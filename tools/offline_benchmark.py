@@ -17,13 +17,13 @@ from hollerau.cases import kit_cases, suite
 from hollerau.simulate import play_local
 
 
-def score_case(case, seed, policy, risk_aversion=None, continuation_credit=0.0, package=None):
+def score_case(case, seed, policy, risk_aversion=None, continuation_credit=0.0, package=None, rfq_only_credit=False):
     if policy == "naive":
         agent = NaiveAgent()
         return play_local(case, agent, package, seed=seed, log=True)
     store = Store(":memory:")
     try:
-        agent = AnalyticalAgent(package=package, store=store, router=Router(enabled=False), run_id=f"offline-{seed}", risk_aversion=risk_aversion, continuation_credit=continuation_credit)
+        agent = AnalyticalAgent(package=package, store=store, router=Router(enabled=False), run_id=f"offline-{seed}", risk_aversion=risk_aversion, continuation_credit=continuation_credit, rfq_only_credit=rfq_only_credit)
         return play_local(case, agent, seed=seed, log=True)
     finally:
         store.close()
@@ -37,6 +37,7 @@ def main():
     p.add_argument("--random-cases", type=int, default=20)
     p.add_argument("--risk-aversion", type=float, default=None)
     p.add_argument("--continuation-credit", type=float, default=0.0)
+    p.add_argument("--rfq-only-credit", action="store_true")
     args = p.parse_args()
     if args.full_suite:
         from arena_kit.cli import load_env
@@ -54,7 +55,7 @@ def main():
     rows = []
     for case in cases:
         for seed in args.seeds:
-            our = score_case(case, seed, "analytical", args.risk_aversion, args.continuation_credit, package)
+            our = score_case(case, seed, "analytical", args.risk_aversion, args.continuation_credit, package, args.rfq_only_credit)
             naive = score_case(case, seed, "naive", package=package)
             row = {
                 "case": case["case_id"],
@@ -72,6 +73,7 @@ def main():
         "games": len(rows),
         "risk_aversion": args.risk_aversion,
         "continuation_credit": args.continuation_credit,
+        "rfq_only_credit": args.rfq_only_credit,
         "mean_ours": statistics.mean(row["ours"] for row in rows),
         "mean_naive": statistics.mean(row["naive"] for row in rows),
         "min_ours": min(row["ours"] for row in rows),
