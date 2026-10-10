@@ -22,7 +22,7 @@ from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v5.1-quote-discovery"
+POLICY_VERSION = "bayes-v5.2-offline-opening-probe"
 DECISION_BUDGET_S = 35
 
 
@@ -40,6 +40,7 @@ class AnalyticalAgent:
         risk_aversion=None,
         lookahead=True,
         price_pressure=0.0,
+        opening_probe=True,
     ):
         self.package = package
         self.store = store or Store()
@@ -50,6 +51,7 @@ class AnalyticalAgent:
         if not math.isfinite(price_pressure) or not 0 <= price_pressure <= 0.4:
             raise ValueError("price_pressure must be between 0 and 0.4")
         self.price_pressure = price_pressure
+        self.opening_probe = bool(opening_probe)
         self.threads = {}
         self.case_id = None
         self.session_id = None
@@ -102,6 +104,7 @@ class AnalyticalAgent:
                 "policy_version": POLICY_VERSION,
                 "risk_aversion": self.risk_for_case(case),
                 "price_pressure": self.price_pressure,
+                "opening_probe": self.opening_probe,
             },
         )
         for sid, events in threads.items():
@@ -706,6 +709,82 @@ class AnalyticalAgent:
         finally:
             self.decision_deadline = None
 
+    def safe_opening_counter(self, case, threads, sid, th, best, fallback):
+        """Try one bounded first counter instead of accepting an untouched opening.
+
+        A buyer who accepts an unchanged first offer normally earns zero savings.
+        This is NOT a case-ID or hidden-score heuristic: use only the public,
+        executable quote, buyer TCO, and explicitly uncertain response forecasts.
+        No other supplier's standing offer is sacrificed or assumed persistent.
+        """
+        if (
+            not self.opening_probe
+            or not best
+            or best[1] != sid
+            or th.last_terms is not None
+            or th.planning_moves < 3
+            or any(m.get("from") == "buyer" for messages in threads.values() for m in messages)
+        ):
+            return None
+        opening = closing_terms(case, best[3], th.std)
+        if opening != th.reference or not opening.get("unit_price"):
+            return None
+        opening_cost = total_cost(case, opening, th.std)
+        if not math.isfinite(opening_cost) or opening_cost <= 0:
+            return None
+        # Keep every other term exactly as quoted. A price cut cannot secretly
+        # exchange 30-day for 14-day payment or add buyer index exposure.
+        quoted_price = opening["unit_price"]
+        exposure = max(0.0, fallback - opening_cost)
+        choices = []
+        for discount in (0.005, 0.01, 0.015):
+            price = round(quoted_price * (1 - discount), 2)
+            if not 0 < price < quoted_price:
+                continue
+            terms = complete_offer(case, {**opening, "unit_price": price})
+            if not self.valid(case, th, terms):
+                continue
+            if any(violated(terms, condition) for condition in th.beliefs.conditions):
+                continue
+            saving = opening_cost - total_cost(case, terms, th.std)
+            if saving < max(0.01, opening_cost * 0.001):
+                continue
+            quote = quoted_price
+            probabilities = {
+                kind: self.weighted(
+                    th, [th.beliefs.probabilities(terms, part, quote)[kind] for part in th.beliefs.particles]
+                )
+                for kind in ("accept", "counter", "walk")
+            }
+            if probabilities["accept"] < 0.12 or probabilities["walk"] > 0.05:
+                continue
+            # A supplier counter can still improve on the untouched opening.
+            # Penalise the possibility of losing it using the public fallback.
+            opportunity = (
+                saving * (probabilities["accept"] + 0.3 * probabilities["counter"])
+                - probabilities["walk"] * exposure
+            )
+            if opportunity <= 0:
+                continue
+            choices.append((opportunity, saving, {
+                "terms": terms,
+                "probabilities": probabilities,
+                "deal_cost": self.weighted(th, self.cost_samples(case, th, terms)),
+                "objective": best[0] - opportunity,
+                "opening_probe": True,
+                "public_tco_saving": saving,
+            }))
+        if not choices:
+            self.log("opening_probe", {"selected": False, "opening_cost": opening_cost}, sid)
+            return None
+        _, saving, chosen = max(choices, key=lambda r: (r[0], r[1]))
+        self.log("opening_probe", {
+            "selected": True, "public_tco_saving": saving,
+            "terms": chosen["terms"], "probabilities": chosen["probabilities"],
+            "fallback_exposure": exposure,
+        }, sid)
+        return chosen
+
     def _decide(self, case, threads, started, deadline):
         self.check_budget()
         live = live_threads(threads)
@@ -842,7 +921,10 @@ class AnalyticalAgent:
                 self.parked.add(sid)
                 self.log("park", {"reason": "check remaining suppliers before accepting"}, sid)
                 return self._decide(case, threads, started, deadline)
-            return self.accept(best, "available deal dominates estimated continuation")
+            probe = self.safe_opening_counter(case, threads, sid, th, best, negotiation_fallback)
+            if probe is None:
+                return self.accept(best, "available deal dominates estimated continuation")
+            chosen = probe
         claims = [c for c in th.dossier.claims if not set(c.refs) & th.used][:2]
         facts = {**(self.package.facts if self.package else {}), **case.get("facts", {})}
         claims = [c for c in claims if all(r in facts for r in c.refs)]
