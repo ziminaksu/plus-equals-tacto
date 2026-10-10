@@ -155,6 +155,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "agreed": "Supplier agreement is an executable offer, not an obligation to accept.",
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
+            "anchoring": "A package a supplier agreed to at once was too generous: it is a ceiling to fall back "
+                         "to, never an opening. The first offer sets the range: open with a 'data anchor' package "
+                         "(our own order prices, below the ask) and concede in steps against the supplier's moves. "
+                         "Suppliers answer a low but data-backed first offer with a counter, not a walk-out; repeating "
+                         "a previously accepted package forfeits everything below it.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
