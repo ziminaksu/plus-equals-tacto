@@ -1,0 +1,200 @@
+"""The dossier: what the data says about a supplier and part, as numbers the strategy uses and as
+arguments that will check out (ID + figure computed from facts.json, the arena's own source).
+
+Arguments are only proposed when they help: an index that rose less than the asked increase, a
+should-cost below the asked price, a short notice against the contract, a weak scorecard, a cheaper
+quote. Each carries a `strength` so the strategy can spend the strong ones at the right time.
+"""
+
+import re
+from dataclasses import dataclass, field
+
+CASH_WORDS = re.compile(r"cash|liquidit|pay (?:our|the) invoices|within \d+ days|discount|prepay|early payment", re.I)
+CAPACITY_WORDS = re.compile(r"capacity|second shift|idle|on hold|fill|take additional", re.I)
+STALE_COSTING = re.compile(r"spreadsheet|not followed|last updated|own figures|costing", re.I)
+APPROVAL = re.compile(r"approval|committee|board|boss|head office|group", re.I)
+PARTNER = re.compile(r"partnership|kept supplying|loyal|many years|relationship", re.I)
+
+
+@dataclass
+class Claim:
+    kind: str
+    refs: list
+    sentence: str  # one argument per sentence, the ID and its figure in it
+    strength: float
+    figure: float | None = None
+
+
+@dataclass
+class Dossier:
+    supplier: str
+    part: str | None
+    full_cost: float | None = None  # supplier's full cost per price unit (should-cost), if known
+    cost_ref: str | None = None
+    index_change_pct: float | None = None  # cost-driver weighted change over 12 months
+    asked_pct: float | None = None
+    cash_short: bool = False
+    spare_capacity: bool = False
+    stale_costing: bool = False
+    approval_ladder: bool = False
+    wants_partnership: bool = False
+    notes: list = field(default_factory=list)
+    claims: list = field(default_factory=list)
+
+
+def _months_back(month, n):
+    y, m = map(int, month.split("-"))
+    k = y * 12 + m - 1 - n
+    return f"{k // 12:04d}-{k % 12 + 1:02d}"
+
+
+def _facts(package, case):
+    facts = dict(package.facts) if package else {}
+    facts.update(case.get("facts") or {})
+    return facts
+
+
+def index_change(facts, series, horizon=12):
+    """(earlier_id, later_id, change %) over `horizon` months ending at the series' last month."""
+    ids = sorted(k for k in facts if k.startswith(f"idx:{series}@"))
+    if not ids:
+        return None
+    later = ids[-1]
+    earlier = f"idx:{series}@{_months_back(later.split('@')[1], horizon)}"
+    if earlier not in facts:
+        return None
+    v1, v2 = facts[earlier]["value"], facts[later]["value"]
+    return earlier, later, round((v2 / v1 - 1) * 100, 1)
+
+
+def _query(package, sql, params=()):
+    try:
+        return package.query(sql, params) if package and package.db else []
+    except Exception:
+        return []
+
+
+def build(case, supplier_id, package=None, asked_price=None):
+    """The dossier for one supplier of the case. `asked_price`: its opening price."""
+    facts = _facts(package, case)
+    part = (case.get("parts") or [None])[0]
+    d = Dossier(supplier=supplier_id, part=part)
+    b = case["buyer"]
+    current = b.get("current_unit_price")
+    if asked_price and current:
+        d.asked_pct = round((asked_price / current - 1) * 100, 1)
+
+    # should-cost: the supplier's plant, no margin (error 5-15 %)
+    if part and (sc := facts.get(f"cost:{part.split(':')[1]}")):
+        plant = _query(package, "SELECT supplier_id FROM should_cost WHERE id = ?", (f"cost:{part.split(':')[1]}",))
+        if not plant or plant[0]["supplier_id"] in (None, "", supplier_id):  # it models this supplier's plant
+            d.full_cost, d.cost_ref = sc["unit_cost"], f"cost:{part.split(':')[1]}"
+
+    # cost drivers -> weighted index change, and per-series arguments
+    drivers = _query(package, "SELECT series_id, weight FROM cost_drivers WHERE part_id = ?", (part,))
+    refs_series = {r.split("@")[0][4:] for r in case.get("refs", []) if r.startswith("idx:")}
+    series = {r["series_id"]: r["weight"] for r in drivers} or {s: None for s in refs_series}
+    weighted, wsum, index_claims = 0.0, 0.0, []
+    for s, w in series.items():
+        ch = index_change(facts, s)
+        if not ch:
+            continue
+        e, l_, pct = ch
+        if w:
+            weighted += w * pct
+            wsum += w
+        index_claims.append((s, e, l_, pct, w or 0.0))
+    if wsum:
+        d.index_change_pct = round(weighted, 2)  # share of price that follows the drivers
+    asked = d.asked_pct if d.asked_pct is not None else 0.0
+    for s, e, l_, pct, w in sorted(index_claims, key=lambda x: x[3]):
+        # only data that argues for us: a falling index, or one far below the asked increase
+        if pct <= 0 or (asked >= 3 and pct < 0.4 * asked):
+            sentence = f"The index {s} moved {pct:+.1f}% over the last twelve months ({e} to {l_})."
+            d.claims.append(Claim("index", [e, l_], sentence, 0.5 + 0.5 * (w or 0.3) + 0.02 * (asked - pct), pct))
+
+    # should-cost below the ask: a strong argument (only when it is clearly below)
+    if d.full_cost and asked_price and d.full_cost * 1.06 < asked_price:
+        d.claims.append(
+            Claim(
+                "should_cost",
+                [d.cost_ref],
+                f"Our bottom-up should-cost for this part is EUR {d.full_cost:.2f} per unit ({d.cost_ref}).",
+                1.2,
+                d.full_cost,
+            )
+        )
+
+    # notice: the trigger letter against the contract
+    trig = case.get("trigger_doc")
+    if trig and (doc := facts.get(trig)) and doc.get("days") is not None:
+        ctr = next(
+            (k for k, v in facts.items() if k.startswith("ctr:") and "#" not in k and v.get("supplier") == supplier_id),
+            None,
+        )
+        if ctr and facts[ctr].get("days") and doc["days"] < facts[ctr]["days"]:
+            d.claims.append(
+                Claim(
+                    "notice",
+                    [trig, ctr],
+                    f"Your letter {trig} gives {doc['days']} days of notice, while our contract {ctr} "
+                    f"requires {facts[ctr]['days']} days.",
+                    1.3,
+                    doc["days"],
+                )
+            )
+
+    # scorecard: latest quarter
+    scs = sorted(k for k in facts if k.startswith(f"sc:{supplier_id.split(':')[1]}@"))
+    if scs:
+        sc = facts[scs[-1]]
+        goal = b.get("category_goal")
+        if goal == "quality_first" and sc.get("ppm", 0) > 300:
+            d.claims.append(Claim("quality", [scs[-1]], f"Your rolling defect rate is {sc['ppm']} ppm ({scs[-1]}).", 0.9, sc["ppm"]))
+        elif sc.get("otd_pct", 100) < 92:
+            d.claims.append(
+                Claim("delivery", [scs[-1]], f"Your on-time delivery was {sc['otd_pct']}% ({scs[-1]}).", 0.7, sc["otd_pct"])
+            )
+
+    # quotes this case points to (refs or the alternative): price comparison
+    alt = b.get("alternative") or {}
+    quote_refs = [r for r in case.get("refs", []) if r.startswith("quote:")] + ([alt["ref"]] if alt.get("ref") else [])
+    for q in dict.fromkeys(quote_refs):
+        f = facts.get(q)
+        if f and f.get("supplier") != supplier_id and asked_price and f.get("unit_price", 1e9) < asked_price:
+            d.claims.append(Claim("quote", [q], f"We hold a quote at EUR {f['unit_price']:.2f} per unit ({q}).", 1.4, f["unit_price"]))
+
+    # what the notes say (context, not checked)
+    docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
+    for row in docs[-12:]:
+        try:
+            text = package.document(row["id"])
+        except Exception:
+            continue
+        body = text.split("\n", 4)[-1].strip()
+        d.notes.append(f"{row['id']} ({row['kind']}): {body[:300]}")
+        d.cash_short |= bool(CASH_WORDS.search(body))
+        d.spare_capacity |= bool(CAPACITY_WORDS.search(body))
+        d.stale_costing |= bool(STALE_COSTING.search(body))
+        d.approval_ladder |= bool(APPROVAL.search(body))
+        d.wants_partnership |= bool(PARTNER.search(body))
+    intel = _query(package, "SELECT equity_ratio_pct, credit_index, credit_index_12m_ago FROM supplier_intel WHERE supplier_id = ?", (supplier_id,))
+    if intel:
+        i = intel[0]
+        if (i.get("equity_ratio_pct") or 100) < 15 or (i.get("credit_index") or 0) - (i.get("credit_index_12m_ago") or 0) > 15:
+            d.cash_short = True
+    d.claims.sort(key=lambda c: -c.strength)
+    return d
+
+
+def estimate(case, dossier, standard, asked_price, params):
+    """Our estimate of the supplier for supplier_value / relationship cost."""
+    full = dossier.full_cost
+    if not full and asked_price:
+        full = asked_price / (1 + params.open_margin)
+    return {
+        "standard": standard,
+        "full_cost": full or 0.0,
+        "interest_rate": 0.18 if dossier.cash_short else 0.08,
+        "usual_rate": 0.08,
+    }
