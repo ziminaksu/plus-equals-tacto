@@ -34,3 +34,25 @@ jobs:
         run: uv sync --locked --group dev
       - name: Run offline tests (no Arena or paid model calls)
         run: uv run pytest -q
+
+  credentials-preflight:
+    # Only same-repository PRs; never pass credentials to forked PRs.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Check secret presence without exposing values or making network calls
+        env:
+          ARENA_CONFIGURED: ${{ secrets.ARENA_API_KEY != '' }}
+          OPENAI_CONFIGURED: ${{ secrets.OPENAI_API_KEY != '' }}
+        run: |
+          if [ "$ARENA_CONFIGURED" = true ]; then
+            echo "Arena API key: OK" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Arena API key: MISSING" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ "$OPENAI_CONFIGURED" = true ]; then
+            echo "OpenAI API key: OK" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "OpenAI API key: MISSING" >> "$GITHUB_STEP_SUMMARY"
+          fi
