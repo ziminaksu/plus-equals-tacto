@@ -21,6 +21,7 @@ class Particle:
     full_cost: float
     b_capacity: float
     b_quality: float
+    b_index: float
     weight: float
 
 
@@ -48,6 +49,9 @@ class Beliefs:
         # Use a more cautiously optimistic supplier quality-cost prior, not an
         # extra buyer-side quality penalty. This remains an uncalibrated sensitivity.
         self.quality_cost_max = p * (0.012 if case["buyer"].get("category_goal") == "quality_first" else 0.020)
+        # Uncalibrated supplier-side benefit per unit from index protection.
+        # It has NO effect until a quote-backed index_protection signal is applied.
+        self.index_value_max = p * 0.05
         self.particles = [
             Particle(
                 rng.uniform(center * 0.94, min(p * 1.015, center * 1.06)),
@@ -57,6 +61,7 @@ class Beliefs:
                 supplier["full_cost"] * rng.uniform(0.90, 1.10),
                 rng.uniform(capacity_min, capacity_max),
                 rng.uniform(0, self.quality_cost_max),
+                rng.uniform(0, self.index_value_max),
                 1 / count,
             )
             for _ in range(count)
@@ -78,8 +83,23 @@ class Beliefs:
         # Payment is represented by b_pay only, not counted again in supplier_value.
         sup = {**self.supplier, "interest_rate": 0.0, "usual_rate": 0.0}
         cash = supplier_value(c, t, sup)
+        # Suppliers may value raw-material index protection, especially on longer
+        # contracts. Only explicit, verified preference evidence activates this.
+        # The effect is *relative* to their opening standard, not a free bonus
+        # for repeating a supplier's already indexed offer.
+        index_delta = 0.0
+        if self.signal_counts.get("index_protection") and "index_clause" in c["negotiable"]:
+            protection = bool(t.get("index_clause"))
+            baseline = bool(ref.get("index_clause"))
+            if protection != baseline:
+                index_delta = (
+                    (1 if protection else -1)
+                    * particle.b_index
+                    * (1 + 0.25 * max(0, min(2, t["contract_months"] / 12 - 1)))
+                )
         return (
             cash
+            + index_delta
             + particle.b_pay * (ref["payment_days"] - t["payment_days"]) / 30
             + particle.b_term * (t["contract_months"] - ref["contract_months"]) / 12
             + particle.b_flex * (t["lead_time_days"] - ref["lead_time_days"]) / 7
@@ -147,6 +167,7 @@ class Beliefs:
             "capacity_limit": "b_capacity",
             "quality_cost": "b_quality",
             "price_resistance": "r",
+            "index_protection": "b_index",
         }
         for signal in signals:
             kind = signal.get("kind")
@@ -203,6 +224,8 @@ class Beliefs:
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
             "quality_prior_max_eur_per_1000ppm": round(self.quality_cost_max, 6),
+            "index_prior_max_eur_per_unit": round(self.index_value_max, 6),
+            "index_protection_active": bool(self.signal_counts.get("index_protection")),
             "tau": self.tau,
             "response_coefficients": {
                 "w0": self.walk_intercept,
@@ -212,7 +235,7 @@ class Beliefs:
                 "accept_bias": self.accept_bias,
             },
         }
-        for field in ("r", "b_pay", "b_term", "b_flex", "full_cost", "b_capacity", "b_quality"):
+        for field in ("r", "b_pay", "b_term", "b_flex", "full_cost", "b_capacity", "b_quality", "b_index"):
             values = sorted((getattr(p, field), p.weight) for p in self.particles)
 
             def quantile(q, values=values):
