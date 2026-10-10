@@ -1,4 +1,4 @@
-# Analytical buyer agent — bayes-v5-astra
+# Analytical buyer agent — bayes-v5.1-quote-discovery
 
 Astra proposes complete deals and a separate Astra call reviews difficult decisions. Python owns cost calculations, probability updates, permitted terms and final actions. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
 
@@ -20,7 +20,10 @@ The requested v5 experiment authorises only one new session each on P02 and P18.
 flowchart TD
     A[Public case and supplier evidence] --> B[Astra negotiator: quotes and complete proposals]
     B --> C[Python validates each item and updates beliefs]
-    C --> D[Compare packages including supplier indicative alternatives]
+    C --> Q{Supplier offers an unpriced indexed alternative?}
+    Q -->|Yes, once, with moves reserved| R[Request actual rebased quote without committing]
+    R --> I
+    Q -->|No| D[Compare packages including supplier indicative alternatives]
     D --> E{Opening, stalled, uncertain or accepting?}
     E -->|Yes| F[Separate Astra review from raw evidence and cost breakdowns]
     F --> G[Python validates alternatives and reranks]
@@ -31,6 +34,10 @@ flowchart TD
 ```
 
 Both roles use `gpt-6-astra`, with separate requests and no shared model conversation or negotiator rationale passed to the reviewer. Agreement between them is not proof of correctness. Strict, case-specific structured outputs constrain fields; Python still validates exact quotes, options, fixed terms, numerical bounds and must-haves. One unsupported item is rejected and logged without discarding independently valid proposals. A supplier welcoming our terms is not evidence that those terms are required. The explicit-requirement gate is conservative and does not prove general semantic entailment.
+
+Both roles can now return `quote_requests` independently of numerical proposals. A source-backed `index_rebase` request asks for the missing complete quote without making a binding offer. A narrow deterministic fallback recognises explicit supplier openness or rebasing language. It is limited to one request per supplier, needs at least three remaining moves, and cannot override a final offer, fixed index terms, or an already-priced indexed alternative. It does not invent a base price, count indexation as mandatory, or train acceptance probabilities from a response to a question.
+
+If the supplier already supplies an indicative alternative, Python compares its actual quoted package with standing quotes and fallback using estimated total cost, including index and relationship costs. A cheaper valid alternative gets a request to confirm those exact terms as the standing offer, once per package. Its indicative ID is never accepted. Counteroffer forecasts still contain assumptions; they no longer veto discovery or confirmation of these supplier-backed alternatives.
 
 ## Supplier estimates and learning
 
@@ -78,9 +85,11 @@ An opening can include one additional package at comparable expected buyer cost,
 
 ## Astra routing and latency
 
-`ANALYTICAL_PRIMARY=astra` and `STRATEGIC_REVIEWER=astra` are the defaults. `OPENAI_API_KEY` is the only key used by those calls. The Responses API uses medium reasoning, up to 4096 reasoning/output tokens, `store=false` and a strict case-specific JSON schema. See [official structured-output documentation](https://developers.openai.com/api/docs/guides/structured-outputs).
+`ANALYTICAL_PRIMARY=astra` and `STRATEGIC_REVIEWER=astra` are the defaults. `OPENAI_API_KEY` is the only key used by those calls. The Responses API uses low reasoning to reduce latency, up to 4096 reasoning/output tokens, `store=false` and a strict case-specific JSON schema. Low reasoning is supported by the [official Astra model documentation](https://developers.openai.com/api/docs/models/gpt-6-astra). See also [structured-output documentation](https://developers.openai.com/api/docs/guides/structured-outputs).
 
-The primary call is bounded to 22 seconds, the reviewer to 25; both share a 52-second decision deadline with three seconds reserved at each call for local processing. The Arena move limit is 60 seconds. There are no retries; failures keep the Python fallback available and are recorded by role, error class and validation section. Two consecutive failed reviewer calls open its circuit. No extra writing call is needed. Returned token usage does not capture billing for timed-out calls.
+The shared move budget is 35 seconds starting when `LoggedTable` receives the supplier reply, before attachment downloads. The primary and reviewer HTTP phase budgets total at most 18 and 12 seconds respectively, further capped by the remaining time minus five seconds. Attachment phase budgets total at most eight seconds and share the same clock. Slow attachments are explicitly marked unavailable. Candidate generation and ranking check the deadline; exhausted time triggers a valid standing-offer close or fallback walk-away. Acceptance relies on the server's atomic ID validation, avoiding a redundant pre-accept network request. Equal-model escalation no longer repeats ranking without new evidence.
+
+The Arena limit is 60 seconds. The extra margin reduces risk from transmission and processing, but phase timeouts are not a hard wall-clock guarantee under network or OS stalls. There are no retries in the analytical CLI; failures are recorded by role, error class and validation section. Two consecutive failed reviewer calls open its circuit. No extra writing call is needed. Returned token usage does not capture billing for timed-out calls.
 
 The reviewer runs on opening offers, prospective acceptance, stalled replies, interpretation failures, indicative alternatives, low predicted acceptance or costly/conditional trades. A primary Astra call no longer suppresses its separate Astra reviewer. The reviewer can propose up to three complete packages; it cannot send them or override buyer requirements.
 

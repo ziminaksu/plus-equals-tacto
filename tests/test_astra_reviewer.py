@@ -63,13 +63,13 @@ def test_astra_and_qwen_use_separate_hosts_keys_and_output_protocols():
         assert req.url == "https://api.openai.com/v1/responses"
         assert req.headers["Authorization"] == "Bearer openai-test"
         assert body["model"] == ASTRA and body["store"] is False
-        assert body["reasoning"] == {"effort": "medium"}
+        assert body["reasoning"] == {"effort": "low"}
         assert body["max_output_tokens"] == 4096
         assert body["text"]["format"]["type"] == "json_schema"
         assert body["text"]["format"]["strict"] is True
         assert "json" in body["input"].lower()  # Required by the live Responses JSON-mode validator.
         assert not {"temperature", "max_tokens", "chat_template_kwargs", "tools"} & body.keys()
-        assert 0 < req.extensions["timeout"]["read"] <= 25
+        assert 0 < sum(req.extensions["timeout"].values()) <= 12 + 1e-6
         return httpx.Response(200, json=response())
 
     router = Router("hf-test", httpx.MockTransport(handler), reviewer="astra", review_key="openai-test")

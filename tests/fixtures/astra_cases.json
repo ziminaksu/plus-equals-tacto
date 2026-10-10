@@ -294,6 +294,72 @@
         "missing_fields": [],
         "claim_results": []
       }
+    ],
+    "v5_replies": [
+      {
+        "message_id": "msg:70510-1-2",
+        "from": "sales@70510",
+        "status": "open",
+        "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nWe checked the delivery record data you cited; it holds, but it does not change our calculation. However, we appreciate your proposal and are willing to accept the 14 days net payment terms. In return for the improved payment terms, we can offer a revised price of \u20ac369.52 per unit. \n\nUnder these conditions, our Angebot comprises a price of \u20ac369.52 per unit, Zahlungsziel 14 days net, no Preisgleitklausel. Please note that this offer remains valid for 30 days.\n\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70510-1",
+            "terms": {
+              "unit_price": 369.52,
+              "payment_days": 14,
+              "index_clause": null
+            }
+          }
+        ]
+      },
+      {
+        "message_id": "msg:70510-2-4",
+        "from": "sales@70510",
+        "status": "open",
+        "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nTo move our discussion forward, we can offer a further adjusted price of \u20ac368.85 per unit under the 14 days net payment terms. Our offer comprises a price of \u20ac368.85 per unit, Zahlungsziel 14 days net, no Preisgleitklausel. Please note that our price reflects our costs; our calculation stays internal.\n\nIn response to your question, we are open to introducing a symmetrical CU-NOTATION index clause if you prefer to manage the copper market risk directly. \n\nThis offer remains valid for 30 days.\n\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70510-2",
+            "terms": {
+              "unit_price": 368.85,
+              "payment_days": 14,
+              "index_clause": null
+            }
+          }
+        ]
+      },
+      {
+        "message_id": "msg:70510-3-6",
+        "from": "sales@70510",
+        "status": "open",
+        "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. In response to your movement, we can offer a further adjusted price of EUR 368.45 per unit with 14 days net payment. For our complete Angebot, we state a price of \u20ac368.45 per unit, Zahlungsziel 14 days net, and no Preisgleitklausel. Regarding your question, if we implement a CU-NOTATION index clause, the base price would be recalculated to exclude recent copper increases, preventing any double-counting. Please note that our price reflects our costs; our calculation stays internal. This offer remains valid for 30 days.\n\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70510-3",
+            "terms": {
+              "unit_price": 368.45,
+              "payment_days": 14,
+              "index_clause": null
+            }
+          }
+        ]
+      },
+      {
+        "message_id": "msg:70510-4-8",
+        "from": "sales@70510",
+        "status": "final_offer",
+        "body": "Dear Sir or Madam,\n\nThis is our final offer (letztes Angebot). Please decide.\n\nOur offer is a price of \u20ac368.45 per unit, Zahlungsziel 14 days net, no Preisgleitklausel. This offer remains valid for 7 days.\n\nOur price reflects our costs; our calculation stays internal. Any further step needs approval from our management.\n\nA symmetrical adjustment ensures that any future decreases or increases in the CU-NOTATION index are equally reflected in the price. Should you wish to implement the CU-NOTATION index clause, please confirm, and we will calculate the corresponding revised base price.\n\nMit freundlichen Gr\u00fc\u00dfen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70510-4",
+            "terms": {
+              "unit_price": 368.45,
+              "payment_days": 14,
+              "index_clause": null
+            }
+          }
+        ]
+      }
     ]
   },
   "case:P18": {
@@ -612,6 +678,66 @@
         },
         "missing_fields": [],
         "claim_results": []
+      }
+    ],
+    "v5_replies": [
+      {
+        "message_id": "msg:70740-1-2",
+        "from": "sales@70740",
+        "status": "open",
+        "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We checked the delivery record data you cited; it holds, but it does not change our calculation. We note your comment on delivery performance and are continuously optimizing our logistics, though this does not impact our current cost structure. Our price follows our main cost drivers: AS-14404, PPI-C2431, LCI-C. For contracts extending to 24 months, indexation is not optional; we must include the AS-14404 clause to manage raw material volatility. We can offer a Preisgleitklausel on AS-14404, AS-14404, AS-14404.\n\nWith this indexation and your proposed 14-day payment terms, we can offer a revised base price of \u20ac5.60 per unit. Alternatively, with a Preisgleitklausel on AS-14404: \u20ac5.60 per unit. Our full Angebot stands at a price of \u20ac5.50 per unit, Zahlungsziel 14 days net, a contract term of 24 months, a Preisgleitklausel on AS-14404. This offer remains valid for 30 days.\n\nMit freundlichen Gr\u00fc\u00dfen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH\n\nLogistics: We have free capacity for your parts. Our Lieferzeit is 14 days. With overtime we can deliver in 14 days, at a premium.",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70740-1",
+            "terms": {
+              "unit_price": 5.5,
+              "payment_days": 14,
+              "index_clause": {
+                "series": "AS-14404",
+                "material_share": 0.45,
+                "deadband_pct": 0.0,
+                "base_month": "2026-08"
+              },
+              "contract_months": 24
+            }
+          },
+          {
+            "term_sheet_id": "offer:70740-1-a",
+            "terms": {
+              "unit_price": 5.6,
+              "payment_days": 14,
+              "index_clause": {
+                "series": "AS-14404",
+                "material_share": 0.45,
+                "deadband_pct": 5.0,
+                "base_month": "2026-08"
+              },
+              "contract_months": 24
+            }
+          }
+        ]
+      },
+      {
+        "message_id": "msg:70740-2-4",
+        "from": "sales@70740",
+        "status": "open",
+        "body": "Dear customer,\n\nThank you for reaching out to us. We are always glad to assist you and to support your business with our extensive stock and dedicated service. \n\nWe have reviewed your offer and hold our Angebot. To answer your question, standard delivery does not carry any premium; our standard lead time is 14 days. Our price follows our main cost drivers: AS-14404, PPI-C2431, LCI-C. \n\nWe must therefore hold our previous offer of EUR 5.50 for a 24-month contract with 14-day payment terms and the AS-14404 index clause. For full clarity on what we currently stand by, our Angebot remains a price of \u20ac5.50 per unit, Zahlungsziel 14 days net, a contract term of 24 months, a Preisgleitklausel on AS-14404. Please note that this offer stays valid for 30 days.\n\nWe appreciate our ongoing relationship and look forward to hearing from you soon.\n\nMit freundlichen Gr\u00fc\u00dfen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH\n\nLogistics: We have free capacity for your parts. Our Lieferzeit is 14 days. With overtime we can deliver in 14 days, at a premium.",
+        "term_sheets": [
+          {
+            "term_sheet_id": "offer:70740-2",
+            "terms": {
+              "unit_price": 5.5,
+              "payment_days": 14,
+              "index_clause": {
+                "series": "AS-14404",
+                "material_share": 0.45,
+                "deadband_pct": 0.0,
+                "base_month": "2026-08"
+              },
+              "contract_months": 24
+            }
+          }
+        ]
       }
     ]
   }

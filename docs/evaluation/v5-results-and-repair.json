@@ -1,0 +1,145 @@
+{
+  "evaluated_policy": "bayes-v5-astra",
+  "evaluated_commit": "72f9d1e6d0e75f69da3a09512973a86e78767003",
+  "run_id": "ehl-v5-astra-two-20261010",
+  "sessions_authorised": 2,
+  "sessions_started": 2,
+  "post_fix_policy": "bayes-v5.1-quote-discovery",
+  "post_fix_arena_sessions": 0,
+  "cases": {
+    "case:P02": {
+      "session_id": "2aae5851101dcf2a",
+      "baseline_score": 0.15698901705979842,
+      "score": 0.15698901705979842,
+      "deal": true,
+      "buyer_timeouts": 0,
+      "model_calls": [
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 14.089
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 15.747
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 15.234
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 13.906
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 17.052
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 13.159
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 18.933
+        }
+      ],
+      "ranking_example": [
+        {
+          "terms": {
+            "unit_price": 355,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "deal_cost": 2233779.1342459125,
+          "objective": 2283521.804409482,
+          "probabilities": {
+            "accept": 0.17643047473810167,
+            "counter": 0.8129375304155757,
+            "walk": 0.010631994846322575
+          },
+          "predicted_counter_cost": 2285545.546522219
+        },
+        {
+          "terms": {
+            "unit_price": 350,
+            "payment_days": 30,
+            "index_clause": {
+              "series": "CU-NOTATION",
+              "material_share": 0.2,
+              "deadband_pct": 5,
+              "base_month": "2026-08"
+            }
+          },
+          "deal_cost": 2234503.1651269454,
+          "objective": 2304872.4076951393,
+          "probabilities": {
+            "accept": 0.09380969568415702,
+            "counter": 0.8929651097116306,
+            "walk": 0.013225194604212391
+          },
+          "predicted_counter_cost": 2302870.0458414475
+        }
+      ]
+    },
+    "case:P18": {
+      "session_id": "8cc1269743adb352",
+      "baseline_score": 0.33963340207573,
+      "score": 0.0,
+      "deal": false,
+      "buyer_timeouts": 1,
+      "model_calls": [
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 12.01
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 11.869
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 14.699
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 22.022
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 17.221
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 15.631
+        }
+      ]
+    }
+  },
+  "verification": {
+    "focused_tests": 41,
+    "network_calls_in_tests": 0,
+    "test_cases": [
+      "case:P02",
+      "case:P18"
+    ],
+    "limitations": [
+      "Saved-decision regressions and mock timeout tests do not produce new Arena scores.",
+      "P18 v5 score zero followed a server-recorded buyer timeout; negotiation quality is not isolated by this result.",
+      "Quote discovery consumes a move and may fail to improve or preserve the previous offer.",
+      "HTTP phase timeouts and clock checks reduce timeout risk; network and OS delays can still exceed margins."
+    ]
+  }
+}

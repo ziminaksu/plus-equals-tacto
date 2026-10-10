@@ -9,19 +9,25 @@ from dataclasses import asdict
 from types import SimpleNamespace
 
 from arena_kit.cost import closing_terms, complete_offer, cost_breakdown, must_haves_ok, total_cost
-from arena_kit.play import latest, live_threads, moves_left, standing
+from arena_kit.play import closing_move, latest, live_threads, moves_left, standing
 
 from .. import compliance, intel, levers
 from ..agent import _opening_standard, describe
 from ..params import Params
 from .beliefs import Beliefs
+from .discovery import REBASE_QUESTION, discover_quote_requests, validate_quote_request
 from .offers import echoed_proposal, equivalent_alternative
 from .planning import counter_costs, paired_objective
 from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v5-astra"
+POLICY_VERSION = "bayes-v5.1-quote-discovery"
+DECISION_BUDGET_S = 35
+
+
+class DecisionBudgetExpired(Exception):
+    pass
 
 
 class AnalyticalAgent:
@@ -48,6 +54,12 @@ class AnalyticalAgent:
         self.case_id = None
         self.session_id = None
         self.turn = 0
+        self.move_deadline = None  # set on receipt, before downloading supplier attachments
+        self.decision_deadline = None
+
+    def check_budget(self):
+        if self.decision_deadline is not None and time.monotonic() >= self.decision_deadline - 3:
+            raise DecisionBudgetExpired
 
     def log(self, kind, payload, sid=None):
         self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
@@ -143,6 +155,9 @@ class AnalyticalAgent:
                 analyst_candidates=[],
                 indicative_candidates=[],
                 interpretation_failed=False,
+                quote_requests=[],
+                asked_quotes=set(),
+                asked_confirmations=set(),
                 planning_anchor=None,
                 planning_moves=case.get("round_limit", 10),
             )
@@ -157,6 +172,13 @@ class AnalyticalAgent:
                 continue
             reply = latest(events)
             offered = standing(events)[1]
+            if pending.get("kind") in ("quote_request", "quote_confirmation"):
+                # An information request is not an offer rejection: no acceptance-rate training.
+                self.log("quote_response", {"response": reply, "request": pending["request"]}, sid)
+                if offered.get("unit_price"):
+                    th.last_supplier_terms = dict(offered)
+                th.pending = None
+                continue
             status = reply.get("status")
             outcome = "accept" if status == "agreed" else "walk" if status in ("walked_away", "no_bid") else "counter"
             event_id = hashlib.sha256(json.dumps(reply, sort_keys=True, default=str).encode()).hexdigest()
@@ -304,6 +326,7 @@ class AnalyticalAgent:
         candidates, seen = [], set()
         package_rows = {}
         for pkg in packages:
+            self.check_budget()
             package_key = json.dumps(pkg, sort_keys=True)
             if package_key in package_rows:
                 continue
@@ -431,6 +454,7 @@ class AnalyticalAgent:
             current,
         )
         th.critic_candidates = []  # stale proposals must not survive a changed supplier reply
+        th.quote_requests = analysis.get("quote_requests", []) + discover_quote_requests(sources, case)
         conditions = extract_explicit_conditions(sources, case, current) + analysis.get("conditions", [])
         added = th.beliefs.apply_conditions(conditions)
         if standing(events)[0]:
@@ -448,6 +472,7 @@ class AnalyticalAgent:
         anchor = th.planning_anchor or [continuation] * len(weights)
         rows = []
         for terms in self.candidates(case, th, current, continuation, fallback):
+            self.check_budget()
             costs = self.cost_samples(case, th, terms)
             probs = [
                 th.beliefs.probabilities(terms, p, quote, th.repeats if terms["unit_price"] == th.last_price else 0)
@@ -490,6 +515,7 @@ class AnalyticalAgent:
             # A shortlist based only on immediate acceptance discards useful opening
             # anchors. Screen every candidate against the continuation model as well.
             for row in rows:
+                self.check_budget()
                 future = counter_costs(
                     case, th, row["terms"], current, lambda t: self.valid(case, th, t), fallback, particles=[center]
                 )[0]
@@ -505,6 +531,7 @@ class AnalyticalAgent:
             shortlist += [r for r in rows if r["terms"] in extras]
             rows = list({json.dumps(r["terms"], sort_keys=True): r for r in shortlist}.values())
             for row in rows:
+                self.check_budget()
                 future = counter_costs(case, th, row["terms"], current, lambda t: self.valid(case, th, t), fallback)
                 values = [
                     pr["accept"] * cost + pr["counter"] * (future_cost + fallback * 0.0003) + pr["walk"] * fallback
@@ -590,22 +617,97 @@ class AnalyticalAgent:
         added = th.beliefs.apply_conditions(review.get("conditions", []))
         approved = self.approved_proposals(case, th, review.get("alternative_terms", []), current)
         th.critic_candidates = approved
+        th.quote_requests.extend(review.get("quote_requests", []))
         self.log("critic", {"result": review, "approved_candidates": approved, "applied_conditions": added}, sid)
         if (added or approved) and deadline - time.monotonic() > 3:
             continuation = best[0] if best else fallback
             ranked = self.rank(case, th, current, continuation, fallback)
         return ranked, best
 
+    def request_missing_quote(self, case, sid, events, sources):
+        th = self.threads[sid]
+        if th.asked_quotes or moves_left(case, events) < 3 or latest(events).get("status") in ("final_offer", "agreed"):
+            return None
+        # Once actual indexed prices exist, compare those packages instead of asking again.
+        if any(s.get("terms", {}).get("index_clause") for s in latest(events).get("term_sheets", [])):
+            return None
+        for request in th.quote_requests:
+            try:
+                validate_quote_request(request, sources, case["negotiable"], case.get("term_options"))
+            except (ValueError, TypeError):
+                continue
+            message = {"subject": "Re: " + case["title"], "body": REBASE_QUESTION, "term_sheets": []}
+            if compliance.problems(case, message, {}, standard=th.std):
+                continue
+            th.asked_quotes.add(request["kind"])
+            th.pending = {"kind": "quote_request", "request": request, "event_count": len(events)}
+            decision = {"supplier_id": sid, "message": message}
+            self.log("decision", {"action": decision, "kind": "request_quote", "evidence": request,
+                                  "reason": "unpriced supplier alternative; counter-price forecast cannot rule it out",
+                                  "quote_request_limit": 1, "llm_calls": self.router.calls}, sid)
+            self.router.calls = []
+            return decision
+        return None
+
+    def confirm_priced_alternative(self, case, threads, sid, fallback):
+        """Compare supplier-quoted costs before forecasting a hypothetical counter price.
+
+        An indicative quote is not executable. Request confirmation using its exact
+        terms, once, only when it beats the available standing quotes and fallback.
+        """
+        th, events = self.threads[sid], threads[sid]
+        if moves_left(case, events) < 2:
+            return None
+        available = self.available(case, threads, fallback)
+        ceiling = min(fallback, available[0][0] if available else fallback)
+        standing_id = standing(events)[0]
+        for cost, supplier, sheet_id, terms in self.available(case, threads, fallback, include_indicative=True):
+            if supplier != sid or sheet_id == standing_id or cost >= ceiling - max(0.01, ceiling * 0.0001):
+                continue
+            terms = complete_offer(case, terms)
+            key = json.dumps(terms, sort_keys=True)
+            if key in th.asked_confirmations:
+                continue
+            message = {"subject": "Re: " + case["title"], "body": (
+                "Thank you for the priced alternative. Please confirm the attached quoted package "
+                "as your standing offer so we can conclude on those exact terms."
+            ), "term_sheets": [{"terms": terms}]}
+            if compliance.problems(case, message, {}, standard=th.std):
+                continue
+            th.asked_confirmations.add(key)
+            th.pending = {"kind": "quote_confirmation", "request": {"term_sheet_id": sheet_id},
+                          "event_count": len(events)}
+            decision = {"supplier_id": sid, "message": message}
+            self.log("decision", {"action": decision, "kind": "confirm_quote", "estimated_cost": cost,
+                                  "standing_or_fallback_cost": ceiling, "source_sheet_id": sheet_id,
+                                  "reason": "supplier-priced alternative improves estimated cost; confirm its status",
+                                  "llm_calls": self.router.calls}, sid)
+            self.router.calls = []
+            return decision
+        return None
+
     def decide(self, case, threads):
         started = time.monotonic()
-        deadline = started + 52  # stays below Arena's 60-second move limit, including two bounded calls
+        deadline = min(started + DECISION_BUDGET_S, self.move_deadline or float("inf"))
+        self.decision_deadline = deadline
         if self.case_id != case["case_id"]:
             self.start(case, threads)
         self.turn += 1
         self.observe(case, threads)
-        return self._decide(case, threads, started, deadline)
+        try:
+            self.check_budget()
+            return self._decide(case, threads, started, deadline)
+        except DecisionBudgetExpired:
+            decision = closing_move(case, threads)
+            self.log("decision", {"action": decision, "reason": "shared move budget exhausted; close before timeout",
+                                  "seconds": time.monotonic() - started, "llm_calls": self.router.calls})
+            self.router.calls = []
+            return decision
+        finally:
+            self.decision_deadline = None
 
     def _decide(self, case, threads, started, deadline):
+        self.check_budget()
         live = live_threads(threads)
         if not live:
             return {"supplier_id": next(iter(threads)), "message": {"action": {"type": "walk_away"}}}
@@ -643,6 +745,13 @@ class AnalyticalAgent:
         if not current:
             current = th.reference
         analysis, sources = self.interpret(case, sid, events, deadline)
+        self.check_budget()
+        confirmation = self.confirm_priced_alternative(case, threads, sid, fallback)
+        if confirmation:
+            return confirmation
+        discovery = self.request_missing_quote(case, sid, events, sources)
+        if discovery:
+            return discovery
         # Interpretation changes belief weights BEFORE cost scenarios and offers are evaluated.
         available = self.available(case, threads, fallback)
         best = available[0] if available else None
@@ -663,7 +772,7 @@ class AnalyticalAgent:
                 reasons.append("unresolved source interpretation could materially change package ranking")
         if analysis.get("fallback") and case.get("type") == "capacity" and not best:
             reasons.append("no feasible standing capacity offer; source interpretation may change commitment trade")
-        if reasons and time.monotonic() < deadline - 8:
+        if reasons and self.router.large != self.router.small and time.monotonic() < deadline - 8:
             resolved = self.router.resolve(
                 sources, analysis, reasons, deadline, case["negotiable"], case.get("term_options", {})
             )
@@ -678,6 +787,10 @@ class AnalyticalAgent:
             self.plan_anchor(case, th, best, continuation, sid)
             ranked = self.rank(case, th, current, continuation, negotiation_fallback)
         ranked, best = self.review_plan(case, sid, th, sources, ranked, best, current, negotiation_fallback, deadline)
+        self.check_budget()
+        discovery = self.request_missing_quote(case, sid, events, sources)
+        if discovery:
+            return discovery
         self.log("coefficients", th.beliefs.snapshot(), sid)
         if not ranked:
             if best:

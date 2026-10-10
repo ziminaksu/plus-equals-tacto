@@ -39,6 +39,9 @@ def decision_schema(case, review=False):
     properties = {
         "conditions": {"type": "array", "items": condition},
         "alternative_terms": {"type": "array", "items": obj(fields)},
+        "quote_requests": {"type": "array", "items": obj({
+            "kind": {"type": "string", "enum": ["index_rebase"]}, "source_id": text, "quote": text,
+        })},
     }
     if review:
         properties["issues"] = {"type": "array", "items": obj({"source_id": text, "quote": text, "explanation": text})}

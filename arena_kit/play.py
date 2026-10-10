@@ -15,6 +15,8 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import httpx
+
 from .client import ArenaError
 from .cost import must_haves_ok, total_cost
 from .docs import read_document, standard_terms
@@ -119,7 +121,12 @@ def fetch_documents(table, message):
     """Download every attachment of a supplier message and add its text."""
     for att in message.get("attachments") or []:
         if att.get("attachment_id") and "text" not in att:
-            att["text"] = read_document(att["name"], table.attachment(att["attachment_id"]))
+            try:
+                att["text"] = read_document(att["name"], table.attachment(att["attachment_id"]))
+            except (TimeoutError, httpx.TimeoutException):
+                # A slow attachment must not consume the entire supplier-response window.
+                att["read_error"] = "timeout"
+                log.warning("attachment unavailable within move budget: continuing with received terms")
     return message
 
 

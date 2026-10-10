@@ -57,12 +57,13 @@ class ArenaClient:
         if wait > 0:
             time.sleep(wait)
 
-    def _call(self, method, path, body=None, params=None, raw=False):
+    def _call(self, method, path, body=None, params=None, raw=False, timeout=None):
         headers = {MOVE_ID_HEADER: uuid.uuid4().hex} if method == "POST" else {}
         for attempt in range(self.retries + 1):
             self._pace()
             try:
-                r = self.http.request(method, path, json=body, params=params, headers=headers)
+                r = self.http.request(method, path, json=body, params=params, headers=headers,
+                                      **({"timeout": timeout} if timeout is not None else {}))
             except httpx.TransportError:
                 if attempt == self.retries:
                     raise
@@ -106,9 +107,9 @@ class ArenaClient:
     def thread(self, session_id, supplier_id):
         return self._call("GET", f"/sessions/{session_id}/threads/{supplier_id}")
 
-    def attachment(self, session_id, attachment_id):
+    def attachment(self, session_id, attachment_id, timeout=None):
         """The bytes of a document a supplier attached."""
-        return self._call("GET", f"/sessions/{session_id}/attachments/{attachment_id}", raw=True)
+        return self._call("GET", f"/sessions/{session_id}/attachments/{attachment_id}", raw=True, timeout=timeout)
 
     def backoffice(self, session_id):
         return self._call("GET", f"/sessions/{session_id}/backoffice")

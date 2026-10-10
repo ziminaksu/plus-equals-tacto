@@ -10,6 +10,7 @@ import time
 import httpx
 
 from .contracts import decision_schema, decode_conditions
+from .discovery import validate_quote_request
 from .preferences import validate_conditions
 
 SMALL = "Qwen/Qwen3.8-27B:deepinfra"
@@ -99,6 +100,9 @@ Proposals are suggestions for Python to price and validate, never supplier-accep
 Trade price against payment, duration, volume, delivery, quality and index risk as applicable.
 Keep non-price value in reserve: do not concede everything immediately. Seek reciprocal price reductions.
 When progress stalls, change the package or ask a targeted question instead of tiny price-only nudges.
+If the supplier explicitly offers indexation or recalculating its base price but has not priced that
+alternative, return quote_requests [{kind:"index_rebase",source_id:"reply:...",quote:"exact evidence"}].
+This asks for a complete rebased quote without committing to an index or inventing a base price.
 Inspect every supplier-proposed indicative alternative; request confirmation rather than accepting its ID.
 Should-cost and acceptance estimates are uncertain, not proven price floors. Respect supplier sustainability
 where the buyer values it. Do not expose the buyer's budget, urgency, cost model or outside-option weakness.
@@ -126,6 +130,9 @@ Keep the review concise: at most two issues and two alternative packages.
 Return an empty list when no supported correction exists. Do not agree merely because the
 proposed decision sounds confident. First form your own assessment from the raw sources, then compare
 packages. Look for overlooked indicative quotes, stalled price-only moves and gifts of payment/duration.
+When a supplier explicitly offers an unpriced indexed/rebased alternative, return quote_requests
+[{kind:"index_rebase",source_id:"reply:...",quote:"exact evidence"}]. Python can execute this request;
+do not bury it only in issues or fabricate a numerical alternative. Otherwise return quote_requests: [].
 Welcoming/accepting a package does NOT make its terms mandatory. Conditions require explicit demands.
 For a structured schema, when/requires use arrays of {field,value} predicates. Do not include prose
 to be sent to the supplier. The negotiator's rationale is deliberately withheld."""
@@ -192,7 +199,7 @@ class Router:
 
     def call_astra(self, system, data, deadline, role="strategic_review", schema=None):
         """Responses API; bounded reasoning/output, no tools, no retries or stored response."""
-        remaining = min(22 if role == "negotiator" else 25, deadline - time.monotonic() - 3)
+        remaining = min(18 if role == "negotiator" else 12, deadline - time.monotonic() - 5)
         if not self.review_enabled or remaining < 1:
             raise TimeoutError("Astra unavailable or decision budget exhausted")
         record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started"}
@@ -202,14 +209,15 @@ class Router:
             response = self.client.post(
                 "https://api.openai.com/v1/responses",
                 headers={"Authorization": "Bearer " + self.review_key},
-                timeout=remaining,
+                timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
+                                      write=remaining / 20, read=remaining * 0.8),
                 json={
                     "model": ASTRA,
                     "instructions": system,
                     # Responses JSON mode checks input as well as the instructions field.
                     "input": "Review the following evidence and return one JSON object.\n"
                     + json.dumps(data, ensure_ascii=False),
-                    "reasoning": {"effort": "medium"},
+                    "reasoning": {"effort": "low"},
                     "text": {"format": (
                         {"type": "json_schema", "name": role, "strict": True, "schema": schema}
                         if schema else {"type": "json_object"}
@@ -368,8 +376,8 @@ class Router:
         Audit only field names/error classes, never raw exception text or credentials.
         """
         result, errors = {}, []
-        lists = ("issues", "conditions", "alternative_terms") if review else (
-            "interpretations", "signals", "conditions", "alternative_terms",
+        lists = ("issues", "conditions", "alternative_terms", "quote_requests") if review else (
+            "interpretations", "signals", "conditions", "alternative_terms", "quote_requests",
         )
         for field in lists:
             result[field] = []
@@ -383,6 +391,8 @@ class Router:
                         raise ValueError("invalid item")
                     if field == "conditions":
                         validate_conditions([item], sources, negotiable_fields or [], term_options)
+                    elif field == "quote_requests":
+                        validate_quote_request(item, sources, negotiable_fields or [], term_options)
                     elif field == "alternative_terms":
                         if set(item) != set(negotiable_fields or []):
                             raise ValueError("incomplete proposal")

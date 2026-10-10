@@ -6,14 +6,17 @@ import json
 import math
 import os
 import re
+import time
 from pathlib import Path
+
+import httpx
 
 from arena_kit.cli import load_env
 from arena_kit.client import ArenaClient
 from arena_kit.data import DataPackage
 from arena_kit.play import RemoteTable, hosted, play
 
-from .agent import POLICY_VERSION, AnalyticalAgent
+from .agent import DECISION_BUDGET_S, POLICY_VERSION, AnalyticalAgent
 from .router import Router
 from .storage import Store
 
@@ -27,6 +30,7 @@ class LoggedTable(RemoteTable):
     def open(self, case_id):
         self.case_id = case_id
         result = super().open(case_id)
+        self.agent.move_deadline = time.monotonic() + DECISION_BUDGET_S
         self.agent.session_id = self.session_id
         self.store.status(self.run, case_id, "opened", self.session_id)
         self.store.log(self.run, "opened", {"case": result[0], "threads": result[1]}, case_id, session=self.session_id)
@@ -35,15 +39,27 @@ class LoggedTable(RemoteTable):
     def send(self, supplier_id, message):
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().send(supplier_id, message)
+        self.agent.move_deadline = time.monotonic() + DECISION_BUDGET_S
         self.store.log(self.run, "received", result, self.case_id, supplier_id, self.session_id)
         return result
+
+    def attachment(self, attachment_id):
+        remaining = min(8, (self.agent.move_deadline or 0) - time.monotonic() - 5)
+        if remaining < 1:
+            raise TimeoutError("attachment budget exhausted")
+        return self.client.attachment(
+            self.session_id, attachment_id,
+            timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
+                                  write=remaining / 20, read=remaining * 0.8),
+        )
 
     def close(self, supplier_id, message):
         action = message.get("action", {})
         if action.get("type") == "accept":
-            thread = self.client.thread(self.session_id, supplier_id)
-            if action.get("term_sheet_id") != thread.get("offer_id"):
-                raise ValueError("selected offer is no longer the server-confirmed standing offer")
+            # The server validates the ID atomically on accept. A redundant read here
+            # could itself exceed the move window; only received standing IDs are chosen.
+            if not action.get("term_sheet_id"):
+                raise ValueError("accept requires a received standing offer ID")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
