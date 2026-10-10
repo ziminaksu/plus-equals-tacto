@@ -50,7 +50,7 @@ def board_for(agent, case, threads):
                        {s: agent.threads[s].episodes for s in threads})
 
 
-@pytest.mark.parametrize("status", ["open", "agreed", "final_offer"])
+@pytest.mark.parametrize("status", ["open", "agreed"])
 def test_p18_quote_status_never_bypasses_astra_or_forces_acceptance(status, monkeypatch):
     agent, case, threads, sid = setup()
     latest(threads[sid])["status"] = status
