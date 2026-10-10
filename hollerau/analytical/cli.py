@@ -28,10 +28,15 @@ class LoggedTable(RemoteTable):
         self.store, self.run, self.agent = store, run, agent
         self.case_id = None
         self.standing_ids = {}
+        self.offer_terms = {}
 
     def remember_standing(self, supplier_id, events):
         sheet = standing_sheet(events)
         self.standing_ids[supplier_id] = sheet.get("term_sheet_id") if sheet else None
+        for event in events:
+            for ts in event.get("term_sheets") or []:
+                if ts.get("term_sheet_id"):
+                    self.offer_terms[ts["term_sheet_id"]] = ts.get("terms")
 
     def open(self, case_id):
         self.case_id = case_id
@@ -83,7 +88,7 @@ class LoggedTable(RemoteTable):
         return result
 
     def reissued_accept(self, supplier_id, message, error):
-        retry = reissued_accept(self.client, self.session_id, supplier_id, message, error)
+        retry = reissued_accept(self.client, self.session_id, supplier_id, message, error, self.offer_terms)
         if retry:
             self.standing_ids[supplier_id] = retry["action"]["term_sheet_id"]
         return retry
@@ -95,7 +100,7 @@ class LoggedTable(RemoteTable):
         return result
 
 
-def reissued_accept(client, session_id, supplier_id, message, error):
+def reissued_accept(client, session_id, supplier_id, message, error, known_terms=None):
     """A timeout repeats the supplier's offer under a NEW id (P05: Astra accepted Dralveck's 28.00 as
     offer:70210-2, the thread had timed out to -3 and -4 with the same terms, the accept got 422 and the
     run crashed). Returns one retry with the live id, only if its terms equal the ones we chose."""
@@ -110,10 +115,13 @@ def reissued_accept(client, session_id, supplier_id, message, error):
     if not new_id or new_id == action.get("term_sheet_id") or live.get("closed"):
         return None
     thread = client.thread(session_id, supplier_id)
-    terms = {}
+    # GET /threads omits term_sheet_id on sheets (round 2 P05: the retry found no old terms and the
+    # 422 crashed the case) - use the terms the table recorded when it received each offer.
+    terms = dict(known_terms or {})
     for m in thread.get("messages", []):
         for ts in m.get("term_sheets") or []:
-            terms[ts.get("term_sheet_id")] = ts.get("terms")
+            if ts.get("term_sheet_id"):
+                terms[ts["term_sheet_id"]] = ts.get("terms")
     for t in thread.get("timeouts") or []:
         terms[t.get("offer_id")] = t.get("terms")
     for mv in state.get("moves") or []:
@@ -129,11 +137,32 @@ def reissued_accept(client, session_id, supplier_id, message, error):
 class SafeRemoteTable(RemoteTable):
     """The kit's table plus the reissued-id accept retry - for the Live Final runner."""
 
+    def __init__(self, client, case=None):
+        super().__init__(client, case)
+        self.offer_terms = {}
+
+    def _record(self, events):
+        for event in events:
+            for ts in event.get("term_sheets") or []:
+                if ts.get("term_sheet_id"):
+                    self.offer_terms[ts["term_sheet_id"]] = ts.get("terms")
+
+    def open(self, case_id):
+        case, threads = super().open(case_id)
+        for events in threads.values():
+            self._record(events)
+        return case, threads
+
+    def send(self, supplier_id, message):
+        reply = super().send(supplier_id, message)
+        self._record([reply])
+        return reply
+
     def close(self, supplier_id, message):
         try:
             return super().close(supplier_id, message)
         except ArenaError as e:
-            retry = reissued_accept(self.client, self.session_id, supplier_id, message, e)
+            retry = reissued_accept(self.client, self.session_id, supplier_id, message, e, self.offer_terms)
             if not retry:
                 raise
             return super().close(supplier_id, retry)
