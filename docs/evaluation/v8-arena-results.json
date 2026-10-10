@@ -1,0 +1,648 @@
+{
+  "run_id": "ehl-v8-feedback-two-20261010",
+  "freeze": {
+    "run_id": "ehl-v8-feedback-two-20261010",
+    "commit": "9a4d108bd3769f49ca93c19e36d9c6fd6f8c3467",
+    "checkpoint": "01M4KDBYEQS7K8GGKC9SC1R9D6",
+    "policy": "astra-v8-decision-feedback",
+    "source_sha256": "0b07b14f76380abd5f71bda9c17aecce7c8ad248c0477afd3adbaad8f290b195",
+    "runner_sha256": "b4ac0d3306d552341de3b2b377752832d3ab8b92b5f0c4b15a4d5f13a3a09713",
+    "cases": [
+      "case:P02",
+      "case:P18"
+    ],
+    "max_sessions": 2,
+    "local_tests_run": false
+  },
+  "local_tests_run": false,
+  "cases": [
+    {
+      "case_id": "case:P02",
+      "session_id": "a54561a5e586b0e8",
+      "status": "completed",
+      "result": {
+        "ended": true,
+        "deal": true,
+        "supplier_id": "sup:70510",
+        "offer_id": "offer:70510-0",
+        "terms": {
+          "payment_days": 30,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 370.96
+        },
+        "c_open": 2282867.49,
+        "c_deal": 2282867.49,
+        "c_alt": 2604227.78,
+        "c_best": 2235514.05,
+        "score": 0.0,
+        "must_haves_ok": true,
+        "cost_breakdown": {
+          "price": 2266565.6,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 15110.44,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        }
+      },
+      "learning_reconstruction": [
+        {
+          "legacy_models_ignored": true,
+          "labels": {
+            "counteroffer": 13,
+            "unchanged_offer": 11,
+            "accepted_proposal": 2
+          },
+          "response_counts": {
+            "offer": {
+              "counteroffer": 13,
+              "unchanged_offer": 7,
+              "accepted_proposal": 2
+            },
+            "question": {
+              "unchanged_offer": 4
+            }
+          },
+          "observations": 26
+        }
+      ],
+      "decision_count": 1,
+      "authority_counts": {
+        "astra": 1
+      },
+      "decisions": [
+        {
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70510:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable fixed-price offer at expected total cost €2,282,868.85, versus €2,604,227.78 for the fallback; its calibrated relationship-cost downside is small. Historically supported alternatives offer modest savings, while aggressive reductions introduce substantial scored relationship costs, and another exchange does not offer sufficiently credible upside against losing the standing offer.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.04,
+              "risk_reason": "For another counter, a subjective 1–4% walkout range straddles the historically supported early-payment package's optimistic 2.24% break-even threshold, which overstates tolerance because not every surviving exchange achieves agreement. Historical final-warning cases closed at that package rather than showing a walkout, but seven unchanged offers and only two accepted proposals among twenty-two offer responses counsel against assuming improvement.",
+              "information_needed": "None: close the current executable offer rather than seek further information or reconfirm historical quotes.",
+              "stop_condition": "Accept the standing term sheet now and end negotiations."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70510-0"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 10526,
+                "input_tokens_details": {
+                  "cache_write_tokens": 10523,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 439,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 10965
+              },
+              "seconds": 8.171,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 56221,
+                "input_tokens_details": {
+                  "cache_write_tokens": 56218,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 374,
+                "output_tokens_details": {
+                  "reasoning_tokens": 72
+                },
+                "total_tokens": 56595
+              },
+              "seconds": 9.486
+            }
+          ]
+        }
+      ],
+      "observations": [],
+      "errors": [],
+      "cost_feedback": [
+        {
+          "source": "completed practice cost breakdown",
+          "session_id": "a54561a5e586b0e8",
+          "context_id": "34634cf9eb4371a2fc343f335fb9c0309273da5a6eac365b59ac5318574a9d0e",
+          "supplier_id": "sup:70510",
+          "terms": {
+            "payment_days": 30,
+            "lead_time_days": 35,
+            "volume_per_year": 6110,
+            "contract_months": 12,
+            "effective_date": "2027-01-01",
+            "index_clause": null,
+            "incoterm": "DAP",
+            "tooling_eur": 0.0,
+            "ppm_commitment": 250,
+            "chargeback_eur_per_complaint": 0.0,
+            "unit_price": 370.96
+          },
+          "actual_components_eur": {
+            "price": 2266565.6,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 15110.44,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 1191.45,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 0.0
+          },
+          "predicted_components_eur": {
+            "price": 2266565.6,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 15110.44,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 1191.45,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 1.36
+          },
+          "forecast_error_eur": {
+            "price": 0.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 0.0,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": -1.36
+          },
+          "currently_executable": false
+        }
+      ]
+    },
+    {
+      "case_id": "case:P18",
+      "session_id": "ef1af63cca226f5b",
+      "status": "completed",
+      "result": {
+        "ended": true,
+        "deal": true,
+        "supplier_id": "sup:70740",
+        "offer_id": "offer:70740-2",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.7
+        },
+        "c_open": 295173.23,
+        "c_deal": 275373.46,
+        "c_alt": 301087.96,
+        "c_best": 222651.27,
+        "score": 0.2730175797785934,
+        "must_haves_ok": true,
+        "cost_breakdown": {
+          "price": 270180.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 2761.84,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 1215.81,
+          "index_risk": 1215.81,
+          "relationship": 0.0
+        }
+      },
+      "learning_reconstruction": [
+        {
+          "legacy_models_ignored": true,
+          "labels": {
+            "counteroffer": 6,
+            "unchanged_offer": 9,
+            "accepted_proposal": 1,
+            "walkout": 1
+          },
+          "response_counts": {
+            "offer": {
+              "counteroffer": 6,
+              "unchanged_offer": 6,
+              "accepted_proposal": 1
+            },
+            "question": {
+              "unchanged_offer": 3
+            },
+            "offer_after_final": {
+              "walkout": 1
+            }
+          },
+          "observations": 17
+        }
+      ],
+      "decision_count": 3,
+      "authority_counts": {
+        "astra": 3
+      },
+      "decisions": [
+        {
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70740:counter",
+            "package_ids": [
+              "sup:70740:p3"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "The proposed package exchanges earlier payment, a longer commitment and indexation for a lower base price, with historical willingness evidence requiring fresh agreement. Its published total cost is EUR 24,630.88 below acceptance now, against EUR 5,914.73 of downside if the standing offer is lost; this supports a concrete opening counter rather than another historically unproductive general question.",
+            "reply_text": "Thank you for your offer. We are open to an indexed arrangement provided it comes with a corresponding reduction in the base price. With our annual requirement of {{fixed:volume_per_year}} kg unchanged, we propose earlier payment and a longer contract in exchange for the attached complete price and index terms. Please confirm whether you can offer this package now; we are not treating earlier discussions as a current quotation.",
+            "continuation_review": {
+              "target_package_id": "sup:70740:p3",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "There is no current final warning or stagnant reply, and prior ordinary counters produced six counteroffers, six unchanged offers and one acceptance; nevertheless, the historical walkout after a final warning warrants a conservative subjective range above the model estimate. This range is below the optimistic 80.64% break-even threshold, but that threshold overstates safety because not every non-walkout yields the target saving.",
+              "information_needed": "Fresh agreement to the exact attached package, or a complete counterquotation, will establish which improved terms are executable.",
+              "stop_condition": "If the supplier issues a final warning, close on the lowest-cost executable worthwhile offer without further bargaining; if it holds unchanged, do not repeat this package and continue only if a materially different reciprocal exchange is explicitly supported."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "subject": "Re: Alloy surcharge and base price for 1.4404 bar (Werdenfels)",
+              "body": "Thank you for your offer. We are open to an indexed arrangement provided it comes with a corresponding reduction in the base price. With our annual requirement of 23700 kg unchanged, we propose earlier payment and a longer contract in exchange for the attached complete price and index terms. Please confirm whether you can offer this package now; we are not treating earlier discussions as a current quotation.\n\nPackage 1: 23700 units per year; 24 months; payment 14 days net; lead time 14 days; Incoterm DAP; quality 70 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.6 per unit; index clause {\"series\": \"AS-14404\", \"material_share\": 0.45, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.6,
+                    "index_clause": {
+                      "series": "AS-14404",
+                      "material_share": 0.45,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    },
+                    "payment_days": 14,
+                    "contract_months": 24
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 11.202
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 24446,
+                "input_tokens_details": {
+                  "cache_write_tokens": 24443,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 434,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 24880
+              },
+              "seconds": 9.182
+            }
+          ]
+        },
+        {
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70740:counter",
+            "package_ids": [
+              "sup:70740:p6"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "The standing offer costs €275,373.46; a longer commitment at the attached terms could save €4,831.11 through a concrete reciprocal exchange supported by historical willingness, not an entitlement to historical pricing. One focused counter is justified before any final warning, whereas payment matrices and unsupported fixed-price requests have little evidential support.",
+            "reply_text": "Our proposed price was a commercial exchange for earlier payment, a longer commitment and indexation, rather than a calculation claiming access to your internal costs. Earlier quotations informed that proposal, but we recognise that they require fresh confirmation. Thank you for your revised offer; in exchange for the attached further extension of the contract, with our annual requirement of {{fixed:volume_per_year}} unchanged and the offered payment and index arrangements retained, could you offer the attached reduced base price? Please keep your current quotation available while considering this specific alternative.",
+            "continuation_review": {
+              "target_package_id": "sup:70740:p6",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.03,
+              "risk_reason": "This subjective range is below the target's optimistic 15.82% break-even threshold, although frequent counters and unchanged offers make the real threshold substantially lower. The observed walkout after a historical final warning is a strong stopping signal, but no such warning or stagnant reply has occurred in this exchange.",
+              "information_needed": "A fresh complete offer establishing whether the longer commitment buys the proposed reduction; otherwise retain the executable standing package as the closing choice.",
+              "stop_condition": "If the supplier holds its price, rejects the exchange or gives a final warning, stop bargaining and accept the standing offer if still available; accept an improved executable offer only after checking its complete total cost."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "subject": "Re: Alloy surcharge and base price for 1.4404 bar (Werdenfels)",
+              "body": "Our proposed price was a commercial exchange for earlier payment, a longer commitment and indexation, rather than a calculation claiming access to your internal costs. Earlier quotations informed that proposal, but we recognise that they require fresh confirmation. Thank you for your revised offer; in exchange for the attached further extension of the contract, with our annual requirement of 23700 unchanged and the offered payment and index arrangements retained, could you offer the attached reduced base price? Please keep your current quotation available while considering this specific alternative.\n\nPackage 1: 23700 units per year; 36 months; payment 14 days net; lead time 14 days; Incoterm DAP; quality 70 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.6 per unit; index clause {\"series\": \"AS-14404\", \"material_share\": 0.45, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.6,
+                    "index_clause": {
+                      "series": "AS-14404",
+                      "material_share": 0.45,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    },
+                    "payment_days": 14,
+                    "contract_months": 36
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 11.241
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 33565,
+                "input_tokens_details": {
+                  "cache_write_tokens": 33562,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 473,
+                "output_tokens_details": {
+                  "reasoning_tokens": 40
+                },
+                "total_tokens": 34038
+              },
+              "seconds": 9.974
+            }
+          ]
+        },
+        {
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70740:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable offer at a published total cost of EUR 275,373.46, saving EUR 25,714.50 versus the fallback and satisfying the buyer's constraints. The supplier rejected the requested reduction despite the longer commitment and stated its commercial limit; historical lower quotes are not executable, and another exchange offers insufficient justified upside.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "sup:70740:p2",
+              "walkout_probability_low": 0.08,
+              "walkout_probability_high": 0.2,
+              "risk_reason": "For a further counter exchanging removal of the deadband for a lower price, my subjective walkout range straddles the optimistic 12.86% break-even threshold, which assumes every non-walkout secures the EUR 3,796.48 improvement. Although there is no formal final warning now, the stated commercial limit, six historical unchanged offer responses, and the historical walkout after a final warning make the sparse model's low hazard estimate insufficient reassurance.",
+              "information_needed": "None; further inquiry is not justified before closing the worthwhile executable offer.",
+              "stop_condition": "Accept the current standing offer now; do not repeat the rejected reduction or seek another pricing round."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70740-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 11.253
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 34463,
+                "input_tokens_details": {
+                  "cache_write_tokens": 32101,
+                  "cached_tokens": 2359
+                },
+                "output_tokens": 378,
+                "output_tokens_details": {
+                  "reasoning_tokens": 55
+                },
+                "total_tokens": 34841
+              },
+              "seconds": 9.717
+            }
+          ]
+        }
+      ],
+      "observations": [
+        {
+          "label": "counteroffer",
+          "outcome": "counter",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70740-1-2",
+            "from": "sales@70740",
+            "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We appreciate your proposal for a 24-month contract and 14-day payment terms. We can accept the AS-14404 indexation and these revised terms, provided the base price is set at €5.70 per unit. This represents a significant concession on our part and reflects our commitment to developing our business relationship.\n\nWhich figures is that based on? Please send us the data. Our price follows our main cost drivers: AS-14404, PPI-C2431, LCI-C. We can offer a Preisgleitklausel on AS-14404, AS-14404, AS-14404. \n\nUnder our current Angebot, we offer a price of €5.70 per unit, Zahlungsziel 14 days net, a contract term of 24 months, and a Preisgleitklausel on AS-14404. Our offer stays valid for 30 days. Our standard terms apply to everything the quote does not state; see attached.\n\nMit freundlichen Grüßen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70740-1",
+                "terms": {
+                  "unit_price": 5.7,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "AS-14404",
+                    "material_share": 0.45,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  },
+                  "contract_months": 24
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.08223940981753758,
+            "counter": 0.8984830481689028,
+            "walk": 0.01927754201355964
+          },
+          "exact_proposal_match": false,
+          "brier": 0.017440635662298764
+        },
+        {
+          "label": "counteroffer",
+          "outcome": "counter",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70740-2-4",
+            "from": "sales@70740",
+            "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We welcome your proposal to extend the contract term to 36 months. However, our previous price of €5.70 per unit already reflects the maximum commercial concession we can provide. \n\nWe can therefore offer the 36-month agreement at a price of €5.70 per unit, retaining the 14-day payment terms and AS-14404 indexation. Specifically, this Angebot includes a price of €5.70 per unit, Zahlungsziel 14 days net, a contract term of 36 months, a Preisgleitklausel on AS-14404. \n\nOur standard Zahlungsziel is 30 days net. Please note that our price follows our main cost drivers: AS-14404, PPI-C2431, LCI-C. Furthermore, we can offer a Preisgleitklausel on AS-14404, AS-14404, AS-14404. \n\nThis proposal remains valid for 30 days. We look forward to continuing our partnership.\n\nMit freundlichen Grüßen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70740-2",
+                "terms": {
+                  "unit_price": 5.7,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "AS-14404",
+                    "material_share": 0.45,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  },
+                  "contract_months": 36
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.2765391616111111,
+            "counter": 0.7140250528306566,
+            "walk": 0.009435785558232317
+          },
+          "exact_proposal_match": false,
+          "brier": 0.1583446123621859
+        }
+      ],
+      "errors": [],
+      "cost_feedback": [
+        {
+          "source": "completed practice cost breakdown",
+          "session_id": "ef1af63cca226f5b",
+          "context_id": "4cc1898ba731dc00b6a2fc381561cfa28b3a83bca866c6ee444cf36c45bf4eba",
+          "supplier_id": "sup:70740",
+          "terms": {
+            "payment_days": 14,
+            "lead_time_days": 14,
+            "volume_per_year": 23700,
+            "contract_months": 36,
+            "effective_date": "2027-01-01",
+            "index_clause": {
+              "series": "AS-14404",
+              "material_share": 0.45,
+              "deadband_pct": 5.0,
+              "base_month": "2026-08"
+            },
+            "incoterm": "DAP",
+            "tooling_eur": 0.0,
+            "ppm_commitment": 70,
+            "chargeback_eur_per_complaint": 0.0,
+            "unit_price": 5.7
+          },
+          "actual_components_eur": {
+            "price": 270180.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 2761.84,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 1215.81,
+            "index_risk": 1215.81,
+            "relationship": 0.0
+          },
+          "predicted_components_eur": {
+            "price": 270180.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 2761.84,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 1215.81,
+            "index_risk": 1215.81,
+            "relationship": 0.0
+          },
+          "forecast_error_eur": {
+            "price": 0.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 0.0,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 0.0
+          },
+          "currently_executable": false
+        }
+      ]
+    }
+  ],
+  "source_unchanged_during_run": true,
+  "runner_unchanged_during_run": true,
+  "sessions_started": 2
+}

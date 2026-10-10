@@ -1,4 +1,4 @@
-# Analytical buyer agent — astra-v8-decision-feedback
+# Analytical buyer agent — astra-v81-arena-objective
 
 Astra proposes complete deals and a separate Astra call selects **every final action**. Python owns arithmetic, evidence lookup, recording and validation; it cannot replace a valid Astra choice with its preferred strategy. This includes confirmation, acceptance, supplier `agreed`/`final_offer` responses, the last move and wave-cap closure. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
 
@@ -72,7 +72,7 @@ Conditional preferences preserve statements such as “24 months requires an ind
 
 Legacy `learned_models` rows are retained for audit but no longer imported. Each start reconstructs behavioural estimates from raw received/sent messages for completed hosted sessions with the same supplier, case and context fingerprint. It includes terminal replies, excludes hidden result fields and deduplicates duplicate logs. Reconstruction is data repair, not a simulator/model evaluation. Supplier cost feedback remains separate. No cross-supplier behavioural transfer is applied.
 
-Every candidate has its possible gain versus the current package, cost of losing that offer, an optimistic break-even walkout probability, and explicitly uncalibrated response estimates. Historical offer/question outcomes after final warnings are shown separately. Astra must record a subjective risk range, its reason, an information goal for questions, and a stopping condition. None of these calculations overrides Astra's choice.
+Every candidate has its possible Arena improvement versus the current package, secured improvement at risk if that offer is lost, an optimistic break-even walkout probability, and explicitly uncalibrated response estimates. Historical offer/question outcomes after final warnings are shown separately. Astra must record a subjective risk range, its reason, an information goal for questions, and a stopping condition. The cash fallback loss is separately labelled and does not substitute for Arena reward. The unknown best-cost denominator is never imported; positive opening-to-deal savings are a proxy that omits score saturation. None of these calculations overrides Astra's choice.
 
 ## Retained legacy offer search and closure
 

@@ -144,6 +144,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "asked_questions": sorted(th.asked_quotes),
             "supplier_economics": economics_context(case, th),
             "stagnant_replies": th.stagnation,
+            "previous_continuation_review": th.continuation_review,
             "observed_response_counts": th.response_counts,
             "previous_practice_outcomes": th.economics.feedback[-6:],
             "opening_comparison": {"terms": complete_offer(case, th.reference),
@@ -377,6 +378,7 @@ def execute(agent, case, threads, board, selection):
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
         if compliance.problems(case, message, facts, standard=th.std):
             raise ValueError("final message violates constraints")
+    th.continuation_review = selection["continuation_review"]
     decision = {"supplier_id": sid, "message": message}
     agent.log("decision", {"authority": "astra", "kind": kind, "selection": selection,
                            "action": decision, "llm_calls": agent.router.calls}, sid)

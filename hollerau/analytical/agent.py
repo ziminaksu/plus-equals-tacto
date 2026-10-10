@@ -27,7 +27,7 @@ from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v8-decision-feedback"
+POLICY_VERSION = "astra-v81-arena-objective"
 DECISION_BUDGET_S = 35
 
 
@@ -177,6 +177,7 @@ class AnalyticalAgent:
                 seen_replies=set(),
                 feedback_seen=set(),
                 response_counts={},
+                continuation_review=None,
             )
             th = self.threads[sid]
             history = self.store.behavior_history(sid, case, self.session_id)

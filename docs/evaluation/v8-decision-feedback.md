@@ -22,3 +22,7 @@ The v7 audit found four false positive acceptances in P02, an unobserved termina
 ## Validation and publication
 
 Static syntax/lint and diff checks only; local tests and private replays remain stopped at the user's request. The authorised strategy evaluation is exactly one new hosted P02 session and one P18 session, without replacement sessions. This implementation document does not claim score improvement before those runs finish. Code is published with an authentic scoped Entire session attachment before evaluation; results receive their own subsequent attachment.
+
+## V8.1: align continuation value with the Arena objective
+
+The first live pair revealed that v8's cash-downside rule caused opening-price acceptance in P02. V8.1 uses positive savings versus opening as the competition reward proxy: the downside of a walkout is secured improvement, not the fallback's entire cash cost. The official unknown best-cost denominator is never used; this proxy does not model score saturation at one. Actual fallback cost stays visible as business context. Previous Astra stopping conditions now persist into the next decision board. See [the first pair and diagnosis](v8-arena-results.md).

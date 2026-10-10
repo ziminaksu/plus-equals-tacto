@@ -12,7 +12,11 @@ def objective_scope(case):
     relationship = bool(buyer.get("category_goal") in RELATIONSHIP_GOALS
                         and buyer.get("relationship_eur_per_point") and buyer.get("sustainable_margin_pct"))
     return {"category_goal": buyer.get("category_goal"), "relationship_cost_active": relationship,
-            "rule": "Minimise the published total cost subject to the buyer's hard constraints.",
+            "mode": "arena_improvement",
+            "rule": "Maximise improvement over the opening total cost under Arena's published score, "
+                    "subject to hard constraints. No deal and no improvement both score zero.",
+            "reward_proxy": "Positive euro savings versus opening. The unknown best-cost denominator is "
+                            "constant within a case; it is never imported. Saturation at score one is not modelled.",
             "supplier_margin_role": "Scored relationship cost and supplier willingness." if relationship else
             "Willingness evidence only. Supplier margin is NOT an additional buyer objective or price floor.",
             "zero_components": "A zero current component can activate after a term changes; inspect each package."}
@@ -40,22 +44,24 @@ def context_evidence(th, status, offers=True):
             "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."}
 
 
-def action_consequences(th, terms, current, current_cost, candidate_cost, exit_cost, status):
+def action_consequences(th, terms, current, current_cost, candidate_cost, opening_cost, exit_cost, status):
     quote = current.get("unit_price") or th.reference["unit_price"]
     th.beliefs.standing_terms = dict(current)
     probabilities = {k: sum(p.weight * th.beliefs.probabilities(terms, p, quote, th.repeats)[k]
                             for p in th.beliefs.particles) for k in ("accept", "counter", "walk")}
-    gain, loss = current_cost - candidate_cost, exit_cost - current_cost
-    positive_gain, positive_loss = max(0, gain), max(0, loss)
-    denominator = positive_gain + positive_loss
-    # Counter/unchanged is optimistically assumed to preserve the current offer.
+    secured = max(0.0, opening_cost - current_cost)
+    target = max(0.0, opening_cost - candidate_cost)
+    gain, loss = target - secured, secured
+    denominator = max(0, gain) + loss
     expected_gain = probabilities["accept"] * gain - probabilities["walk"] * loss
     return {"gain_if_exact_package_agreed_eur": round(gain, 2),
-            "loss_if_current_offer_lost_eur": round(loss, 2),
-            "optimistic_break_even_walkout_probability": round(positive_gain / denominator, 4)
+            "secured_improvement_at_risk_eur": round(loss, 2),
+            "target_improvement_eur": round(target, 2),
+            "optimistic_break_even_walkout_probability": round(max(0, gain) / denominator, 4)
             if denominator else None,
             "response_estimates_uncalibrated": {k: round(v, 4) for k, v in probabilities.items()},
-            "optimistic_model_expected_gain_eur": round(expected_gain, 2),
+            "optimistic_model_expected_improvement_gain_eur": round(expected_gain, 2),
+            "cash_cost_if_offer_lost_eur": round(exit_cost - current_cost, 2),
             "final_offer_warning": status == "final_offer"}
 
 
@@ -71,7 +77,13 @@ def add_action_consequences(agent, board):
         baseline = standing or supplier["opening_comparison"]
         supplier["continuation_risk"] = {
             "current_offer_executable": bool(standing), "outside_option_cost_eur": round(exit_cost, 2),
-            "loss_of_current_offer_eur": round(exit_cost - baseline["expected_total_eur"], 2) if standing else None,
+            "cash_loss_if_offer_lost_eur": round(exit_cost - baseline["expected_total_eur"], 2) if standing else None,
+            "secured_improvement_at_risk_eur": round(max(0, supplier["opening_comparison"]["expected_total_eur"]
+                                                         - baseline["expected_total_eur"]), 2),
+            "objective_warning": "Cash fallback loss is business context, NOT Arena score loss. The only "
+                                 "negotiation reward at risk is improvement already secured. Accepting an "
+                                 "unchanged opening offer locks in zero improvement; a feasible beneficial "
+                                 "counter may still earn improvement even when the fallback is expensive.",
             "final_offer_warning": supplier["status"] == "final_offer",
             "offer_history": context_evidence(th, supplier["status"]),
             "question_history": context_evidence(th, supplier["status"], offers=False),
@@ -85,4 +97,5 @@ def add_action_consequences(agent, board):
             if package["supplier_id"] == sid:
                 package["next_action"] = action_consequences(
                     th, package["terms"], baseline["terms"], baseline["expected_total_eur"],
-                    package["expected_total_eur"], exit_cost, supplier["status"])
+                    package["expected_total_eur"], supplier["opening_comparison"]["expected_total_eur"],
+                    exit_cost, supplier["status"])
