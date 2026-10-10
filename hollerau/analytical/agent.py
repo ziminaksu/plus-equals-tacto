@@ -350,6 +350,12 @@ class AnalyticalAgent:
                 if key in seen or not self.valid(case, th, terms):
                     continue
                 value = th.beliefs.value(terms, center)
+                if previous and self.weighted(th, [
+                    th.beliefs.value(terms, part) - th.beliefs.value(previous, part)
+                    for part in th.beliefs.particles
+                ]) < -0.01:
+                    # Reject package changes that look positive only at a central estimate.
+                    continue
                 # Same-package price moves must progress. Different packages may explore
                 # uncertain trade-offs; they are priced for walk-away risk, not hard-pruned.
                 package_changed = previous and any(terms.get(k) != previous.get(k) for k in terms if k != "unit_price")
