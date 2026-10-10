@@ -22,7 +22,7 @@ POLICY_VERSION = "bayes-v2.5-index-evidence"
 
 
 class AnalyticalAgent:
-    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=None, price_pressure=0.0):
+    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=None, price_pressure=0.0, continuation_credit=0.0):
         self.package = package
         self.store = store or Store()
         self.router = router or Router(enabled=False)
@@ -31,6 +31,11 @@ class AnalyticalAgent:
         if not math.isfinite(price_pressure) or not 0 <= price_pressure <= 0.4:
             raise ValueError("price_pressure must be between 0 and 0.4")
         self.price_pressure = price_pressure
+        if not math.isfinite(continuation_credit) or not 0 <= continuation_credit <= 0.05:
+            raise ValueError("continuation_credit must be between 0 and 0.05")
+        # Experimental assumption about concessions achievable in a later round.
+        # Zero by default; never subtract from reported official buyer deal cost.
+        self.continuation_credit = continuation_credit
         self.threads = {}
         self.case_id = None
         self.session_id = None
@@ -405,6 +410,12 @@ class AnalyticalAgent:
         available = self.available(case, threads, fallback)
         best = available[0] if available else None
         continuation = best[0] if best else fallback
+        if best and self.continuation_credit and moves_left(case, events) > 2:
+            reference = closing_terms(case, current, th.std)
+            years = min(reference["contract_months"] / 12 or 1, case["buyer"]["horizon_years"])
+            committed = reference["volume_per_year"] * years
+            # Bounded estimated future supplier concessions, not guaranteed savings.
+            continuation = max(0, continuation - self.continuation_credit * current["unit_price"] * committed)
         ranked = self.rank(case, th, current, continuation, fallback)
         reasons = []
         if not analysis.get("fallback") and analysis.get("ambiguities") and len(ranked) > 1:
