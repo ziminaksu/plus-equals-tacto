@@ -223,11 +223,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
         for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
             # A re-cited ID scores 'duplicate' and buys nothing (P18 rounds 2-3): offer unused ones only.
-            if set(claim.refs) & th.used:
+            if set(claim.refs) & th.used or (not claim.refs and claim.kind in getattr(th, "used_kinds", set())):
                 continue
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
-                                                   "refs": claim.refs,
+                                                   "refs": claim.refs, "kind": claim.kind,
                                                    "already_used": bool(set(claim.refs) & th.used)}
 
         keys = {}
@@ -448,6 +448,16 @@ def execute(agent, case, threads, board, selection):
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
+            # Escalating to the supplier's approver: management moved for a longer contract plus the
+            # share-of-business prospect (P18 0.563) and not without it (0.509) - attach it if unused.
+            if qid and board["questions"][qid]["kind"] == "approval_route":
+                share = next((e for e in board["evidence"].values()
+                              if e["supplier_id"] == sid and e.get("kind") == "share_of_business"), None)
+                if share and share not in claims:
+                    claims = (claims + [share])[-3:] if len(claims) >= 3 else claims + [share]
+            for claim in claims:
+                if not claim["refs"]:
+                    th.used_kinds = getattr(th, "used_kinds", set()) | {claim.get("kind")}
             body = "\n\n".join(x for x in [authored, *[c["text"] for c in claims], *[
                 f"Package {i + 1}: {describe_complete(case, offer, th.std)}."
                 for i, offer in enumerate(offers)
