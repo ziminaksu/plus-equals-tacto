@@ -1,0 +1,72 @@
+{
+  "experiment": "ehl-20261010-authorized-five",
+  "live_policy": "bayes-v1",
+  "final_policy": "bayes-v1.1",
+  "starts": 5,
+  "results": [
+    {
+      "case_id": "case:P01",
+      "session_id": "56e82b2f69eadf31",
+      "score": 0.6185848034441437,
+      "deal": true,
+      "c_open": 1153779.74,
+      "c_deal": 1118542.7,
+      "replay": "https://arena.tacto.ai/replay/56e82b2f69eadf31"
+    },
+    {
+      "case_id": "case:P04",
+      "session_id": "0f8a7b4989da7516",
+      "score": 0.8153309653389462,
+      "deal": true,
+      "c_open": 198846.33,
+      "c_deal": 196957.2,
+      "replay": "https://arena.tacto.ai/replay/0f8a7b4989da7516"
+    },
+    {
+      "case_id": "case:P05",
+      "session_id": "fe58b5d345143447",
+      "score": 0.4325706072725315,
+      "deal": true,
+      "c_open": 305544.96,
+      "c_deal": 270021.92,
+      "replay": "https://arena.tacto.ai/replay/fe58b5d345143447"
+    },
+    {
+      "case_id": "case:P10",
+      "session_id": "3c92250b0dab3d0a",
+      "score": 0.0,
+      "deal": false,
+      "c_open": 1932492.18,
+      "c_deal": null,
+      "replay": "https://arena.tacto.ai/replay/3c92250b0dab3d0a"
+    },
+    {
+      "case_id": "case:P11",
+      "session_id": "2123ec722c123b23",
+      "score": 0.37543393328297475,
+      "deal": true,
+      "c_open": 817578.0,
+      "c_deal": 781882.5,
+      "replay": "https://arena.tacto.ai/replay/2123ec722c123b23"
+    }
+  ],
+  "mean_score": 0.44838406186771923,
+  "deals": 4,
+  "max_decision_seconds": 25.397363333962858,
+  "returned_usage_cost_usd": 0.0475816,
+  "usage_note": "Returned usage only; timed-out requests may also be billed. Excludes setup smoke calls.",
+  "llm_calls": 36,
+  "llm_successes": 23,
+  "llm_timeouts": 12,
+  "post_run_fixes": [
+    "large model uses reasoning_effort=low (separate API smoke test passed)",
+    "enumerate all capped package combinations, including full-volume long contracts",
+    "prevent an economically worse follow-up offer without compensating terms",
+    "model capacity uplift uncertainty instead of predicting near-certain acceptance"
+  ],
+  "limitations": [
+    "Five heterogeneous cases, no controlled baseline comparison.",
+    "Final fixes validated locally only; no sixth session started.",
+    "Pressure-response slopes remain uncalibrated defaults; preference posteriors are session-local."
+  ]
+}

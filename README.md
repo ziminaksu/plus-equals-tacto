@@ -36,14 +36,14 @@ uv run python -m hollerau play case:P01
 For the Live Final, start before **11 October 2026, 12:00 (Munich time)**:
 
 ```bash
-uv run python -m hollerau run --set final --parallel 10 > final.log 2>&1
+uv run python -m hollerau run --set final --brain analytical --parallel 10 > final.log 2>&1
 ```
 
 Refresh the arena data after the Sunday 08:00 release. The final runner does not call the forbidden `/v1/events`, `/screen`, `/leaderboard` or `/results` endpoints. Submit the Git repository URL, the **exact final commit hash**, a short description and pitch slides on ehl.gg.
 
 ## Entire
 
-The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Local installation and successful session recording **have not been verified**. On the development Mac, check:
+The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Scoped development-session imports and checkpoint delivery have been verified for the analytical-agent commits. For future local sessions, check:
 
 ```bash
 command -v entire
@@ -65,3 +65,11 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 ## Team contributors
 
 - [IlyaKats2005](https://github.com/IlyaKats2005)
+
+## Bayesian Qwen agent
+
+`hollerau.analytical` uses Qwen to interpret supplier evidence **before** Python updates estimates and selects a complete offer. It compares all standing term sheets, searches discounts and premiums for non-price trade-offs, prevents unproductive repeated demands, and saves cautious supplier/category learning in SQLite. The v4 policy adds conditional preferences, numeric counteroffer learning, four-reply planning, comparable opening packages and competition-aware RFQ decisions. In local simulation it scored 0.901 on development games and 0.776 on 45 fresh games; the 0.90 fresh-evaluation target remains unmet. A single small-model call also supplies prose; the large model can clarify material uncertainty or independently review a proposed decision. Python validates and evaluates its suggestions before acting.
+
+See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). The existing agents remain available; select `--brain analytical` explicitly for the new agent in the team runner. Use `tacto-bayes` for bounded practice.
+
+The implementation uses Entire's supported external-agent import to attach actual scoped Codex development records. Earlier unrelated history and credentials are excluded; original source-session IDs, timestamps and record hashes are preserved. See the provenance section of the setup guide. Commit trailers and remote checkpoint refs are verified after publishing.

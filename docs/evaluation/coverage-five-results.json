@@ -1,0 +1,626 @@
+{
+  "recorded_at_utc": "2026-10-10T14:00:22.023279+00:00",
+  "evaluated_commit": "5a0bcc3dba13df0942fdc61fa833d45cddd22048",
+  "implementation_changed_during_evaluation": false,
+  "scope": "Exactly one session for each of the five previously unvisited hosted practice cases. No sixth start, replacement, recovery or final submission.",
+  "coverage": {
+    "before": 5,
+    "after": 10,
+    "hosted_cases": 10,
+    "before_best_mean_with_unvisited_zero": 0.281999361106872,
+    "after_best_mean": 0.44436567451605297,
+    "best_scores": {
+      "case:P01": 0.6185848034441437,
+      "case:P05": 0.4325706072725315,
+      "case:P18": 0.18919400413336834,
+      "case:P11": 0.37543393328297475,
+      "case:P10": 0.5780733017301243,
+      "case:P04": 0.8153309653389462,
+      "case:P02": 0.0,
+      "case:P03": 0.5612041500642857,
+      "case:P07": 0.5683886557315823,
+      "case:P08": 0.304876324162573
+    },
+    "practice_usage_before": {
+      "used": 11,
+      "left": 189,
+      "limit": 200,
+      "resets_at": "2026-10-11T11:20:31.834221+00:00"
+    },
+    "practice_usage_after": {
+      "used": 16,
+      "left": 184,
+      "limit": 200,
+      "resets_at": "2026-10-11T11:20:31.834221+00:00"
+    },
+    "our_leaderboard_row": {
+      "team_name": "+=",
+      "played": 10,
+      "total": 44.4,
+      "deals": 10,
+      "rounds": 32,
+      "rank": 7
+    },
+    "leader_at_snapshot": {
+      "team_name": "TakeTheMoneyAndRun",
+      "played": 10,
+      "total": 67.9,
+      "deals": 10,
+      "rounds": 55,
+      "rank": 1
+    }
+  },
+  "evaluation": {
+    "run_id": "ehl-20261010-coverage-five",
+    "starts": 5,
+    "completed": 5,
+    "results": [
+      {
+        "case_id": "case:P02",
+        "session_id": "98e7e555d136db76",
+        "recovered": false,
+        "score": 0.0,
+        "deal": true,
+        "c_open": 2282867.49,
+        "c_deal": 2282867.49,
+        "replay": "https://arena.tacto.ai/replay/98e7e555d136db76",
+        "final_terms": {
+          "payment_days": 30,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 370.96
+        },
+        "cost_breakdown": {
+          "price": 2266565.6,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 15110.44,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "buyer_proposals": 0,
+        "closing_reason": "available deal dominates estimated continuation"
+      },
+      {
+        "case_id": "case:P03",
+        "session_id": "a692b47057e303d1",
+        "recovered": false,
+        "score": 0.5612041500642857,
+        "deal": true,
+        "c_open": 4246314.02,
+        "c_deal": 4057036.18,
+        "replay": "https://arena.tacto.ai/replay/a692b47057e303d1",
+        "final_terms": {
+          "payment_days": 14,
+          "lead_time_days": 49,
+          "volume_per_year": 4580,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 350,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 438.21
+        },
+        "cost_breakdown": {
+          "price": 4014003.6,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 41032.04,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 2000.54,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "buyer_proposals": 1,
+        "closing_reason": "all threads closing; best valid package across suppliers"
+      },
+      {
+        "case_id": "case:P07",
+        "session_id": "b04751a35ebebff4",
+        "recovered": false,
+        "score": 0.5683886557315823,
+        "deal": true,
+        "c_open": 391027.4,
+        "c_deal": 338857.33,
+        "replay": "https://arena.tacto.ai/replay/b04751a35ebebff4",
+        "final_terms": {
+          "payment_days": 14,
+          "lead_time_days": 5,
+          "volume_per_year": 30000,
+          "contract_months": 24,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 80,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.59
+        },
+        "cost_breakdown": {
+          "price": 335400.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 3428.53,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 28.8,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "buyer_proposals": 1,
+        "closing_reason": "available deal dominates estimated continuation"
+      },
+      {
+        "case_id": "case:P08",
+        "session_id": "2a7cd398780284d6",
+        "recovered": false,
+        "score": 0.304876324162573,
+        "deal": true,
+        "c_open": 1135887.28,
+        "c_deal": 1082357.72,
+        "replay": "https://arena.tacto.ai/replay/2a7cd398780284d6",
+        "final_terms": {
+          "payment_days": 14,
+          "lead_time_days": 10,
+          "volume_per_year": 94800,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 0.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 50,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.48
+        },
+        "cost_breakdown": {
+          "price": 1039008.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 10620.97,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 28053.22,
+          "index_risk": 4675.54,
+          "relationship": 0.0
+        },
+        "buyer_proposals": 3,
+        "closing_reason": "available deal dominates estimated continuation"
+      },
+      {
+        "case_id": "case:P18",
+        "session_id": "278575e640be63da",
+        "recovered": false,
+        "score": 0.18919400413336834,
+        "deal": true,
+        "c_open": 295173.23,
+        "c_deal": 281452.51,
+        "replay": "https://arena.tacto.ai/replay/278575e640be63da",
+        "final_terms": {
+          "payment_days": 14,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 24,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 0.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.7
+        },
+        "cost_breakdown": {
+          "price": 270180.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 2761.84,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 7294.86,
+          "index_risk": 1215.81,
+          "relationship": 0.0
+        },
+        "buyer_proposals": 4,
+        "closing_reason": "all threads closing; best valid package across suppliers"
+      }
+    ],
+    "mean_score": 0.32473262681836185,
+    "deals": 5,
+    "llm_calls": 12,
+    "llm_timeouts": 0,
+    "llm_status": [
+      {
+        "model": "Qwen/Qwen3.8-27B:deepinfra",
+        "status": "ok",
+        "count": 12
+      }
+    ],
+    "returned_usage_cost_usd": 0.014349975000000001,
+    "usage_note": "Returned usage only; timed-out calls may be billed. Excludes setup checks.",
+    "mean_offer_generation_seconds": 7.97040722197077,
+    "max_offer_generation_seconds": 8.92809691594448,
+    "mean_observed_brier": 0.42091941419537643,
+    "observed_responses": 9,
+    "signals_applied": {
+      "price_resistance": 5,
+      "early_payment": 3,
+      "long_commitment": 4
+    },
+    "experiments": [
+      {
+        "policy": "bayes-v2.2",
+        "code_sha256": "157dc9d22d1b939a4486d82525458d3d47475a045d8129c0f92a64eaabe41212",
+        "cases": [
+          "case:P02",
+          "case:P03",
+          "case:P07",
+          "case:P08",
+          "case:P18"
+        ],
+        "max_sessions": 5
+      }
+    ],
+    "recoveries": []
+  },
+  "interpretation_limits": [
+    "The leaderboard increase comes from covering unplayed cases; it is not a paired demonstration of stronger strategy.",
+    "One stochastic run per new case, with existing supplier/category memory. No model-family comparison was performed.",
+    "All 12 recorded model calls used Qwen3.8-27B. The large escalation model was not called in this batch.",
+    "Recommendations below are proposed, not implemented or validated by these scores.",
+    "The leaderboard counts hosted cases. Coverage is not a claim that we bargained individually with every supplier thread in multi-supplier RFQs."
+  ],
+  "observed_failures": [
+    {
+      "case": "case:P02",
+      "failure": "Accepted the initial registered offer without a counterproposal. Score zero.",
+      "evidence": {
+        "predicted_standing_cost_eur": 2359652.7534375,
+        "actual_closing_cost_eur": 2282867.49,
+        "actual_relationship_cost_eur": 0.0
+      },
+      "code_findings": [
+        "Counteroffer objective includes risk_aversion times scenario standard deviation, but acceptance is compared to standing mean alone.",
+        "Counter continuation assumes the current standing cost plus a small fixed stagnation penalty; it does not value useful learning or future supplier concessions.",
+        "Uncertain full-cost estimates drive a convex relationship penalty; the realised opening deal had no relationship penalty."
+      ],
+      "offline_diagnosis": {
+        "case": "case:P02",
+        "supplier_cost_estimate": 374.95,
+        "coefficients": {
+          "version": 0,
+          "memory_source": "category",
+          "supplier_signals": {
+            "cash_short": false,
+            "spare_capacity": false,
+            "approval_ladder": true,
+            "wants_partnership": true
+          },
+          "signals_applied": {},
+          "tau": 9.274,
+          "response_coefficients": {
+            "w0": -5.0001102750125295,
+            "w_d": 11.799996524473322,
+            "w_repeat": 0.485,
+            "status": "regularised online estimates; not statistically calibrated",
+            "accept_bias": -0.02471435193854815
+          },
+          "r": {
+            "mean": 358.7205,
+            "p10": 341.3775,
+            "p90": 375.2365
+          },
+          "b_pay": {
+            "mean": 6.6643,
+            "p10": 1.3721,
+            "p90": 12.3692
+          },
+          "b_term": {
+            "mean": 6.7205,
+            "p10": -0.088,
+            "p90": 12.7419
+          },
+          "b_flex": {
+            "mean": 4.2312,
+            "p10": 1.4062,
+            "p90": 6.8531
+          },
+          "full_cost": {
+            "mean": 376.6029,
+            "p10": 348.1708,
+            "p90": 409.0209
+          },
+          "b_capacity": {
+            "mean": 9.7548,
+            "p10": 5.0859,
+            "p90": 14.3605
+          },
+          "b_quality": {
+            "mean": 3.8498,
+            "p10": 0.6069,
+            "p90": 6.454
+          },
+          "effective_scenarios": 64.0
+        },
+        "standing_estimated_cost": 2359652.7534375,
+        "standing_cost_parts_at_point_estimate": {
+          "price": 2266565.6,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 15110.437333333335,
+          "freight": 0.0,
+          "late_delivery": 0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 7924.064950748961
+        },
+        "top_candidates": [
+          {
+            "terms": {
+              "unit_price": 319.03,
+              "payment_days": 90,
+              "index_clause": null
+            },
+            "deal_cost": 2500584.64953125,
+            "expected_cost": 2370522.1164143914,
+            "objective": 2371162.1625515632,
+            "uncertainty": 2560.1845486872485,
+            "probabilities": {
+              "accept": 0.0085357002041474,
+              "counter": 0.9575118065813499,
+              "walk": 0.03395249321450277
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 319.03,
+              "payment_days": 90,
+              "index_clause": {
+                "series": "CU-NOTATION",
+                "material_share": 0.2,
+                "deadband_pct": 5,
+                "base_month": "2026-08"
+              }
+            },
+            "deal_cost": 2516178.8359375,
+            "expected_cost": 2370655.2237142078,
+            "objective": 2371325.6912908335,
+            "uncertainty": 2681.8703065029,
+            "probabilities": {
+              "accept": 0.0085357002041474,
+              "counter": 0.9575118065813499,
+              "walk": 0.03395249321450277
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 319.03,
+              "payment_days": 90,
+              "index_clause": {
+                "series": "CU-NOTATION",
+                "material_share": 0.2,
+                "deadband_pct": 3,
+                "base_month": "2026-08"
+              }
+            },
+            "deal_cost": 2523975.92921875,
+            "expected_cost": 2370721.7773596835,
+            "objective": 2371408.277178654,
+            "uncertainty": 2745.999275880931,
+            "probabilities": {
+              "accept": 0.0085357002041474,
+              "counter": 0.9575118065813499,
+              "walk": 0.03395249321450277
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 333.86,
+              "payment_days": 90,
+              "index_clause": null
+            },
+            "deal_cost": 2421202.2496875,
+            "expected_cost": 2369080.2457084395,
+            "objective": 2371410.468300621,
+            "uncertainty": 9320.890368725362,
+            "probabilities": {
+              "accept": 0.03871056912548666,
+              "counter": 0.939831792294525,
+              "walk": 0.021457638579988347
+            }
+          },
+          {
+            "terms": {
+              "unit_price": 319.03,
+              "payment_days": 90,
+              "index_clause": {
+                "series": "CU-NOTATION",
+                "material_share": 0.2,
+                "deadband_pct": 0,
+                "base_month": "2026-08"
+              }
+            },
+            "deal_cost": 2535671.5684375,
+            "expected_cost": 2370821.607827208,
+            "objective": 2371533.0792326406,
+            "uncertainty": 2845.885621730674,
+            "probabilities": {
+              "accept": 0.0085357002041474,
+              "counter": 0.9575118065813499,
+              "walk": 0.03395249321450277
+            }
+          }
+        ],
+        "lowest_deal_cost": {
+          "terms": {
+            "unit_price": 358.72,
+            "payment_days": 30,
+            "index_clause": null
+          },
+          "expected_cost": 2354021.3818580834,
+          "uncertainty": 75897.6999054355,
+          "objective": 2372995.806834442,
+          "deal_cost": 2346825.7439062498,
+          "probabilities": {
+            "accept": 0.48963348403618423,
+            "counter": 0.5005202100743054,
+            "walk": 0.0098463058895104
+          },
+          "pressure": 0.032995471209833815
+        },
+        "no_risk_penalty_winner": {
+          "terms": {
+            "unit_price": 361.66,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "expected_cost": 2351186.657093482,
+          "uncertainty": 82178.26155247352,
+          "objective": 2371731.2224816005,
+          "deal_cost": 2348273.3454687498,
+          "probabilities": {
+            "accept": 0.6118984376182628,
+            "counter": 0.37912644223575404,
+            "walk": 0.00897512014598319
+          },
+          "pressure": 0.025070088419236455
+        },
+        "paired_uncertainty_diagnostic": {
+          "terms": {
+            "unit_price": 361.66,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "expected_cost": 2351186.657093482,
+          "uncertainty": 82178.26155247352,
+          "objective": 2371731.2224816005,
+          "deal_cost": 2348273.3454687498,
+          "probabilities": {
+            "accept": 0.6118984376182628,
+            "counter": 0.37912644223575404,
+            "walk": 0.00897512014598319
+          },
+          "pressure": 0.025070088419236455,
+          "paired_delta_objective": 3358.3959217904867,
+          "note": "Offline sensitivity only: uncertainty of the difference against the same standing-offer scenarios; current continuation remains a scalar approximation. No claim that this offer would have been accepted."
+        }
+      }
+    },
+    {
+      "cases": [
+        "case:P08",
+        "case:P18"
+      ],
+      "failure": "Supplier repeatedly requires a raw-material index clause for long commitments; subsequent buyer proposals keep index_clause null.",
+      "code_findings": [
+        "Router signal types have no index-clause or conditional-contract preference.",
+        "Beliefs.value has no supplier benefit for index protection or its interaction with contract length.",
+        "Observation learning updates outcome likelihoods but does not fit the actual numeric counteroffer package."
+      ],
+      "buyer_proposals": {
+        "case:P08": 3,
+        "case:P18": 4
+      }
+    },
+    {
+      "case": "case:P11 (previous evaluation)",
+      "failure": "Prior v2.1 quality deal regressed from 0.3754 to 0.1329 after proposing weaker quality at a higher price.",
+      "reference": "improved-five-practice-results.json",
+      "interpretation": "Meeting a hard quality limit is not equivalent to maximising economic value."
+    }
+  ],
+  "recommended_sequence": [
+    {
+      "priority": 1,
+      "change": "Use one consistent risk criterion for accept, counter and walk, and evaluate the uncertain difference between actions. Add a two-step negotiation lookahead.",
+      "why": "Avoid premature acceptance and distinguish temporary disagreement from a lost deal.",
+      "initial_parameters": {
+        "lookahead_depth": 2,
+        "supplier_scenarios": 64,
+        "shortlisted_packages_per_step": 6
+      },
+      "validation": "Saved-opening and simulator sensitivity checks before any additional hosted sessions. Do not force a counter if acceptance really dominates."
+    },
+    {
+      "priority": 2,
+      "change": "Represent sourced conditional preferences and coupled terms: index clause x duration; quality x price/chargeback; volume x duration/capacity.",
+      "why": "A supplier condition must change package ranking rather than disappear into prose.",
+      "validation": "Use P08/P18 replay cases to verify that an explicit index condition changes the next candidate set. Claimed supplier conditions remain uncertain, not buyer hard constraints."
+    },
+    {
+      "priority": 3,
+      "change": "Update beliefs using counteroffer terms and movement, with cautious likelihoods and uncertainty; add a consistency check for production-cost estimates.",
+      "why": "A simple accept/counter label throws away the strongest numeric information. Supplier counteroffers are strategic demands, not ground-truth reservation prices.",
+      "validation": "Assess prediction error and decision regret separately; keep buyer cost rates from the case and learn unknown supplier preferences."
+    },
+    {
+      "priority": 4,
+      "change": "Add an independent decision critic using the already configured large Qwen model, after Python has ranked packages.",
+      "why": "Current large-model escalation only resolves source ambiguity; it does not audit the proposed deal.",
+      "critic_input": [
+        "source evidence and full current supplier conditions",
+        "allowed and fixed terms",
+        "top six packages with cost breakdowns",
+        "proposed action and available standing deal",
+        "remaining moves and calibrated uncertainty"
+      ],
+      "critic_output": [
+        "missed condition with exact supporting quote",
+        "alternative permitted package",
+        "suspect cost assumption or unsupported factual claim"
+      ],
+      "triggers": [
+        "accepting before any negotiation",
+        "unresolved condition contradicted by proposed package",
+        "large concession or economically consequential uncertainty"
+      ],
+      "limits": "Separate prompt without the first model rationale to reduce anchoring. Python validates every suggestion and recomputes cost; the critic cannot bypass constraints or send an offer. Keep a strict time limit and safe fallback."
+    },
+    {
+      "priority": 5,
+      "change": "Compare structural changes through isolated offline ablations, then a bounded paired hosted test.",
+      "why": "A bigger model benchmark is not evidence of better procurement deals. Keep old policy and replays, and report regressions and latency along with mean score."
+    }
+  ],
+  "model_recommendation": {
+    "now": "Keep Qwen3.8-27B for evidence extraction; test the existing Qwen3.8-2.4T-A95B as a selective decision critic before buying or changing to another model family.",
+    "evidence": "This batch has twelve successful small-model calls and zero model timeouts, yet clear Python-side representational and planning failures. This does not prove a stronger model would never help.",
+    "official_sources": [
+      "https://huggingface.co/Qwen/Qwen3.8-27B",
+      "https://huggingface.co/Qwen/Qwen3.8-2.4T-A95B"
+    ]
+  }
+}

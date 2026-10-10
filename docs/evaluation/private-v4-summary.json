@@ -1,0 +1,116 @@
+{
+  "target": {
+    "mean_at_least": 0.9,
+    "zero_invalid_actions": true,
+    "scope": "fresh local evaluation"
+  },
+  "passed": false,
+  "games": 45,
+  "case_configurations": 15,
+  "scores": {
+    "v3": {
+      "mean": 0.5768775618225871,
+      "median": 0.599250956768786,
+      "minimum": 0.10593292478535338,
+      "games_at_least_0_90": 2,
+      "zero_scores": 0,
+      "deals": 45,
+      "supplier_walkouts": 0,
+      "invalid_actions": 0,
+      "case_bootstrap_mean_interval_95": [
+        0.4864512219078691,
+        0.6609793662701287
+      ]
+    },
+    "v4": {
+      "mean": 0.7755628777095623,
+      "median": 0.8030070987651451,
+      "minimum": 0.4517850085776901,
+      "games_at_least_0_90": 7,
+      "zero_scores": 0,
+      "deals": 45,
+      "supplier_walkouts": 0,
+      "invalid_actions": 0,
+      "case_bootstrap_mean_interval_95": [
+        0.7396485784597857,
+        0.8127120407262678
+      ]
+    }
+  },
+  "by_type": {
+    "price_increase": {
+      "v3": 0.5667747456993966,
+      "v4": 0.7986267580310671
+    },
+    "renewal": {
+      "v3": 0.6078978379223978,
+      "v4": 0.7639072359278918
+    },
+    "rfq": {
+      "v3": 0.5213349444616797,
+      "v4": 0.7643195746642855
+    }
+  },
+  "development_experiments": [
+    {
+      "variant": "broad-prior",
+      "mean": 0.9109514498309514,
+      "minimum": 0.8358078456206086,
+      "report": "dev-broad-prior.json"
+    },
+    {
+      "variant": "choices",
+      "mean": 0.8707440706971502,
+      "minimum": 0.5250548984286759,
+      "report": "dev-choices.json"
+    },
+    {
+      "variant": "financing",
+      "mean": 0.9041629758664463,
+      "minimum": 0.8358078456206086,
+      "report": "dev-financing.json"
+    },
+    {
+      "variant": "horizon",
+      "mean": 0.6665828295269176,
+      "minimum": 0.5208333979402294,
+      "report": "dev-horizon.json"
+    },
+    {
+      "variant": "screened",
+      "mean": 0.8678726445610944,
+      "minimum": 0.7760417474252864,
+      "report": "dev-screened.json"
+    },
+    {
+      "variant": "stable-choices",
+      "mean": 0.9009419163202772,
+      "minimum": 0.8358078456206086,
+      "report": "dev-stable-choices.json"
+    }
+  ],
+  "regressions": [],
+  "wins": 38,
+  "ties": 7,
+  "final_development_report": "dev-stable-choices.json",
+  "heldout_report": "fresh-frozen.json",
+  "source_fingerprint": "f027d1ab3be75f91790f6e3aad7ef276c4fffd18d1c423ff600e38e0c2640358",
+  "validation": {
+    "unit_tests_passed": 87,
+    "unit_tests_skipped": 1,
+    "lint": "passed",
+    "git_diff_check": "passed"
+  },
+  "network_model_calls": 0,
+  "arena_sessions": 0,
+  "pushed": false,
+  "limitations": [
+    "Custom local supplier simulator; no claim of Arena performance.",
+    "Qwen and Astra disabled; these scores evaluate the Python policy.",
+    "Buyer receives public data only; score evaluator sees hidden economics.",
+    "Development variants were tuned using their results. Fresh evaluation was frozen in advance.",
+    "A mean target does not require or imply that every individual result exceeds 0.90.",
+    "Confidence interval clusters the three seeds per case; the small synthetic sample limits generalisation."
+  ],
+  "publication_note": "Historical offline evaluation before publication; pushed=false describes the evaluation time."
+}

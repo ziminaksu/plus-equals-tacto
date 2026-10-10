@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559-private-v4",
+  "scope_start": "2026-10-10T14:05:17.249Z",
+  "records_exported": 314,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "3ea66b3ba684000906c5916a2634f09cc67ff88341d1d4796f5a22f95cb33bf2"
+}

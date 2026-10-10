@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1130" viewBox="0 0 1500 1130"><rect width="100%" height="100%" fill="#F7FAF7"/>
+<text x="55" y="46.0" fill="#536F6A" font-family="Arial,sans-serif" font-size="20" font-weight="700">+= / TACTO / COEFFICIENT MAP</text>
+<text x="55" y="105.1" fill="#173B39" font-family="Arial,sans-serif" font-size="39" font-weight="700">Four interpretable supplier parameters to start</text>
+<text x="55" y="145.8" fill="#536F6A" font-family="Arial,sans-serif" font-size="22" font-weight="400">All values below are fictional starting ranges for a €100/unit example—not calibrated estimates.</text>
+<rect x="55" y="193" width="680" height="204" rx="18" fill="#E3EEF7"/>
+<text x="77" y="229.7" fill="#536F6A" font-family="Arial,sans-serif" font-size="23" font-weight="700">r</text>
+<text x="77" y="268.2" fill="#173B39" font-family="Arial,sans-serif" font-size="28" font-weight="700">Baseline acceptance threshold</text>
+<text x="77" y="306.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">€ / unit at the reference terms</text>
+<text x="77" y="337.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Example range: €85–€105</text>
+<text x="77" y="368.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Learn from complete offers and counters.</text>
+<rect x="765" y="193" width="680" height="204" rx="18" fill="#DDF2CD"/>
+<text x="787" y="229.7" fill="#536F6A" font-family="Arial,sans-serif" font-size="23" font-weight="700">b_pay</text>
+<text x="787" y="268.2" fill="#173B39" font-family="Arial,sans-serif" font-size="28" font-weight="700">Value of earlier payment</text>
+<text x="787" y="306.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">€ / unit per 30 days earlier</text>
+<text x="787" y="337.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Example range: €0–€3</text>
+<text x="787" y="368.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Learn from price/payment trade-offs.</text>
+<rect x="55" y="423" width="680" height="204" rx="18" fill="#DDF2CD"/>
+<text x="77" y="459.7" fill="#536F6A" font-family="Arial,sans-serif" font-size="23" font-weight="700">b_term</text>
+<text x="77" y="498.2" fill="#173B39" font-family="Arial,sans-serif" font-size="28" font-weight="700">Value of longer commitment</text>
+<text x="77" y="536.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">€ / unit per additional 12 months</text>
+<text x="77" y="567.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Example range: −€2 to +€2</text>
+<text x="77" y="598.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Learn from price/contract trade-offs.</text>
+<rect x="765" y="423" width="680" height="204" rx="18" fill="#DDF2CD"/>
+<text x="787" y="459.7" fill="#536F6A" font-family="Arial,sans-serif" font-size="23" font-weight="700">b_flex</text>
+<text x="787" y="498.2" fill="#173B39" font-family="Arial,sans-serif" font-size="28" font-weight="700">Value of delivery flexibility</text>
+<text x="787" y="536.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">€ / unit per 7 extra lead-time days</text>
+<text x="787" y="567.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Example range: €0–€2</text>
+<text x="787" y="598.8" fill="#173B39" font-family="Arial,sans-serif" font-size="22" font-weight="400">Learn from price/delivery trade-offs.</text>
+<rect x="55" y="682" width="1390" height="122" rx="18" fill="#173B39"/>
+<text x="78" y="713.3" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="17" font-weight="700">SUPPLIER ATTRACTIVENESS / CONDITIONAL ON REMAINING IN NEGOTIATION</text>
+<text x="78" y="754.4" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="26" font-weight="700">effective value = cash-equivalent price + b_pay × payment steps</text>
+<text x="78" y="786.6" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="24" font-weight="400">+ b_term × contract steps + b_flex × delivery steps; compare with r</text>
+<rect x="55" y="835" width="680" height="192" rx="18" fill="#FCE9CE"/>
+<text x="77" y="869.2" fill="#536F6A" font-family="Arial,sans-serif" font-size="18" font-weight="700">PRESSURE: OUR CHOICE</text>
+<text x="77" y="907.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="700">d = (current quote − our price) / current quote</text>
+<text x="77" y="943.9" fill="#173B39" font-family="Arial,sans-serif" font-size="21" font-weight="400">Test price gaps 0%, 2%, 5%, 8%; keep tone respectful.</text>
+<text x="77" y="976.9" fill="#173B39" font-family="Arial,sans-serif" font-size="21" font-weight="400">Learn w_d: effect of demand size on walk-away risk.</text>
+<text x="77" y="1005.2" fill="#536F6A" font-family="Arial,sans-serif" font-size="18" font-weight="400">Grid values are policy candidates, not recommended discounts.</text>
+<rect x="765" y="835" width="680" height="192" rx="18" fill="#E3EEF7"/>
+<text x="787" y="869.2" fill="#536F6A" font-family="Arial,sans-serif" font-size="18" font-weight="700">LEVERAGE: OUR SITUATION</text>
+<text x="787" y="907.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="700">B = fallback total cost − current deal total cost</text>
+<text x="787" y="943.9" fill="#173B39" font-family="Arial,sans-serif" font-size="21" font-weight="400">Large positive B = replacing them is expensive.</text>
+<text x="787" y="976.9" fill="#173B39" font-family="Arial,sans-serif" font-size="21" font-weight="400">Their outside option stays uncertain; do not invent it.</text>
+<text x="787" y="1005.2" fill="#536F6A" font-family="Arial,sans-serif" font-size="18" font-weight="400">No automatic conversion from leverage to a discount.</text>
+<text x="55" y="1080.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="700">Buyer cost weights come from the case. Supplier preference coefficients are learned separately.</text>
+<text x="55" y="1115.0" fill="#536F6A" font-family="Arial,sans-serif" font-size="20" font-weight="400">Keep other terms fixed initially; add a coefficient only when evidence can identify it.</text>
+</svg>
