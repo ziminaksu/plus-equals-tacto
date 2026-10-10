@@ -602,18 +602,20 @@ def test_index_protection_requires_explicit_supplier_requirement():
     ]
     assert all(supports_index_protection(x) for x in positive)
     assert not any(supports_index_protection(x) for x in negative)
-    sources = {str(i): s for i, s in enumerate(positive + negative)}
-    analysis = {
-        "interpretations": [],
-        "ambiguities": [],
-        "signals": [
-            {"kind": "index_protection", "source_id": k, "quote": v}
-            for k, v in sources.items()
-        ],
-    }
-    out = Router.validate(analysis, sources, ["unit_price", "index_clause", "contract_months"])
-    assert len(out["signals"]) == len(positive)
-    assert Router.validate(analysis, sources, ["unit_price"])["signals"] == []
+    for batch, expected in ((positive, len(positive)), (negative, 0)):
+        # The analyst's documented maximum is eight signals per reply.
+        sources = {str(i): text for i, text in enumerate(batch)}
+        analysis = {
+            "interpretations": [],
+            "ambiguities": [],
+            "signals": [
+                {"kind": "index_protection", "source_id": k, "quote": v}
+                for k, v in sources.items()
+            ],
+        }
+        out = Router.validate(analysis, sources, ["unit_price", "index_clause", "contract_months"])
+        assert len(out["signals"]) == expected
+        assert Router.validate(analysis, sources, ["unit_price"])["signals"] == []
 
 
 def test_index_supplier_value_activates_only_after_quoted_evidence():
