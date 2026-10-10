@@ -779,8 +779,8 @@ class AnalyticalAgent:
                 last.get("http_status") in (None, 408, 429) or (last.get("http_status") or 0) >= 500)
             if not infra:
                 raise
-            decision = closing_move(case, threads)
-            self.log("decision", {"action": decision, "reason": "Astra unreachable; closing_move fallback",
+            decision = self.offline_move(case, threads)
+            self.log("decision", {"action": decision, "reason": "Astra unreachable; offline fallback",
                                   "llm_calls": self.router.calls})
             self.router.calls = []
             return decision
@@ -795,6 +795,28 @@ class AnalyticalAgent:
             return decision
         finally:
             self.decision_deadline = None
+
+    def offline_move(self, case, threads):
+        """Without any LLM: two price-only counters (-3 %, then -1.5 % of the supplier's standing price,
+        its other terms kept), then the best valid standing deal (closing_move). Accepting the opening at
+        once scores 0 (round 2: every case after the credits ran out)."""
+        live = [sid for sid in live_threads(threads)
+                if latest(threads[sid]).get("status") not in ("final_offer", "agreed")
+                and moves_left(case, threads[sid]) > 2]
+        if live:
+            sid = min(live, key=lambda s: sum(m.get("from") == "buyer" for m in threads[s]))
+            sent = sum(1 for m in threads[sid] if m.get("from") == "buyer" and m.get("term_sheets"))
+            sheet_id, terms = standing(threads[sid])
+            if sheet_id and terms.get("unit_price") and sent < 2:
+                cut = (0.03, 0.015)[sent]
+                offer = complete_offer(case, {**terms, "unit_price": round(terms["unit_price"] * (1 - cut), 2)})
+                message = {"subject": "Re: " + case["title"],
+                           "body": "Thank you for your offer. Please consider the attached package.",
+                           "term_sheets": [{"terms": offer}]}
+                th = self.threads.get(sid)
+                if not compliance.problems(case, message, {}, standard=getattr(th, "std", {})):
+                    return {"supplier_id": sid, "message": message}
+        return closing_move(case, threads)
 
     def close_decision(self, case, threads):
         """The wave-cap path must receive the same final Astra authorization."""
