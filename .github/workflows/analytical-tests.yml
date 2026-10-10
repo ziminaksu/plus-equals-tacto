@@ -2,7 +2,7 @@ name: Analytical agent offline regression
 
 on:
   push:
-    branches: [codex/bayesian-qwen-agent]
+    branches: [codex/bayesian-qwen-agent, codex/offline-optimization-v26]
   pull_request:
     paths:
       - "hollerau/**"
@@ -34,3 +34,5 @@ jobs:
         run: uv sync --locked --group dev
       - name: Run offline tests (no Arena or paid model calls)
         run: uv run pytest -q
+      - name: Reproducible offline benchmark (isolated memory)
+        run: uv run python tools/offline_benchmark.py --seeds 2 5 11
