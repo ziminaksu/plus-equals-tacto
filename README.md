@@ -61,3 +61,7 @@ Git configuration alone does not prove that checkpoints have been recorded. Foll
 - `tests/` — tests
 
 Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
+
+## Team contributors
+
+- [IlyaKats2005](https://github.com/IlyaKats2005)
