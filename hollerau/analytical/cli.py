@@ -1,8 +1,10 @@
 """Explicit five-session maximum, durable reservation before every remote start."""
 
 import argparse
+import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 from arena_kit.cli import load_env
@@ -10,7 +12,7 @@ from arena_kit.client import ArenaClient
 from arena_kit.data import DataPackage
 from arena_kit.play import RemoteTable, hosted, play
 
-from .agent import AnalyticalAgent
+from .agent import POLICY_VERSION, AnalyticalAgent
 from .router import Router
 from .storage import Store
 
@@ -36,6 +38,11 @@ class LoggedTable(RemoteTable):
         return result
 
     def close(self, supplier_id, message):
+        action = message.get("action", {})
+        if action.get("type") == "accept":
+            thread = self.client.thread(self.session_id, supplier_id)
+            if action.get("term_sheet_id") != thread.get("offer_id"):
+                raise ValueError("selected offer is no longer the server-confirmed standing offer")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
@@ -57,11 +64,19 @@ def main(argv=None):
         or len(set(args.cases)) != len(args.cases)
     ):
         ap.error("choose distinct cases, at most five and within --max-sessions")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", args.run_id):
+        ap.error("run-id must contain only letters, digits, underscore or hyphen")
     if not args.offline_llm and not os.environ.get("HF_TOKEN"):
         ap.error("HF_TOKEN is required; no Arena session started")
     package = DataPackage(os.environ.get("ARENA_DATA", "data/package"))
     package.lookup("")
     store = Store(args.db)
+    code_hash = hashlib.sha256(b"".join(p.read_bytes() for p in sorted(Path(__file__).parent.glob("*.py")))).hexdigest()
+    store.log(
+        args.run_id,
+        "experiment",
+        {"policy": POLICY_VERSION, "code_sha256": code_hash, "cases": args.cases, "max_sessions": args.max_sessions},
+    )
     router = Router(enabled=not args.offline_llm)
     client = ArenaClient(retries=0)  # never retry an ambiguous session start automatically
     available = {c["case_id"] for c in hosted(client.cases("practice"))}
@@ -92,7 +107,7 @@ def main(argv=None):
             print("STOP", case_id, type(exc).__name__, "No replacement session will be started.", flush=True)
             raise
     Path("hollerau/logs").mkdir(exist_ok=True)
-    Path("hollerau/logs/practice-results.json").write_text(json.dumps(rows, indent=2))
+    Path(f"hollerau/logs/practice-{args.run_id}.json").write_text(json.dumps(rows, indent=2))
     router.close()
     store.close()
     client.http.close()

@@ -68,7 +68,11 @@ def main():
         else:
             continue
         out.update(
-            timestamp=record.get("timestamp"), source_record=i, source_sha256=hashlib.sha256(line.encode()).hexdigest()
+            timestamp=record.get("timestamp"),
+            source_session_id=source_id,
+            import_scope_id=args.output.stem,
+            source_record=i,
+            source_sha256=hashlib.sha256(line.encode()).hexdigest(),
         )
         raw = json.dumps(out, ensure_ascii=False)
         raw = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[image pixels omitted]", raw)
@@ -79,6 +83,7 @@ def main():
     args.output.write_text("\n".join(rows) + "\n")
     manifest = {
         "source_session_id": source_id,
+        "import_scope_id": args.output.stem,
         "scope_start": args.since,
         "records_exported": len(rows),
         "transformations": [

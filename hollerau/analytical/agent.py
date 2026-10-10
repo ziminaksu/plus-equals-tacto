@@ -18,7 +18,7 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v1.1"
+POLICY_VERSION = "bayes-v2.1"
 
 
 class AnalyticalAgent:
@@ -53,6 +53,8 @@ class AnalyticalAgent:
             sup = intel.estimate(case, dossier, {**reference, **std}, reference["unit_price"], Params())
             seed = int(hashlib.sha256(sid.encode()).hexdigest()[:8], 16)
             beliefs = Beliefs(case, reference, sup, seed=seed)
+            memory = self.store.load_learning(sid, case["buyer"].get("category_goal", "unknown"))
+            beliefs.import_learning(memory)
             self.threads[sid] = SimpleNamespace(
                 std=std,
                 reference=reference,
@@ -64,6 +66,9 @@ class AnalyticalAgent:
                 repeats=0,
                 last_price=None,
                 last_terms=None,
+                last_outcome=None,
+                stagnation=0,
+                last_reply_terms=None,
             )
             self.log("evidence", asdict(dossier), sid)
             self.log("coefficients", beliefs.snapshot(), sid)
@@ -97,6 +102,11 @@ class AnalyticalAgent:
                 if case.get("type") == "capacity" and offered.get("volume_per_year"):
                     th.beliefs.capacity_reference = offered["volume_per_year"]
                 self.log("coefficients", th.beliefs.snapshot(), sid)
+            th.last_outcome = outcome
+            canonical = json.dumps([x.get("terms", {}) for x in reply.get("term_sheets", [])], sort_keys=True)
+            th.stagnation = th.stagnation + 1 if canonical == th.last_reply_terms and outcome == "counter" else 0
+            th.last_reply_terms = canonical
+            self.store.save_learning(sid, case["buyer"].get("category_goal", "unknown"), th.beliefs.export_learning())
             th.pending = None
 
     def cost_samples(self, case, th, terms):
@@ -134,46 +144,123 @@ class AnalyticalAgent:
             * (1 + b.get("fallback_risk_pct", 0) / 100)
         )
 
-    def candidates(self, case, th, current):
-        # Cover each one-lever change first so the 600-package limit cannot hide a whole lever.
+    def candidates(self, case, th, current, continuation=None, fallback=None):
         baseline = complete_offer(case, current or th.reference)
         packages = [{k: v for k, v in baseline.items() if k != "unit_price"}]
         for field in levers.lever_fields(case):
             for value in levers.field_options(case, field, th.std):
                 packages.append({**packages[0], field: value})
-        all_packages = levers.packages(case, th.std)
-        if all_packages:
-            packages.extend(all_packages)
-        quote = (current or {}).get("unit_price") or th.reference["unit_price"]
-        candidates = []
-        seen = set()
+        packages.extend(levers.packages(case, th.std))
+        quote = current.get("unit_price") or th.reference["unit_price"]
+        center = SimpleNamespace(
+            **{
+                k: self.weighted(th, [getattr(p, k) for p in th.beliefs.particles])
+                for k in ("r", "b_pay", "b_term", "b_flex", "b_quality", "b_capacity", "full_cost")
+            }
+        )
+        previous = th.last_terms
+        previous_value = th.beliefs.value(previous, center) if previous else None
+        fallback = self.alternatives(case) if fallback is None else fallback
+        continuation = fallback if continuation is None else continuation
+        candidates, seen = [], set()
+        package_rows = {}
         for pkg in packages:
-            for gap in (0, 0.02, 0.05, 0.08):
-                terms = complete_offer(case, {**pkg, "unit_price": round(quote * (1 - gap), 2)})
+            package_key = json.dumps(pkg, sort_keys=True)
+            if package_key in package_rows:
+                continue
+            package_rows[package_key] = []
+            prices = [quote * m for m in (0.80, 0.86, 0.90, 0.94, 0.97, 0.99, 1, 1.01, 1.03, 1.06, 1.10, 1.15)]
+            v0 = th.beliefs.value({**pkg, "unit_price": 0}, center)
+            slope = th.beliefs.value({**pkg, "unit_price": 1}, center) - v0
+            if slope > 0:
+                # Add adaptive prices at the estimated reservation value, with a modest acceptance cushion.
+                prices.extend((center.r - v0 + pad * th.beliefs.tau) / slope for pad in (0, 0.7, 1.4))
+                if previous:
+                    prices.append((previous_value + quote * 0.004 - v0) / slope)
+            for price in prices:
+                if not 0.5 * quote <= price <= 1.20 * quote:
+                    continue
+                terms = complete_offer(case, {**pkg, "unit_price": round(price, 2)})
                 key = json.dumps(terms, sort_keys=True)
                 if key in seen or not self.valid(case, th, terms):
                     continue
-                # Do not respond to a refusal with a worse economic offer unless another
-                # term compensates the supplier. This is checked on the full package.
-                previous = th.last_terms
-                if (
-                    previous
-                    and self.weighted(
-                        th, [th.beliefs.value(terms, p) - th.beliefs.value(previous, p) for p in th.beliefs.particles]
-                    )
-                    < -0.01
+                value = th.beliefs.value(terms, center)
+                # A refusal must lead to a genuine concession or a compensating package change.
+                if previous and (
+                    value < previous_value - 0.01
+                    or (th.last_outcome == "counter" and value < previous_value + max(0.01, quote * 0.002))
                 ):
                     continue
                 seen.add(key)
-                candidates.append(terms)
-        # Cap scenario evaluations using the central full-deal cost, retaining trade diversity.
-        candidates.sort(key=lambda t: total_cost(case, t, th.std, th.sup))
-        return candidates[:64]
+                cost = total_cost(case, terms, th.std, th.sup)
+                probs = th.beliefs.probabilities(terms, center, quote)
+                surrogate = probs["accept"] * cost + probs["counter"] * continuation + probs["walk"] * fallback
+                row = (terms, cost, probs["accept"], surrogate)
+                candidates.append(row)
+                package_rows[package_key].append(row)
+        if len(candidates) <= 1200:
+            return [r[0] for r in candidates]
+        # Preselection is needed only for very large grids. Preserve the strongest central
+        # expected-value options, plus cheap and high-acceptance alternatives for uncertainty.
+        chosen = sorted(candidates, key=lambda r: r[3])[:600]
+        chosen.extend(sorted(candidates, key=lambda r: r[1])[:150])
+        chosen.extend(sorted(candidates, key=lambda r: -r[2])[:150])
+        representatives = [min(rows, key=lambda r: r[3]) for rows in package_rows.values() if rows]
+        if len(representatives) > 300:
+            representatives = [representatives[round(i * (len(representatives) - 1) / 299)] for i in range(300)]
+        chosen.extend(representatives)
+        unique = {json.dumps(r[0], sort_keys=True): r[0] for r in chosen}
+        return list(unique.values())
+
+    def available(self, case, threads, fallback, include_indicative=False):
+        available = []
+        for sid in live_threads(threads):
+            th = self.threads[sid]
+            opening = (
+                self.weighted(th, self.cost_samples(case, th, th.reference))
+                if self.valid(case, th, th.reference)
+                else fallback
+            )
+            sheets = latest(threads[sid]).get("term_sheets", [])
+            # Secondary sheets can be indicative alternatives, not API-acceptable standing IDs.
+            # The message API puts the standing sheet first; a refreshed thread may identify it explicitly.
+            active_id = latest(threads[sid]).get("standing_offer_id") or (
+                sheets[0]["term_sheet_id"] if sheets else None
+            )
+            for sheet in sheets:
+                if not include_indicative and sheet["term_sheet_id"] != active_id:
+                    continue
+                terms = sheet["terms"]
+                if self.valid(case, th, terms):
+                    cost = self.weighted(th, self.cost_samples(case, th, terms))
+                    if cost <= min(opening, fallback) + 0.01:
+                        available.append((cost, sid, sheet["term_sheet_id"], terms))
+        return sorted(available, key=lambda r: r[0])
+
+    def interpret(self, case, sid, events, deadline):
+        th = self.threads[sid]
+        sources = {}
+        for index, event in enumerate(events):
+            if event.get("from") != "buyer" and (index == 0 or index >= len(events) - 4):
+                ref = event.get("message_id") or str(index)
+                sources[f"reply:{ref}"] = event.get("body", "")[:2500]
+                for j, att in enumerate(event.get("attachments", [])):
+                    if att.get("text"):
+                        sources[f"attachment:{ref}:{j}"] = att["text"][:1800]
+        for index, note in enumerate(th.dossier.notes[-6:]):
+            sources[f"note:{index}"] = note
+        if self.router.enabled:
+            analysis = self.router.analyse(sources, [], deadline, case["negotiable"], allow_escalation=False)
+        else:
+            analysis = {"fallback": True, "signals": [], "interpretations": []}
+        applied = th.beliefs.apply_evidence(analysis.get("signals", []))
+        self.log("analysis", {"sources": sources, "result": analysis, "applied_signals": applied}, sid)
+        return analysis, sources
 
     def rank(self, case, th, current, continuation, fallback):
         quote = current.get("unit_price") or th.reference["unit_price"]
         rows = []
-        for terms in self.candidates(case, th, current):
+        for terms in self.candidates(case, th, current, continuation, fallback):
             costs = self.cost_samples(case, th, terms)
             probabilities = {"accept": 0.0, "counter": 0.0, "walk": 0.0}
             values = []
@@ -182,7 +269,11 @@ class AnalyticalAgent:
                 probs = th.beliefs.probabilities(terms, p, quote, repeats)
                 for key in probs:
                     probabilities[key] += p.weight * probs[key]
-                values.append(probs["accept"] * cost + probs["counter"] * continuation + probs["walk"] * fallback)
+                values.append(
+                    probs["accept"] * cost
+                    + probs["counter"] * (continuation + fallback * 0.0005 * (1 + th.stagnation))
+                    + probs["walk"] * fallback
+                )
             mean = self.weighted(th, values)
             sd = math.sqrt(self.weighted(th, [(x - mean) ** 2 for x in values]))
             rows.append(
@@ -210,35 +301,55 @@ class AnalyticalAgent:
         if not live:
             return {"supplier_id": next(iter(threads)), "message": {"action": {"type": "walk_away"}}}
         fallback = self.alternatives(case)
-        available = []
-        for sid in live:
-            th = self.threads[sid]
-            offer_id, terms = standing(threads[sid])
-            if offer_id and self.valid(case, th, terms):
-                costs = self.cost_samples(case, th, terms)
-                c = self.weighted(th, costs)
-                # Do not accept worse than a feasible alternative or the opening under same estimate.
-                opening = self.weighted(th, self.cost_samples(case, th, th.reference))
-                if c <= min(opening, fallback) + 0.01:
-                    available.append((c, sid, offer_id, terms))
-        best = min(available, key=lambda x: x[0]) if available else None
-        # Visit the least-contacted live supplier while other threads remain open.
-        sid = min(live, key=lambda s: sum(m.get("from") == "buyer" for m in threads[s]))
-        th = self.threads[sid]
-        events = threads[sid]
-        current = standing(events)[1]
-        left = moves_left(case, events)
-        status = latest(events).get("status")
-        terminal = status in ("agreed", "final_offer") or left <= 1
-        if terminal and best:
-            return self.accept(best, "closing status or remaining-round limit")
-        if terminal:
-            # Closing walk-away ends the entire case: first inspect all rival standing sheets above.
-            decision = {"supplier_id": sid, "message": {"action": {"type": "walk_away"}}}
-            self.log("decision", {"action": decision, "reason": "no valid acceptable standing deal"}, sid)
+        available = self.available(case, threads, fallback)
+        best = available[0] if available else None
+        actionable = [
+            sid
+            for sid in live
+            if latest(threads[sid]).get("status") not in ("agreed", "final_offer")
+            and moves_left(case, threads[sid]) > 1
+        ]
+        if not actionable:
+            if best:
+                return self.accept(best, "all threads closing; best valid package across suppliers")
+            decision = {"supplier_id": live[0], "message": {"action": {"type": "walk_away"}}}
+            self.log("decision", {"action": decision, "reason": "no valid acceptable standing deal"})
             return decision
-        continuation = min(best[0] if best else fallback, fallback)
+        sid = min(
+            actionable, key=lambda s: (self.threads[s].stagnation, sum(m.get("from") == "buyer" for m in threads[s]))
+        )
+        th, events = self.threads[sid], threads[sid]
+        sheets = latest(events).get("term_sheets", [])
+        # Consider every offered package when choosing the reference for the next negotiation move.
+        current = min(
+            (x["terms"] for x in sheets), key=lambda t: total_cost(case, t, th.std, th.sup), default=th.reference
+        )
+        analysis, sources = self.interpret(case, sid, events, deadline)
+        # Interpretation changes belief weights BEFORE cost scenarios and offers are evaluated.
+        available = self.available(case, threads, fallback)
+        best = available[0] if available else None
+        continuation = best[0] if best else fallback
         ranked = self.rank(case, th, current, continuation, fallback)
+        reasons = []
+        if not analysis.get("fallback") and analysis.get("ambiguities") and len(ranked) > 1:
+            potential_regret = max(
+                ranked[0]["scenario_costs"][i] - min(r["scenario_costs"][i] for r in ranked[:6])
+                for i in range(len(th.beliefs.particles))
+            )
+            if potential_regret > max(20, fallback * 0.005):
+                reasons.append("unresolved source interpretation could materially change package ranking")
+        if analysis.get("fallback") and case.get("type") == "capacity" and not best:
+            reasons.append("no feasible standing capacity offer; source interpretation may change commitment trade")
+        if reasons and time.monotonic() < deadline - 8:
+            resolved = self.router.resolve(sources, analysis, reasons, deadline, case["negotiable"])
+            applied = th.beliefs.apply_evidence(resolved.get("signals", []))
+            analysis = resolved
+            self.log("escalation", {"reasons": reasons, "result": resolved, "applied_signals": applied}, sid)
+            available = self.available(case, threads, fallback)
+            best = available[0] if available else None
+            continuation = best[0] if best else fallback
+            ranked = self.rank(case, th, current, continuation, fallback)
+        self.log("coefficients", th.beliefs.snapshot(), sid)
         if not ranked:
             if best:
                 return self.accept(best, "no improving feasible candidates")
@@ -246,52 +357,25 @@ class AnalyticalAgent:
             self.log("decision", {"action": decision, "reason": "no feasible candidate"}, sid)
             return decision
         chosen = ranked[0]
-        if best and chosen["objective"] >= best[0] - 0.01:
+        if best and chosen["objective"] >= best[0] - max(0.01, best[0] * 0.0001):
             return self.accept(best, "available deal dominates estimated continuation")
-        reasons = []
-        if len(ranked) > 1:
-            winners = {
-                min(range(min(4, len(ranked))), key=lambda j: ranked[j]["scenario_costs"][i])
-                for i in range(len(th.beliefs.particles))
-            }
-            if len(winners) > 1:
-                reasons.append("preferred candidate changes across plausible supplier scenarios")
-        if latest(events).get("missing_fields"):
-            reasons.append("supplier quote omits decision-relevant terms")
-        if any(x.get("result") == "contradicted" for x in latest(events).get("claim_results", [])):
-            reasons.append("supplier claim feedback contradicts a prior claim")
-        sources = {
-            f"reply:{i}": m.get("body", "")[:1800] for i, m in enumerate(events[-4:]) if m.get("from") != "buyer"
-        }
-        for i, note in enumerate(th.dossier.notes[-6:]):
-            sources[f"note:{i}"] = note
-        analysis = self.router.analyse(sources, reasons, deadline) if self.router.enabled else {"fallback": True}
-        self.log("analysis", {"sources": sources, "reasons": reasons, "result": analysis}, sid)
         claims = [c for c in th.dossier.claims if not set(c.refs) & th.used][:2]
         facts = {**(self.package.facts if self.package else {}), **case.get("facts", {})}
         claims = [c for c in claims if all(r in facts for r in c.refs)]
-        intro = "Thank you for your proposal. We would like to find terms that work for both sides."
-        question = (
-            "Which of payment timing, contract duration or delivery flexibility would help you improve these terms?"
-        )
-        try:
-            prose = self.router.prose({"analysis": analysis, "tone": "firm and respectful"}, deadline)
-            a, b = prose.get("intro", ""), prose.get("question", "")
-            # Keep model text separate from binding numbers and evidence. No unsupported figures/IDs.
-            if (
-                not isinstance(a, str)
-                or not isinstance(b, str)
-                or len(a) + len(b) > 700
-                or re.search(r"\d", a + b)
-                or compliance.ID_RE.search(a + b)
-            ):
-                raise ValueError("invalid writer fields")
-            bad = compliance.problems(case, {"body": a + " " + b}, facts)
-            if bad or not a.strip():
-                raise ValueError("unsafe prose")
+        intro = "Thank you for your proposal. We would like to agree on a workable package."
+        question = "Would the attached package address your priorities?"
+        # Reuse the analyst's bounded prose instead of spending another model call per turn.
+        a, b = analysis.get("intro", ""), analysis.get("question", "")
+        if (
+            isinstance(a, str)
+            and isinstance(b, str)
+            and a.strip()
+            and len(a) + len(b) <= 700
+            and not re.search(r"\d", a + b)
+            and not compliance.ID_RE.search(a + b)
+            and not compliance.problems(case, {"body": a + " " + b}, facts)
+        ):
             intro, question = a, b
-        except Exception:
-            pass
         terms = chosen["terms"]
         body = "\n\n".join(
             [
@@ -346,5 +430,10 @@ class AnalyticalAgent:
 
     def accept(self, best, reason):
         decision = {"supplier_id": best[1], "message": {"action": {"type": "accept", "term_sheet_id": best[2]}}}
-        self.log("decision", {"action": decision, "reason": reason, "estimated_cost": best[0]}, best[1])
+        self.log(
+            "decision",
+            {"action": decision, "reason": reason, "estimated_cost": best[0], "llm_calls": self.router.calls},
+            best[1],
+        )
+        self.router.calls = []
         return decision

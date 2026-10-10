@@ -43,7 +43,7 @@ Refresh the arena data after the Sunday 08:00 release. The final runner does not
 
 ## Entire
 
-The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Local installation and successful session recording **have not been verified**. On the development Mac, check:
+The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Scoped development-session imports and checkpoint delivery have been verified for the analytical-agent commits. For future local sessions, check:
 
 ```bash
 command -v entire
@@ -68,8 +68,8 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Bayesian Qwen agent
 
-The new agent uses Qwen for evidence interpretation and constrained message writing, and Python for Bayesian supplier estimates and full-deal selection. See [implementation and setup](docs/ANALYTICAL.md), [five-session results](docs/evaluation/FIVE_PRACTICE.md), and [internal architecture](docs/architecture/analytical-model-v3.html).
+`hollerau.analytical` uses Qwen to interpret supplier evidence **before** Python updates estimates and selects a complete offer. It compares all standing term sheets, searches discounts and premiums for non-price trade-offs, prevents unproductive repeated demands, and saves cautious supplier/category learning in SQLite. A single small-model call also supplies prose; the large model is reserved for material unresolved interpretation.
 
-Exactly five remote practice sessions produced four deals and a mean score of 0.448. Subsequent capacity and concession fixes have local regression coverage only. The full local suite passed 45 tests with one optional hosted test skipped.
+See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). The existing agents remain available; select `--brain analytical` explicitly for the new agent in the team runner. Use `tacto-bayes` for bounded practice.
 
-This implementation commit has an Entire checkpoint attached through the supported external-agent import protocol using the actual scoped Codex development transcript. Earlier unrelated conversation and credentials are excluded. The importer and exporter are in `tools/`; see the provenance section of the implementation guide.
+The implementation uses Entire's supported external-agent import to attach actual scoped Codex development records. Earlier unrelated history and credentials are excluded; original source-session IDs, timestamps and record hashes are preserved. See the provenance section of the setup guide. Commit trailers and remote checkpoint refs are verified after publishing.

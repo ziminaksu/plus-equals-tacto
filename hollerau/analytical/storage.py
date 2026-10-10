@@ -77,3 +77,29 @@ class Store:
 
     def close(self):
         self.db.close()
+
+    def save_learning(self, supplier, goal, model):
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS learned_models "
+            "(supplier TEXT, goal TEXT, model TEXT, PRIMARY KEY(supplier,goal))"
+        )
+        self.db.execute(
+            "INSERT OR REPLACE INTO learned_models VALUES(?,?,?)",
+            (supplier, goal, json.dumps(clean(model), allow_nan=False)),
+        )
+        self.db.commit()
+
+    def load_learning(self, supplier, goal):
+        self.db.execute(
+            "CREATE TABLE IF NOT EXISTS learned_models "
+            "(supplier TEXT, goal TEXT, model TEXT, PRIMARY KEY(supplier,goal))"
+        )
+        row = self.db.execute(
+            "SELECT model FROM learned_models WHERE supplier=? AND goal=?", (supplier, goal)
+        ).fetchone()
+        if row:
+            return {"source": "supplier", "models": [json.loads(row[0])]}
+        rows = self.db.execute(
+            "SELECT model FROM learned_models WHERE goal=? ORDER BY supplier LIMIT 10", (goal,)
+        ).fetchall()
+        return {"source": "category", "models": [json.loads(r[0]) for r in rows]}

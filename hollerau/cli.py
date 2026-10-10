@@ -22,6 +22,14 @@ from arena_kit.cli import load_env
 def make_agent_factory(writer="template", package=None, brain="llm"):
     """brain=llm: the LLM (GPT-6 / Qwen) chooses every move from the code's menu and writes;
     brain=code: the code decides and `writer` writes (template or LLM)."""
+    if brain == "analytical":
+        from .analytical.agent import AnalyticalAgent
+        from .analytical.router import Router
+
+        if not os.environ.get("HF_TOKEN"):
+            raise SystemExit("HF_TOKEN is required for the analytical brain")
+        return lambda: AnalyticalAgent(package=package, router=Router(), run_id="live-analytical")
+
     from .agent import StrategicAgent
     from .brain import BrainAgent
     from .llm import make_complete
@@ -63,7 +71,7 @@ def main(argv=None):
     lo = sub.add_parser("local", help="play local cases against simulated suppliers (no arena)")
     lo.add_argument("--llm-supplier", action="store_true", help="suppliers played by SIM_MODEL / Qwen")
     lo.add_argument("--writer", default="template", choices=["template", "llm"])
-    lo.add_argument("--brain", default="code", choices=["code", "llm"])
+    lo.add_argument("--brain", default="code", choices=["code", "llm", "analytical"])
     lo.add_argument("--cases", type=int, default=20, help="random cases on top of kit, letter and cached cases")
     lo.add_argument("--only", default=None, help="case ids, comma-separated")
     lo.add_argument("--seed", type=int, default=5)
@@ -71,11 +79,11 @@ def main(argv=None):
     p = sub.add_parser("play", help="play ONE arena case (uses a practice try)")
     p.add_argument("case_id")
     p.add_argument("--writer", default="llm", choices=["template", "llm"])
-    p.add_argument("--brain", default="llm", choices=["code", "llm"])
+    p.add_argument("--brain", default="llm", choices=["code", "llm", "analytical"])
     r = sub.add_parser("run", help="play every case of a set (final: the wave runner)")
     r.add_argument("--set", default="practice")
     r.add_argument("--writer", default="llm", choices=["template", "llm"])
-    r.add_argument("--brain", default="llm", choices=["code", "llm"])
+    r.add_argument("--brain", default="llm", choices=["code", "llm", "analytical"])
     r.add_argument("--parallel", type=int, default=10)
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(asctime)s %(message)s")
@@ -88,8 +96,8 @@ def main(argv=None):
     if args.cmd == "local":
         return local(args, package, factory)
 
-    from arena_kit.client import ArenaClient, ArenaError
     from arena_kit.cli import summary
+    from arena_kit.client import ArenaClient, ArenaError
     from arena_kit.play import RemoteTable, hosted, play, play_all, play_waves
 
     client = ArenaClient()

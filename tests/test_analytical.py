@@ -129,7 +129,7 @@ def test_no_secret_in_failure_audit():
     r = Router("SECRET_VALUE", httpx.MockTransport(lambda req: httpx.Response(401, text="SECRET_VALUE")))
     r.analyse({}, [], time.monotonic() + 20)
     assert "SECRET_VALUE" not in json.dumps(r.calls)
-    assert len(r.calls) == 2
+    assert len(r.calls) == 1  # unavailable small model alone does not justify an expensive escalation
 
 
 def test_public_local_games_have_valid_moves_and_audit(tmp_path):
@@ -232,3 +232,192 @@ def test_capacity_search_keeps_full_volume_long_contracts(tmp_path):
             th, [th.beliefs.value(offer, p) - th.beliefs.value(th.last_terms, p) for p in th.beliefs.particles]
         )
         assert delta >= -0.01
+
+
+def test_quoted_preferences_update_beliefs_once_and_preserve_uncertainty():
+    case, ref, sup = sample()
+    b = Beliefs(case, ref, sup)
+    before = b.summary()["b_pay"]["mean"]
+    signals = [{"kind": "early_payment", "quote": "We need earlier payment."}]
+    assert b.apply_evidence(signals) == ["early_payment"]
+    assert b.summary()["b_pay"]["mean"] > before
+    weights = [p.weight for p in b.particles]
+    assert not b.apply_evidence(signals)
+    assert weights == [p.weight for p in b.particles]
+    assert all(p.weight > 0 for p in b.particles)
+
+
+def test_fixed_terms_cannot_be_reopened_by_supplier_hint():
+    result = Router.validate(
+        {
+            "interpretations": [],
+            "ambiguities": [],
+            "signals": [{"kind": "early_payment", "source_id": "reply", "quote": "pay sooner"}],
+        },
+        {"reply": "Please pay sooner."},
+        ["unit_price", "ppm_commitment"],
+    )
+    assert result["signals"] == []
+    with pytest.raises(ValueError, match="unsupported signal"):
+        Router.validate(
+            {
+                "interpretations": [],
+                "ambiguities": [],
+                "signals": [{"kind": "capacity_limit", "source_id": "reply", "quote": "invented"}],
+            },
+            {"reply": "Please pay sooner."},
+        )
+
+
+def test_alternative_sheets_are_compared_but_only_standing_id_is_accepted(tmp_path):
+    case, ref, _ = sample()
+    case["buyer"].update(fallback_unit_price=200, alternative=None)
+    opening = {
+        "from": "supplier",
+        "status": "open",
+        "term_sheets": [{"term_sheet_id": "opening", "terms": {**ref, "unit_price": 100}}],
+    }
+    agent = AnalyticalAgent(store=Store(tmp_path / "offers.sqlite"))
+    agent.start(case, {"sup:1": [opening]})
+    reply = {
+        "from": "supplier",
+        "status": "final_offer",
+        "term_sheets": [
+            {"term_sheet_id": "expensive", "terms": {**ref, "unit_price": 99}},
+            {"term_sheet_id": "better", "terms": {**ref, "unit_price": 90}},
+        ],
+    }
+    offers = agent.available(case, {"sup:1": [opening, reply]}, 1e12, include_indicative=True)
+    assert [o[2] for o in offers] == ["better", "expensive"]
+    action = agent.decide(case, {"sup:1": [opening, reply]})["message"]["action"]
+    assert action["term_sheet_id"] == "expensive"  # indicative alternative is not an executable acceptance
+
+
+def test_reply_interpretation_changes_beliefs_before_offer_ranking(tmp_path):
+    case, ref, _ = sample()
+    case["negotiable"] = ["unit_price", "payment_days"]
+    case["fixed_terms"].pop("payment_days", None)
+    case["term_options"]["payment_days"] = [14, 60]
+    event = {
+        "from": "supplier",
+        "status": "open",
+        "body": "Please pay sooner.",
+        "term_sheets": [{"term_sheet_id": "opening", "terms": ref}],
+    }
+
+    class EvidenceRouter:
+        enabled = True
+        calls = []
+
+        def analyse(self, *args, **kwargs):
+            return {"signals": [{"kind": "early_payment", "quote": "pay sooner"}], "ambiguities": []}
+
+    agent = AnalyticalAgent(store=Store(tmp_path / "coupling.sqlite"), router=EvidenceRouter())
+    original = agent.rank
+    observed = []
+
+    def rank(*args):
+        observed.append(args[1].beliefs.signal_counts.get("early_payment"))
+        return original(*args)
+
+    agent.rank = rank
+    agent.decide(case, {"sup:1": [event]})
+    assert observed == [1]
+
+
+def test_search_includes_premiums_and_never_repeats_rejected_package(tmp_path):
+    case, ref, _ = sample()
+    case["negotiable"] = ["unit_price", "payment_days"]
+    case["term_options"]["payment_days"] = [14, 60]
+    case["fixed_terms"].pop("payment_days", None)
+    event = {"from": "supplier", "status": "open", "term_sheets": [{"term_sheet_id": "x", "terms": ref}]}
+    agent = AnalyticalAgent(store=Store(tmp_path / "search.sqlite"))
+    agent.start(case, {"sup:1": [event]})
+    th = agent.threads["sup:1"]
+    candidates = agent.candidates(case, th, ref)
+    assert any(t["unit_price"] > ref["unit_price"] for t in candidates)
+    th.last_terms = candidates[0]
+    th.last_outcome = "counter"
+    assert th.last_terms not in agent.candidates(case, th, ref)
+
+
+def test_regularised_learning_survives_restart(tmp_path):
+    case, ref, sup = sample()
+    b = Beliefs(case, ref, sup)
+    before = b.accept_bias
+    b.update("reply", [ref], "counter", ref["unit_price"])
+    assert b.accept_bias < before
+    path = tmp_path / "memory.sqlite"
+    store = Store(path)
+    store.save_learning("sup", "goal", b.export_learning())
+    store.close()
+    store = Store(path)
+    fresh = Beliefs(case, ref, sup)
+    fresh.import_learning(store.load_learning("sup", "goal"))
+    assert b.accept_bias < fresh.accept_bias < 0  # shrink, do not blindly reuse
+    assert fresh.memory_source == "supplier"
+    other = Beliefs(case, ref, sup)
+    other.import_learning(store.load_learning("unseen-supplier", "goal"))
+    assert fresh.accept_bias < other.accept_bias < 0
+    assert other.memory_source == "category"
+
+
+def test_clear_analysis_is_cached_and_no_large_call_for_ambiguity_alone():
+    calls = []
+
+    def handler(req):
+        calls.append(json.loads(req.content)["model"])
+        return httpx.Response(
+            200,
+            json={
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "interpretations": [],
+                                    "signals": [],
+                                    "ambiguities": ["minor unclear wording"],
+                                    "question": "",
+                                }
+                            )
+                        }
+                    }
+                ]
+            },
+        )
+
+    r = Router("test", httpx.MockTransport(handler))
+    r.analyse({"x": "text"}, [], time.monotonic() + 20)
+    second = r.analyse({"x": "text"}, [], time.monotonic() + 20)
+    assert second["cache_hit"] and calls == [r.small]
+
+
+def test_large_failure_circuit_protects_turn_budget():
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        raise httpx.ReadTimeout("timeout")
+
+    r = Router("test", httpx.MockTransport(handler))
+    for _ in range(3):
+        r.resolve({}, {}, ["material trade"], time.monotonic() + 20)
+    assert len(calls) == 2
+
+
+def test_closing_preflight_rejects_unregistered_id_before_post(tmp_path):
+    from hollerau.analytical.cli import LoggedTable
+
+    class Client:
+        def thread(self, *args):
+            return {"offer_id": "offer:registered"}
+
+        def send_message(self, *args):
+            raise AssertionError("must not POST acceptance of an indicative offer")
+
+    store = Store(tmp_path / "preflight.sqlite")
+    table = LoggedTable(Client(), store, "run", None)
+    table.session_id = "existing-session"
+    with pytest.raises(ValueError, match="server-confirmed"):
+        table.close("sup:1", {"action": {"type": "accept", "term_sheet_id": "offer:indicative"}})
