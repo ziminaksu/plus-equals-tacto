@@ -13,8 +13,10 @@ this integration does not discard them when adopting the teammate strategy.
 Read-only Arena inspection selected P01, P02, P05, P07, P08, P10 and P11 because
 their best completed practice scores were below 0.7. P18, P03 and P04 are excluded.
 [The frozen baseline](v9-baseline.json) records both best and latest scores.
-The evaluation allowance is exactly one session per selected case, seven total,
-with no replacement for a failed start. No local tests, simulations or LLM replays.
+The original evaluation allowance was one session per selected case, seven total.
+Six completed; the user stopped queued experiments during P07, which finished.
+P08 never started. See [actual results and the stop record](v9-arena-results.md).
+No local tests, simulations, LLM replays or replacement starts ran.
 
 Earlier recorded exchanges show distinct problems: P01 accepted an early offer
 after giving away 14-day payment; P02 repeated an immediately accepted historical
@@ -64,9 +66,10 @@ is not a hard guarantee against network stalls or lengthy board construction.
 ## Verification and outcome
 
 Source parsing, targeted static lint and diff checks passed before publication.
-No local runtime tests were executed. Arena results will be recorded separately;
-there is no claim that these changes achieve 0.7 before evaluation.
+No local runtime tests were executed. [Actual Arena results](v9-arena-results.md)
+are mixed: three improvements over previous bests, one tie and two declines.
+The architecture review changes documentation and reporting only.
 
-The source must be published with an authentic Entire checkpoint before the
-frozen seven-session evaluation. No official cost formula or benchmark input is
+The evaluated source was published with authentic Entire checkpoints before
+the batch began; six of the seven originally selected sessions ran. No official cost formula or benchmark input is
 modified. Original supplier facts and all executed choices remain auditable.

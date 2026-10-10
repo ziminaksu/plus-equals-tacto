@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "ehl-v9-structure-review-20261010",
+  "scope_start": "2026-10-10T18:30:17.609Z",
+  "records_exported": 108,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "ab4416aab783c44434ed9cddbe5eee81b2790c79a3f54b395a787b83704751e8"
+}

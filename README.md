@@ -1,18 +1,35 @@
 # += Tacto Negotiation Arena
 
-Autonomous AI buyer for Hollerau Pumpenwerke · EHL Munich 2026.
+Autonomous buyer for Hollerau Pumpenwerke · EHL Munich 2026.
 
-The agent negotiates with suppliers by e-mail to minimise **total cost**, not just unit price. In the analytical agent, Astra proposes packages and a separate Astra call chooses every final action. Python calculates costs and validates constraints. If final authorization fails, this path stops without sending a substitute offer or acceptance. Legacy agents retain their explicit fallback modes.
+**Purpose:** negotiate executable agreements that improve total buyer cost under
+the case's constraints. Price, supply coverage, delivery, quality, financing and
+applicable relationship costs all matter.
 
-## Strategy
+## Start here
 
-- Gather the case, current supplier messages, public evidence and earlier exchanges (`hollerau/analytical/agent.py`, `retrieval.py`, `storage.py`).
-- Ask a proposer Astra call for interpretations and up to three complete offers (`router.py`).
-- Validate and price offers, historical proposals and term variants (`director.py`, `sustainability.py`, `arena_kit/cost.py`).
-- Ask a separate Astra call to choose the final action and write the supplier reply (`director.py`, `router.py`).
-- Validate that selection and send exactly the authorized action; log the response and update estimates (`communication.py`, `feedback.py`, `storage.py`).
+| What you need | Read |
+|---|---|
+| What the system actually does, and who decides | [Current architecture](docs/CURRENT_ARCHITECTURE.md) |
+| A clear contract for the next structural improvement | [Decision contract — proposed](docs/DECISION_CONTRACT.md) |
+| Actual latest results, including regressions and timeouts | [V9 Arena report](docs/evaluation/v9-arena-results.md) |
+| Setup, bounded runs and inspection | [Operating guide](docs/ANALYTICAL.md) |
+| Original challenge and starter kit | [Brief](brief/README.md), [starter-kit guide](README-kit.md) |
+| Earlier designs and evaluations | [Historical analytical notes](docs/history/ANALYTICAL-through-v82.md), [strategy announcements](docs/history/README-strategy-history.md) |
 
-See [the current architecture and its limitations](docs/CURRENT_ARCHITECTURE.md). The older `hollerau/agent.py` and `brain.py` paths remain explicit legacy comparisons; they are not the default analytical controller.
+## Current state
+
+Policy **`astra-v9-category-playbooks`**, evaluated at commit `b7c1dbc`, combines
+Ksu's negotiation changes with action/response memory and category-specific
+packages. Astra proposes options and a separate Astra call selects the final move.
+Python generates additional options, calculates costs, applies constraints and
+sends the validated selection. SQLite retains exchanges and learning evidence.
+
+Experiments are stopped for architecture review. Six v9 cases completed: three
+improved over their previous best, one tied and two declined. P08 did not start.
+16 of 19 proposer calls timed out; all 20 final calls succeeded. These results do
+not isolate the effect of each simultaneous change. The new decision contract is
+a proposed structure, not an implemented strategy or a promise of better scores.
 
 ## Setup
 
@@ -24,68 +41,31 @@ cp -n .env.example .env
 uv run arena data
 ```
 
-Fill `.env` locally with `ARENA_API_KEY` and `OPENAI_API_KEY`; never commit it. The default `play` and `run` commands now select the analytical Astra agent. `.env.example` also retains `LLM_API_KEY` and `BRAIN_MODEL` for explicit legacy `--brain llm` comparisons. OpenAI API usage is billed separately from ChatGPT plans.
+Configure `ARENA_API_KEY`, `ARENA_DATA` and `OPENAI_API_KEY` in ignored `.env`.
+Never commit credentials. `play` and `run` default to the analytical Astra agent;
+legacy modes remain explicit comparisons. See the operating guide before starting
+practice sessions. This review starts no new runs or local tests.
 
-## Run
+## Repository map
 
-```bash
-uv run pytest -q
-uv run python -m hollerau local --brain code --cases 5
-uv run python -m hollerau local --brain llm --cases 5
-uv run python -m hollerau play case:P01
-```
+- `hollerau/analytical/` — default negotiation controller, models, evidence and storage.
+- `arena_kit/` — API protocol, runner and published cost calculation.
+- `hollerau/agent.py`, `brain.py` and other legacy modules — explicit comparison paths.
+- `docs/` — current architecture and operating contract; `evaluation/` has versioned evidence.
+- `hollerau/logs/` — ignored local databases and raw traces.
+- `brief/`, `tests/`, `tools/` — challenge reference, existing tests and developer tools.
 
-For the Live Final, start before **11 October 2026, 12:00 (Munich time)**:
+## Publishing with Entire
 
-```bash
-uv run python -m hollerau run --set final --brain analytical --parallel 10 > final.log 2>&1
-```
+Entire is enabled with `git-refs` checkpoints and telemetry disabled. The team uses
+its external-agent import to attach actual scoped Codex session records, excluding
+unrelated history, internal reasoning and credentials. Verify the commit's
+`Entire-Checkpoint` trailer and the corresponding remote checkpoint ref after
+publishing. Configuration alone is not evidence of a recorded session.
 
-Refresh the arena data after the Sunday 08:00 release. The final runner does not call the forbidden `/v1/events`, `/screen`, `/leaderboard` or `/results` endpoints. Submit the Git repository URL, the **exact final commit hash**, a short description and pitch slides on ehl.gg.
-
-## Entire
-
-The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Scoped development-session imports and checkpoint delivery have been verified for the analytical-agent commits. For future local sessions, check:
-
-```bash
-command -v entire
-entire --version
-git show-ref | grep -i entire
-```
-
-Git configuration alone does not prove that checkpoints have been recorded. Follow the [EHL Entire event instructions](https://hack.entire.io/ehl-munich-2026/) for event-specific requirements.
-
-## Project
-
-- `hollerau/` — team agent and local simulation
-- `arena_kit/` — Tacto API client, runner and cost model
-- `brief/` — official competition requirements
-- `tests/` — tests
+Follow the [EHL Entire instructions](https://hack.entire.io/ehl-munich-2026/).
+Submit the repository and exact final commit hash required by the challenge.
 
 Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
-## Team contributors
-
-- [IlyaKats2005](https://github.com/IlyaKats2005)
-
-## Analytical negotiation agent
-
-The current policy is **v9: category playbooks**, integrating Ksu's negotiation strategy with the action/response memory on main. It tailors commercial concessions to strategic supply, capacity, quality and competitive RFQs; repairs jointly invalid opening terms before proposing alternatives; and reserves more time for final authorization. See [implementation and evaluation scope](docs/evaluation/v9-category-playbooks.md). Seven other cases with best scores below 0.7 are selected for one Arena session each; no improvement is claimed before those results exist. The earlier version notes below describe their historical evaluations.
-
-`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v8.3 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
-
-Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
-
-V8.3 implements the independent audit's first structural intervention: historical buyer proposals become selectable alongside the supplier replies they preceded. Memory records the prior terms, supplier status and negotiation stage, so an old closing concession is not confused with the opening that produced it. Astra chooses whether that earlier move fits the current situation. Cost calculations, timeout settings and stopping rules are unchanged. Two Arena runs scored **P02 0.255 and P18 0.273, both unchanged**. The earlier P18 opening was available but not selected, and all three P18 proposer calls timed out. No local tests ran. See [the implementation](docs/evaluation/v83-action-response-memory.md) and [actual results](docs/evaluation/v83-arena-results.md).
-
-V8 corrects false acceptance labels, records terminal walkouts, reconstructs behavioural learning, and enables Astra-authored supplier replies with exact fixed facts. It presents next-action gains, losses and final-offer evidence before the final choice, and gates sustainability concerns by the case objective. See [the v8 implementation](docs/evaluation/v8-decision-feedback.md). The two evaluation pairs scored P02 0.000 then 0.255, and P18 0.273 twice. Neither exceeded its previous best. V8.2 adds forecast and neutral cost-driver retrieval; it was included in the V8.3 pair but has not been evaluated separately. No local tests ran. See [all scores and the evidence-access diagnosis](docs/evaluation/v81-arena-results.md).
-
-A subsequent authorized DeepSeek V4 Pro review identified prompt-size and timing concerns, but its proposed code failed source-level review: among other defects, its schema and validator disagreed on closing actions. No proposed runtime edits were applied. See [the external review and rejected changes](docs/evaluation/v83-deepseek-review.md).
-
-V7 preserves original should-cost evidence, separates production-cost estimates from acceptance behaviour, and calibrates supplier economics using completed practice cost breakdowns. It includes higher-price sustainability alternatives and explicit downside comparisons. See [the implementation and assumptions](docs/evaluation/v7-supplier-economics.md). No local tests are run for this update.
-
-V7's two hosted runs were mixed: **P02 improved to 0.255** (previous best 0.157), while **P18 scored 0** after Astra countered a final offer and the supplier walked away (previous best 0.340). P02's relationship-cost forecast error fell to €150 on the observed deal. See [the actual v7 results and remaining weaknesses](docs/evaluation/v7-arena-results.md), [the v6 P02 diagnosis](docs/evaluation/v6-p02-arena.md), and [the earlier hosted evaluation](docs/evaluation/v51-arena-results.md). Future strategy evaluations use **P02 and P18 in Arena only**, with local tests stopped.
-
-See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). `play` and `run` default to `--brain analytical`; the legacy agents remain explicitly selectable. Use `tacto-bayes` for bounded practice. `local` retains its model-free default.
-
-The implementation uses Entire's supported external-agent import to attach actual scoped Codex development records. Earlier unrelated history and credentials are excluded; original source-session IDs, timestamps and record hashes are preserved. See the provenance section of the setup guide. Commit trailers and remote checkpoint refs are verified after publishing.
+Team contributor: [IlyaKats2005](https://github.com/IlyaKats2005).
