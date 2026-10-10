@@ -124,6 +124,8 @@ def data_anchors(case, th, current):
     pay = [d for d in opts.get("payment_days", []) if d >= case["buyer"]["reference_payment_days"]]
     if "payment_days" in fields and pay:
         best["payment_days"] = max(pay)  # never pay earlier than our reference for free
+    if "effective_date" in fields and opts.get("effective_date"):
+        best["effective_date"] = max(opts["effective_date"])  # the current price for longer (P01: +5 months)
     months = 12 * case["buyer"]["horizon_years"]
     if "contract_months" in fields and months in opts.get("contract_months", []):
         best["contract_months"] = months  # cover the horizon, no more
@@ -194,8 +196,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                "price: payment days, lead time and quality change the total. Do not close while "
                                "a supplier that has not yet seen the best rival offer is still open.",
             "lock_in": "Accept a supplier's live offer when it is the best complete offer on the table AND either "
-                       "its last step was 5 % or more, or its price is within 3 % of our last offer "
-                       "(supplier.closeness). A supplier that has just made a big step is at its limit: one more "
+                       "its last step was 5 % or more, or - only with several suppliers or at most three moves "
+                       "left - its price is within 3 % of our last offer (supplier.closeness). With one supplier "
+                       "and moves left, a 1-2 % step is ordinary bargaining, not its limit (P01: accepted at "
+                       "round 2 of 10, 0.51). A supplier that has just made a big step is at its limit: one more "
                        "push made it walk away (P05: 28.00 refused, 27.20 asked, supplier withdrew). This rule "
                        "outranks the 'do not accept while open' guidance.",
             "index_trade": "An index clause whose deadband is at least the case's expected index move "
@@ -205,6 +209,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                            "price (P02: 361.00 / 90 days / copper clause with deadband 5 was agreed at once = 0.73, "
                            "while every price-only or payment-step path ended near 0.4). A clause with a deadband "
                            "below the expected move costs us the move itself - avoid it.",
+            "effective_date": "When effective_date is negotiable, every month later keeps the CURRENT (lower) "
+                              "price on that month's volume - in a price increase usually the most valuable lever. "
+                              "Ask for the latest option from the first counter on and keep it; a letter giving "
+                              "less notice than the contract requires is the argument for it (P01: the latest "
+                              "date was worth about 27 k EUR, ~0.47 of the score).",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
