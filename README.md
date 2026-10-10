@@ -65,19 +65,3 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 ## Team contributors
 
 - [IlyaKats2005](https://github.com/IlyaKats2005)
-
-## Analytical negotiation agent
-
-`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v8.2 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
-
-Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
-
-V8 corrects false acceptance labels, records terminal walkouts, reconstructs behavioural learning, and enables Astra-authored supplier replies with exact fixed facts. It presents next-action gains, losses and final-offer evidence before the final choice, and gates sustainability concerns by the case objective. See [the v8 implementation](docs/evaluation/v8-decision-feedback.md). The two evaluation pairs scored P02 0.000 then 0.255, and P18 0.273 twice. Neither exceeded its previous best. V8.2 subsequently adds forecast and neutral cost-driver retrieval and has **not yet been evaluated in Arena**. No local tests ran. See [all scores and the evidence-access diagnosis](docs/evaluation/v81-arena-results.md).
-
-V7 preserves original should-cost evidence, separates production-cost estimates from acceptance behaviour, and calibrates supplier economics using completed practice cost breakdowns. It includes higher-price sustainability alternatives and explicit downside comparisons. See [the implementation and assumptions](docs/evaluation/v7-supplier-economics.md). No local tests are run for this update.
-
-V7's two hosted runs were mixed: **P02 improved to 0.255** (previous best 0.157), while **P18 scored 0** after Astra countered a final offer and the supplier walked away (previous best 0.340). P02's relationship-cost forecast error fell to €150 on the observed deal. See [the actual v7 results and remaining weaknesses](docs/evaluation/v7-arena-results.md), [the v6 P02 diagnosis](docs/evaluation/v6-p02-arena.md), and [the earlier hosted evaluation](docs/evaluation/v51-arena-results.md). Future strategy evaluations use **P02 and P18 in Arena only**, with local tests stopped.
-
-See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). `play` and `run` default to `--brain analytical`; the legacy agents remain explicitly selectable. Use `tacto-bayes` for bounded practice. `local` retains its model-free default.
-
-The implementation uses Entire's supported external-agent import to attach actual scoped Codex development records. Earlier unrelated history and credentials are excluded; original source-session IDs, timestamps and record hashes are preserved. See the provenance section of the setup guide. Commit trailers and remote checkpoint refs are verified after publishing.
