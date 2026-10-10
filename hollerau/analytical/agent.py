@@ -1,4 +1,4 @@
-"""Python selects full deals; Qwen interprets evidence and supplies bounded prose."""
+"""Astra proposes and reviews full deals; Python validates and prices every choice."""
 
 import hashlib
 import json
@@ -21,7 +21,7 @@ from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v4-integrated"
+POLICY_VERSION = "bayes-v5-astra"
 
 
 class AnalyticalAgent:
@@ -104,6 +104,10 @@ class AnalyticalAgent:
             )
             dossier = intel.build(case, sid, self.package, reference["unit_price"])
             sup = intel.estimate(case, dossier, {**reference, **std}, reference["unit_price"], Params())
+            facts = {**(self.package.facts if self.package else {}), **case.get("facts", {})}
+            cost_fact = facts.get(dossier.cost_ref, {})
+            sup["cost_uncertainty_pct"] = cost_fact.get("confidence_pct", 10)
+            sup["has_should_cost"] = bool(dossier.cost_ref)
             seed = int(hashlib.sha256(sid.encode()).hexdigest()[:8], 16)
             beliefs = Beliefs(
                 case,
@@ -136,6 +140,9 @@ class AnalyticalAgent:
                 last_reply_terms=None,
                 last_supplier_terms=dict(reference),
                 critic_candidates=[],
+                analyst_candidates=[],
+                indicative_candidates=[],
+                interpretation_failed=False,
                 planning_anchor=None,
                 planning_moves=case.get("round_limit", 10),
             )
@@ -182,11 +189,14 @@ class AnalyticalAgent:
                     th.beliefs.capacity_reference = offered["volume_per_year"]
                 self.log("coefficients", th.beliefs.snapshot(), sid)
             th.last_outcome = outcome
+            before = th.last_supplier_terms
+            same_package = all(offered.get(k) == before.get(k) for k in case["negotiable"] if k != "unit_price")
+            small_move = abs(offered.get("unit_price", 0) - before.get("unit_price", 0)) <= (
+                0.002 * max(0.01, before.get("unit_price", 0))
+            )
+            th.stagnation = th.stagnation + 1 if outcome == "counter" and same_package and small_move else 0
             if offered.get("unit_price"):
                 th.last_supplier_terms = dict(offered)
-            canonical = json.dumps([x.get("terms", {}) for x in reply.get("term_sheets", [])], sort_keys=True)
-            th.stagnation = th.stagnation + 1 if canonical == th.last_reply_terms and outcome == "counter" else 0
-            th.last_reply_terms = canonical
             self.store.save_learning(sid, case["buyer"].get("category_goal", "unknown"), th.beliefs.export_learning())
             th.pending = None
 
@@ -198,6 +208,8 @@ class AnalyticalAgent:
 
     def valid(self, case, th, terms):
         if not isinstance(terms, dict):
+            return False
+        if set(terms) - set(case["negotiable"]) - set(th.std) - set(case.get("fixed_terms", {})):
             return False
         for field, value in terms.items():
             if isinstance(value, (int, float)) and (isinstance(value, bool) or not math.isfinite(value)):
@@ -217,6 +229,18 @@ class AnalyticalAgent:
             if field != "unit_price" and options and value not in options and value != th.std.get(field):
                 return False
         return True
+
+    def approved_proposals(self, case, th, proposals, current):
+        approved = []
+        quote = current.get("unit_price") or th.reference["unit_price"]
+        for terms in proposals[:3]:
+            try:
+                if (isinstance(terms, dict) and set(terms) == set(case["negotiable"])
+                        and self.valid(case, th, terms) and 0.5 * quote <= terms["unit_price"] <= 1.2 * quote):
+                    approved.append(terms)
+            except (TypeError, ValueError, KeyError, ArithmeticError):
+                continue
+        return approved
 
     def alternatives(self, case):
         alt = case["buyer"].get("alternative") or {}
@@ -300,26 +324,14 @@ class AnalyticalAgent:
                 if key in seen or not self.valid(case, th, terms):
                     continue
                 value = th.beliefs.value(terms, center)
-                # A refusal must lead to a genuine concession or a compensating package change.
-                if previous and (
+                # Same-package price moves must progress. Different packages may explore
+                # uncertain trade-offs; they are priced for walk-away risk, not hard-pruned.
+                package_changed = previous and any(terms.get(k) != previous.get(k) for k in terms if k != "unit_price")
+                if previous and not package_changed and (
                     value < previous_value - 0.01
                     or (th.last_outcome == "counter" and value < previous_value + max(0.01, quote * 0.002))
                 ):
                     continue
-                if (
-                    previous
-                    and th.last_outcome == "counter"
-                    and any(terms.get(k) != previous.get(k) for k in terms if k != "unit_price")
-                ):
-                    # A package switch must be a concession in plausible supplier
-                    # worlds, not just at the mean of uncertain preference weights.
-                    reversal_mass = sum(
-                        p.weight
-                        for p in th.beliefs.particles
-                        if th.beliefs.value(terms, p) < th.beliefs.value(previous, p) + max(0.01, quote * 0.002)
-                    )
-                    if reversal_mass > 0.1:
-                        continue
                 seen.add(key)
                 cost = total_cost(case, terms, th.std, th.sup)
                 probs = th.beliefs.probabilities(terms, center, quote)
@@ -327,8 +339,9 @@ class AnalyticalAgent:
                 row = (terms, cost, probs["accept"], surrogate)
                 candidates.append(row)
                 package_rows[package_key].append(row)
+        extra = th.analyst_candidates + th.critic_candidates + th.indicative_candidates
         if len(candidates) <= 1200:
-            return [r[0] for r in candidates] + th.critic_candidates
+            return list({json.dumps(t, sort_keys=True): t for t in [r[0] for r in candidates] + extra}.values())
         # Preselection is needed only for very large grids. Preserve the strongest central
         # expected-value options, plus cheap and high-acceptance alternatives for uncertainty.
         chosen = sorted(candidates, key=lambda r: r[3])[:600]
@@ -348,7 +361,7 @@ class AnalyticalAgent:
         chosen.extend(sorted(candidates, key=lambda r: (-coverage(r), r[1]))[:150])
         chosen.extend(representatives[:150])
         unique = {json.dumps(r[0], sort_keys=True): r[0] for r in chosen}
-        return list(unique.values()) + th.critic_candidates
+        return list(unique.values()) + extra
 
     def available(self, case, threads, fallback, include_indicative=False):
         available = []
@@ -388,6 +401,7 @@ class AnalyticalAgent:
         for index, note in enumerate(th.dossier.notes[-6:]):
             sources[f"note:{index}"] = note
         if self.router.enabled:
+            current = standing(events)[1] or th.reference
             analysis = self.router.analyse(
                 sources,
                 [],
@@ -395,11 +409,28 @@ class AnalyticalAgent:
                 case["negotiable"],
                 allow_escalation=False,
                 term_options=case.get("term_options", {}),
+                context={
+                    "case": {k: case.get(k) for k in ("type", "title", "buyer", "fixed_terms")},
+                    "current_terms": current,
+                    "previous_buyer_terms": th.last_terms,
+                    "supplier_term_sheets": latest(events).get("term_sheets", []),
+                    "remaining_moves": moves_left(case, events),
+                    "stagnant_replies": th.stagnation,
+                    "uncertain_estimates": th.beliefs.summary(),
+                    "current_cost_at_estimate": cost_breakdown(case, current, th.std, th.sup),
+                },
             )
         else:
             analysis = {"fallback": True, "signals": [], "interpretations": []}
         applied = th.beliefs.apply_evidence(analysis.get("signals", []))
         current = standing(events)[1] or th.reference
+        th.interpretation_failed = bool(analysis.get("fallback") or analysis.get("validation_errors"))
+        th.analyst_candidates = self.approved_proposals(case, th, analysis.get("alternative_terms", []), current)
+        th.indicative_candidates = self.approved_proposals(
+            case, th, [complete_offer(case, s.get("terms", {})) for s in latest(events).get("term_sheets", [])[1:]],
+            current,
+        )
+        th.critic_candidates = []  # stale proposals must not survive a changed supplier reply
         conditions = extract_explicit_conditions(sources, case, current) + analysis.get("conditions", [])
         added = th.beliefs.apply_conditions(conditions)
         if standing(events)[0]:
@@ -470,6 +501,8 @@ class AnalyticalAgent:
             shortlist = rows[:12] + sorted(rows, key=lambda r: r["deal_cost"])[:6]
             shortlist += sorted(rows, key=lambda r: -r["probabilities"]["accept"])[:6]
             shortlist += sorted(rows, key=lambda r: r["screen_objective"])[:12]
+            extras = th.analyst_candidates + th.critic_candidates + th.indicative_candidates
+            shortlist += [r for r in rows if r["terms"] in extras]
             rows = list({json.dumps(r["terms"], sort_keys=True): r for r in shortlist}.values())
             for row in rows:
                 future = counter_costs(case, th, row["terms"], current, lambda t: self.valid(case, th, t), fallback)
@@ -511,17 +544,21 @@ class AnalyticalAgent:
         expensive = chosen["deal_cost"] > self.weighted(th, self.cost_samples(case, th, current)) * 1.005
         # A quality opening also merits review: it can hand away quality cheaply before learning.
         if not (
-            (accepting and th.last_terms is None)
+            accepting
             or conditional
             or expensive
             or ("ppm_commitment" in case["negotiable"] and th.last_terms is None)
+            or th.last_terms is None
+            or th.stagnation > 0
+            or th.interpretation_failed
+            or bool(th.indicative_candidates)
+            or chosen["probabilities"].get("accept", 0) < 0.10
         ):
             return ranked, best
         if deadline - time.monotonic() < 8:
             return ranked, best
-        # At most one large-model call per turn, including a preceding ambiguity escalation.
-        large_models = {getattr(self.router, "large", None), getattr(self.router, "review_model", None)}
-        if any(c.get("model") in large_models for c in self.router.calls):
+        # The same model has two distinct roles. A negotiator call must not suppress its reviewer.
+        if any(c.get("role") == "strategic_review" for c in self.router.calls):
             return ranked, best
         packages = [
             {
@@ -544,25 +581,14 @@ class AnalyticalAgent:
                 "standing": {"terms": best[3], "cost_eur": best[0]} if best else None,
                 "remaining_moves": th.planning_moves,
                 "beliefs": th.beliefs.summary(),
+                "previous_buyer_terms": th.last_terms,
+                "supplier_indicative_alternatives": th.indicative_candidates,
+                "stagnant_replies": th.stagnation,
             },
             deadline,
         )
         added = th.beliefs.apply_conditions(review.get("conditions", []))
-        approved = []
-        for terms in review.get("alternative_terms", []):
-            if set(terms) == set(case["negotiable"]) and self.valid(case, th, terms):
-                # Critics cannot introduce an unbounded price jump or reverse a genuine concession.
-                price = current.get("unit_price") or th.reference["unit_price"]
-                delta = (
-                    self.weighted(
-                        th,
-                        [th.beliefs.value(terms, p) - th.beliefs.value(th.last_terms, p) for p in th.beliefs.particles],
-                    )
-                    if th.last_terms
-                    else 1
-                )
-                if 0.5 * price <= terms["unit_price"] <= 1.2 * price and delta >= 0.01:
-                    approved.append(terms)
+        approved = self.approved_proposals(case, th, review.get("alternative_terms", []), current)
         th.critic_candidates = approved
         self.log("critic", {"result": review, "approved_candidates": approved, "applied_conditions": added}, sid)
         if (added or approved) and deadline - time.monotonic() > 3:
@@ -572,7 +598,7 @@ class AnalyticalAgent:
 
     def decide(self, case, threads):
         started = time.monotonic()
-        deadline = started + 40
+        deadline = started + 52  # stays below Arena's 60-second move limit, including two bounded calls
         if self.case_id != case["case_id"]:
             self.start(case, threads)
         self.turn += 1
@@ -660,6 +686,10 @@ class AnalyticalAgent:
             self.log("decision", {"action": decision, "reason": "no feasible candidate"}, sid)
             return decision
         chosen = ranked[0]
+        # Allow one bounded outreach to each RFQ supplier before discarding its negotiation.
+        # This cannot justify an invalid offer or a high estimated walk-away probability.
+        explore = (case.get("type") == "rfq" and th.last_terms is None and len(threads) > 1
+                   and chosen["probabilities"]["walk"] < 0.08 and chosen["deal_cost"] < fallback)
         self.log(
             "plan",
             {
@@ -694,7 +724,7 @@ class AnalyticalAgent:
             )
             self.router.calls = []
             return decision
-        if best and chosen["objective"] >= best[0] - max(0.01, best[0] * 0.0001):
+        if best and not explore and chosen["objective"] >= best[0] - max(0.01, best[0] * 0.0001):
             if len(actionable) > 1 and deadline - time.monotonic() > 3:
                 self.parked.add(sid)
                 self.log("park", {"reason": "check remaining suppliers before accepting"}, sid)
@@ -718,6 +748,8 @@ class AnalyticalAgent:
         ):
             intro, question = a, b
         terms = chosen["terms"]
+        if terms in th.indicative_candidates:
+            question = "Please confirm this alternative as your standing offer so we can conclude on these terms."
         alternate = equivalent_alternative(self, case, th, terms)
         offers = [terms] + ([alternate] if alternate else [])
         if alternate:
@@ -758,7 +790,9 @@ class AnalyticalAgent:
             raise ValueError("outgoing message failed validation")
         for c in claims:
             th.used.update(c.refs)
-        th.repeats = th.repeats + 1 if terms["unit_price"] == th.last_price else 0
+        similar = th.last_terms and all(terms.get(k) == th.last_terms.get(k) for k in terms if k != "unit_price")
+        similar = similar and abs(terms["unit_price"] - th.last_price) <= current["unit_price"] * 0.005
+        th.repeats = th.repeats + 1 if similar else 0
         th.last_price = terms["unit_price"]
         th.last_terms = terms
         th.pending = {

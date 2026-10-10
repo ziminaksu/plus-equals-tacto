@@ -4,6 +4,21 @@ import json
 import re
 
 
+def explicit_requirement(quote):
+    """Conservative admission gate: acceptance of our package is not a requirement.
+
+    This is not a general natural-language entailment proof. Unrecognised or negated
+    demands remain ordinary quoted evidence and can be clarified with the supplier.
+    """
+    if re.search(r"\b(?:do not|don't|does not|doesn't|not|never|no longer)\s+(?:need|require|insist)", quote, re.I):
+        return False
+    return bool(re.search(
+        r"\brequir(?:e|es|ed)\b|\bmust\b|\bmandatory\b|\bonly (?:if|with)\b|"
+        r"\bprovided (?:that|we)\b|\bconditional on\b|\b(?:cannot|can't) (?:offer )?fix\b|"
+        r"\b(?:cannot|can't|will not|won't)\b.{0,65}\bwithout\b", quote, re.I,
+    ))
+
+
 def validate_conditions(items, sources, negotiable, options=None):
     if not isinstance(items, list) or len(items) > 6:
         raise ValueError("invalid supplier conditions")
@@ -26,6 +41,8 @@ def validate_conditions(items, sources, negotiable, options=None):
                 allowed = (options or {}).get(field)
                 if not allowed or value not in allowed:
                     raise ValueError("condition value is not permitted")
+        if not explicit_requirement(quote):
+            raise ValueError("quote does not state an explicit requirement")
         valid.append({"source_id": ref, "quote": quote, "when": when, "requires": requires})
     return valid
 

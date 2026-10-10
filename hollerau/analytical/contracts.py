@@ -1,0 +1,64 @@
+"""Case-specific structured outputs for the two Astra roles."""
+
+
+def obj(properties):
+    return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
+
+
+def enum_values(values):
+    # Object enums are represented as strict objects whose scalar fields are enums.
+    # Python subsequently validates the exact allowed combination, not just each field.
+    variants = []
+    for value in values:
+        if isinstance(value, dict):
+            variants.append(obj({k: enum_values([v]) for k, v in value.items()}))
+        else:
+            kind = "null" if value is None else "boolean" if isinstance(value, bool) else (
+                "number" if isinstance(value, (int, float)) else "string"
+            )
+            variants.append({"type": kind, "enum": [value]})
+    return variants[0] if len(variants) == 1 else {"anyOf": variants}
+
+
+def decision_schema(case, review=False):
+    text = {"type": "string"}
+    fields = {}
+    predicates = []
+    for field in case.get("negotiable", []):
+        options = case.get("term_options", {}).get(field)
+        fields[field] = enum_values(options) if options else {"type": "number"}
+        if field != "unit_price" and options:
+            values = options + (["present"] if field == "index_clause" else [])
+            predicates.append(obj({"field": {"type": "string", "enum": [field]}, "value": enum_values(values)}))
+    predicate = {"anyOf": predicates} if predicates else obj({"field": text, "value": text})
+    condition = obj({
+        "source_id": text, "quote": text,
+        "when": {"type": "array", "items": predicate},
+        "requires": {"type": "array", "items": predicate},
+    })
+    properties = {
+        "conditions": {"type": "array", "items": condition},
+        "alternative_terms": {"type": "array", "items": obj(fields)},
+    }
+    if review:
+        properties["issues"] = {"type": "array", "items": obj({"source_id": text, "quote": text, "explanation": text})}
+    else:
+        properties.update({
+            "interpretations": {"type": "array", "items": obj({"claim": text, "source_id": text, "quote": text})},
+            "signals": {"type": "array", "items": obj({"kind": text, "source_id": text, "quote": text})},
+            "ambiguities": {"type": "array", "items": text},
+            "intro": text, "question": text,
+        })
+    return obj(properties)
+
+
+def decode_conditions(output):
+    """Convert strict predicate arrays to the internal equality maps."""
+    for condition in output.get("conditions", []):
+        for key in ("when", "requires"):
+            values = condition.get(key)
+            if isinstance(values, list):
+                if len({v["field"] for v in values}) != len(values):
+                    raise ValueError("duplicate condition predicate")
+                condition[key] = {v["field"]: v["value"] for v in values}
+    return output

@@ -58,6 +58,8 @@ def main(argv=None):
     ap.add_argument("--run-id", required=True, help="reuse the same ID on restart; reserved attempts count")
     ap.add_argument("--db", default="hollerau/logs/analytical.sqlite")
     ap.add_argument("--offline-llm", action="store_true", help="explicit template-only test mode")
+    ap.add_argument("--primary", choices=["astra", "qwen"], default=os.environ.get("ANALYTICAL_PRIMARY", "astra"))
+    ap.add_argument("--reviewer", choices=["astra", "primary"], default=os.environ.get("STRATEGIC_REVIEWER", "astra"))
     ap.add_argument("--price-pressure", type=float, default=0.0, help="experimental offer-ranking reward, 0..0.4")
     args = ap.parse_args(argv)
     if (
@@ -71,8 +73,13 @@ def main(argv=None):
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", args.run_id):
         ap.error("run-id must contain only letters, digits, underscore or hyphen")
     openai_ready = os.environ.get("LLM_PROVIDER") == "openai" and bool(os.environ.get("LLM_API_KEY"))
-    if not args.offline_llm and not (os.environ.get("HF_TOKEN") or openai_ready):
-        ap.error("configure HF_TOKEN or LLM_PROVIDER=openai with LLM_API_KEY; no Arena session started")
+    ready = bool(os.environ.get("OPENAI_API_KEY")) if args.primary == "astra" else (
+        bool(os.environ.get("HF_TOKEN")) or openai_ready
+    )
+    if not args.offline_llm and not ready:
+        ap.error("configure credentials for the selected primary model; no Arena session started")
+    if not args.offline_llm and args.reviewer == "astra" and not os.environ.get("OPENAI_API_KEY"):
+        ap.error("Astra reviewer requires OPENAI_API_KEY; no Arena session started")
     package = DataPackage(os.environ.get("ARENA_DATA", "data/package"))
     package.lookup("")
     store = Store(args.db)
@@ -86,9 +93,11 @@ def main(argv=None):
             "cases": args.cases,
             "max_sessions": args.max_sessions,
             "price_pressure": args.price_pressure,
+            "primary": args.primary,
+            "reviewer": args.reviewer,
         },
     )
-    router = Router(enabled=not args.offline_llm)
+    router = Router(enabled=not args.offline_llm, primary=args.primary, reviewer=args.reviewer)
     client = ArenaClient(retries=0)  # never retry an ambiguous session start automatically
     available = {c["case_id"] for c in hosted(client.cases("practice"))}
     if not set(args.cases) <= available:
@@ -97,6 +106,10 @@ def main(argv=None):
     for case_id in args.cases:
         # Persist BEFORE the HTTP request; an unknown outcome still consumes this allowance.
         store.reserve(args.run_id, case_id, args.max_sessions)
+        # A transient failure in one supplier session must not disable the reviewer
+        # for the next case. Each case still has a two-failure circuit, no retries.
+        router.review_failures = 0
+        router.large_failures = 0
         agent = AnalyticalAgent(package, store, router, args.run_id, price_pressure=args.price_pressure)
         table = LoggedTable(client, store, args.run_id, agent)
         try:

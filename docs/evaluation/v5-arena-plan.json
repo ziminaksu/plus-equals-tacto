@@ -1,0 +1,23 @@
+{
+  "policy": "bayes-v5-astra",
+  "cases": [
+    "case:P02",
+    "case:P18"
+  ],
+  "max_sessions": 2,
+  "run_id": "ehl-v5-astra-two-20261010",
+  "baseline_scores": {
+    "case:P02": 0.15698901705979842,
+    "case:P18": 0.33963340207573
+  },
+  "selection": "Two lowest team best scores in the read-only Arena preflight; also two lowest latest v4 scores.",
+  "primary": "gpt-6-astra",
+  "reviewer": "gpt-6-astra",
+  "offline_validation": "21 focused tests passed; test case fixtures restricted to P02 and P18.",
+  "replay_limitations": "Saved opening inputs, fresh memory, paid models; not full games. P02 reviewer timed out at 20s; reviewer cap then raised to 25s, still within 52s decision deadline. P18 both roles returned valid outputs.",
+  "comparison_limitations": [
+    "One stochastic hosted run per case, no replacements.",
+    "Several policy changes together; no attribution of score changes to Astra alone.",
+    "Local replay is not a score benchmark."
+  ]
+}

@@ -65,10 +65,11 @@ def test_astra_and_qwen_use_separate_hosts_keys_and_output_protocols():
         assert body["model"] == ASTRA and body["store"] is False
         assert body["reasoning"] == {"effort": "medium"}
         assert body["max_output_tokens"] == 4096
-        assert body["text"] == {"format": {"type": "json_object"}}
+        assert body["text"]["format"]["type"] == "json_schema"
+        assert body["text"]["format"]["strict"] is True
         assert "json" in body["input"].lower()  # Required by the live Responses JSON-mode validator.
         assert not {"temperature", "max_tokens", "chat_template_kwargs", "tools"} & body.keys()
-        assert 0 < req.extensions["timeout"]["read"] <= 20
+        assert 0 < req.extensions["timeout"]["read"] <= 25
         return httpx.Response(200, json=response())
 
     router = Router("hf-test", httpx.MockTransport(handler), reviewer="astra", review_key="openai-test")
@@ -158,6 +159,7 @@ def test_offline_mode_disables_astra_even_with_a_key():
 
 def test_astra_configuration_does_not_replace_qwen(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "hf")
+    monkeypatch.setenv("ANALYTICAL_PRIMARY", "qwen")
     monkeypatch.setenv("HF_TOKEN", "hf-test")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-test")
     monkeypatch.setenv("STRATEGIC_REVIEWER", "astra")

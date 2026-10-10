@@ -76,6 +76,16 @@ class Beliefs:
             )
             for _ in range(count)
         ]
+        uncertainty = supplier.get("cost_uncertainty_pct", 10)
+        spread = min(0.5, max(0.01, float(uncertainty) / 100))
+        self.cost_prior_conflict = bool(supplier.get("has_should_cost") and supplier["full_cost"] > p)
+        for i, particle in enumerate(self.particles):
+            particle.full_cost = supplier["full_cost"] * extra_rng.uniform(1 - spread, 1 + spread)
+            if self.cost_prior_conflict and i % 2 == 0:
+                # Conflicting public evidence: a plant estimate above a voluntary quote.
+                # A labelled 50/50 sensitivity mixture retains loss-making hypotheses,
+                # while admitting that the external cost estimate may not apply here.
+                particle.full_cost = p * extra_rng.uniform(0.80, 0.99)
         # Pooled response assumptions, not coefficients learned from five sessions.
         self.walk_intercept = -5.0
         self.walk_pressure = 12.0 if self.signals["approval_ladder"] else 10.0
@@ -367,6 +377,10 @@ class Beliefs:
         out = {
             "version": self.version,
             "memory_source": self.memory_source,
+            "cost_prior_conflict": self.cost_prior_conflict,
+            "cost_prior_note": (
+                "50/50 should-cost and quote-implied sensitivity" if self.cost_prior_conflict else "standard"
+            ),
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
             "quality_prior_max_eur_per_1000ppm": round(self.quality_cost_max, 6),

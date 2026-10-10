@@ -39,7 +39,10 @@ def counter_costs(case, th, terms, current, valid, fallback, particles=None):
     """
     template = counter_template(case, th.beliefs, terms, current)
     costs = []
-    rate = th.beliefs.concession_rate
+    # Repeated near-identical counteroffers reduce the value of forecasting more
+    # concessions. The old forecast assumed several further replies were guaranteed.
+    rate = th.beliefs.concession_rate / (1 + th.stagnation)
+    final_hazard = min(0.75, 0.10 * th.beliefs.numeric_observations + 0.20 * th.stagnation)
     for p in th.beliefs.particles if particles is None else particles:
         old_value = th.beliefs.value(current, p)
         requested = th.beliefs.value(template, p)
@@ -68,7 +71,7 @@ def counter_costs(case, th, terms, current, valid, fallback, particles=None):
             future = path_costs[-1]
             for step in range(len(path_costs) - 2, -1, -1):
                 keep_negotiating = (1 - risks[step + 1]) * future + risks[step + 1] * fallback + fallback * 0.0003
-                future = min(path_costs[step], keep_negotiating)
+                future = final_hazard * path_costs[step] + (1 - final_hazard) * min(path_costs[step], keep_negotiating)
             replies.append(future)
         costs.append(sum(replies) / len(replies))
     return costs
