@@ -439,9 +439,14 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         for terms, origin in data_anchors(case, th, current):
             add_package(terms, origin)
         if th.last_terms and th.last_terms.get("unit_price"):
+            last_p = th.last_terms["unit_price"]
+            gap = max(0.0, ((current or {}).get("unit_price") or last_p) - last_p)
             for step in (1.004, 1.008, 1.012):  # small paced steps from our last price, same other terms
-                add_package({**th.last_terms, "unit_price": round(th.last_terms["unit_price"] * step, 2)},
+                add_package({**th.last_terms, "unit_price": round(last_p * step, 2)},
                             f"next step: +{round((step - 1) * 100, 1)} % on our last price")
+            if gap > last_p * 0.012:  # a big gap needs a bigger step: a quarter of the distance to its price
+                add_package({**th.last_terms, "unit_price": round(last_p + gap / 4, 2)},
+                            "next step: a quarter of the gap to its price")
         if keys:
             # Price discipline (free Gemini P11: opened at 46.50 against an ask of 47.00 and never got below;
             # the scripted 43.50 -> +0.4/+0.3/+0.25 ladder reached 45.50). First counter: data anchors at
@@ -459,7 +464,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                              and price_of(pid) <= ask * depth]
                     allowed = first or allowed
                 else:
-                    cap = min(th.last_terms.get("unit_price", ask) * 1.012, ask - 0.01)
+                    # +1.2 % or a quarter of the gap, whichever is larger (P08: a 4.84 opening capped at
+                    # +1.2 % per step never reached the supplier's 5.3-5.5 range and it closed at 5.58, 0.38)
+                    last_p = th.last_terms.get("unit_price", ask)
+                    cap = min(max(last_p * 1.012, last_p + (ask - last_p) / 4), ask - 0.01)
                     paced = [pid for pid in allowed if price_of(pid) <= cap]
                     allowed = paced or allowed
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
