@@ -181,7 +181,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
-            "rfq_competition": "With several suppliers, competition is the lever: cite a rival's live offer "
+            "rfq_competition": "walk_away ends the WHOLE case for every supplier; with several live "
+                               "suppliers it is not on the menu - simply stop answering a supplier you do not "
+                               "need and close with the best one. With several suppliers, competition is the lever: cite a rival's live offer "
                                "(rival_offer evidence) to each other supplier and ask for a better complete "
                                "package; repeat as the best offer improves. Compare complete costs, not unit "
                                "price: payment days, lead time and quality change the total. Do not close while "
@@ -291,7 +293,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             # Even an expensive deal is shown: cost is a decision for Astra, not a Python veto.
             board["actions"][f"{sid}:accept"] = {"supplier_id": sid, "kind": "accept",
                                                  "term_sheet_id": current_sheet["term_sheet_id"]}
-        board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
+        # walk_away ends the WHOLE case, every thread (P05: walking away from one RFQ supplier threw
+        # away another's 27.50 = ~0.87). Offer it only when this is the last live supplier.
+        if len(live_threads(threads)) == 1:
+            board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
         if latest(events).get("status") == "final_offer":
             standing_cost = supplier.get("standing", {}).get("expected_total_eur")
             supplier["final_offer_decision"] = {
@@ -450,6 +455,8 @@ def execute(agent, case, threads, board, selection):
             raise ValueError("invalid standing offer")
         message = {"action": {"type": "accept", "term_sheet_id": action["term_sheet_id"]}}
     elif kind == "walk_away":
+        if len(live_threads(threads)) > 1:
+            raise ValueError("walk_away would end every live thread of this case")
         message = {"action": {"type": "walk_away"}}
     else:
         offers = []
