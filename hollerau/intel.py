@@ -348,6 +348,10 @@ def build(case, supplier_id, package=None, asked_price=None):
         i = intel[0]
         if (i.get("equity_ratio_pct") or 100) < 15 or (i.get("credit_index") or 0) - (i.get("credit_index_12m_ago") or 0) > 15:
             d.cash_short = True
+    # A supplier whose material is hedged answers index arguments with "that fall does not reach our
+    # cost" (P08). With a hedge on record, index moves are not its reality either way: argue the hedge.
+    if any(c.kind == "cost_hedged" for c in d.claims):
+        d.claims = [c for c in d.claims if c.kind not in ("index", "index_peak")]
     d.claims.sort(key=lambda c: -c.strength)
     return d
 
