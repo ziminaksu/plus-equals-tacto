@@ -57,8 +57,9 @@ def main(argv=None):
         or len(set(args.cases)) != len(args.cases)
     ):
         ap.error("choose distinct cases, at most five and within --max-sessions")
-    if not args.offline_llm and not os.environ.get("HF_TOKEN"):
-        ap.error("HF_TOKEN is required; no Arena session started")
+    openai_ready = os.environ.get("LLM_PROVIDER") == "openai" and bool(os.environ.get("LLM_API_KEY"))
+    if not args.offline_llm and not (os.environ.get("HF_TOKEN") or openai_ready):
+        ap.error("configure HF_TOKEN or LLM_PROVIDER=openai with LLM_API_KEY; no Arena session started")
     package = DataPackage(os.environ.get("ARENA_DATA", "data/package"))
     package.lookup("")
     store = Store(args.db)
