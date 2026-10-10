@@ -1,11 +1,14 @@
 """Joint weighted supplier scenarios; explicit priors, no LLM-assigned probabilities."""
 
 import hashlib
+import json
 import math
 import random
 from dataclasses import asdict, dataclass
 
 from arena_kit.cost import closing_terms, supplier_value
+
+from .preferences import violated
 
 
 def sigmoid(x):
@@ -22,6 +25,8 @@ class Particle:
     b_capacity: float
     b_quality: float
     weight: float
+    b_index: float = 0.0
+    b_volume: float = 0.0
 
 
 class Beliefs:
@@ -37,16 +42,21 @@ class Beliefs:
         self.capacity_reference = reference.get("volume_per_year") if case.get("type") == "capacity" else None
         p = reference["unit_price"]
         rng = random.Random(seed)
+        extra_rng = random.Random(seed ^ 0x1D3E)
         # Full production cost and acceptance threshold are different uncertain variables.
         floor = supplier["full_cost"] / 0.94
         center = min(p * 0.97, max(p * 0.80, floor))
         self.tau = max(0.01, p * 0.025)
-        payment_max = p * (0.060 if self.signals["cash_short"] else 0.035)
+        # b_pay is EUR per unit for *30 days* earlier payment. Start from an
+        # uncertain annual financing rate and convert it to that unit.
+        payment_max = p * (0.30 if self.signals["cash_short"] else 0.18) * 30 / 360
         term_min, term_max = (-p * 0.005, p * 0.040) if self.signals["wants_partnership"] else (-p * 0.020, p * 0.025)
         capacity_min, capacity_max = (1.0, 6.0) if self.signals["spare_capacity"] else (3.0, 15.0)
         self.particles = [
             Particle(
-                rng.uniform(center * 0.94, min(p * 1.015, center * 1.06)),
+                # Public should-costs have material estimation error, and a quote-based
+                # substitute is weaker still. Do not rule out lower floors a priori.
+                rng.uniform(center * 0.85, min(p * 1.015, center * 1.10)),
                 rng.uniform(0, payment_max),
                 rng.uniform(term_min, term_max),
                 rng.uniform(0, p * 0.02),
@@ -54,6 +64,8 @@ class Beliefs:
                 rng.uniform(capacity_min, capacity_max),
                 rng.uniform(0, p * 0.02),
                 1 / count,
+                extra_rng.uniform(0, p * 0.04),
+                extra_rng.uniform(0, p * (0.04 if self.signals["spare_capacity"] else 0.01)),
             )
             for _ in range(count)
         ]
@@ -67,6 +79,25 @@ class Beliefs:
         self.accept_bias = 0.0
         self.learned_observations = 0
         self.memory_source = None
+        self.conditions = []
+        self.numeric_seen = set()
+        self.numeric_observations = 0
+        self.concession_rate = 0.20
+        self.cost_checks = set()
+        self.condition_version = 0
+        self.standing_terms = dict(reference)
+        self.choice_seen = set()
+
+    @staticmethod
+    def index_protection(terms):
+        clause = terms.get("index_clause")
+        if not clause:
+            return 0.0
+        return (
+            clause["material_share"]
+            * max(0, 1 - clause["deadband_pct"] / 10)
+            * min(3, terms.get("contract_months", 12) / 12)
+        )
 
     def value(self, terms, particle):
         c, ref = self.case, self.reference
@@ -80,12 +111,25 @@ class Beliefs:
             + particle.b_term * (t["contract_months"] - ref["contract_months"]) / 12
             + particle.b_flex * (t["lead_time_days"] - ref["lead_time_days"]) / 7
             - particle.b_quality * max(0, (ref.get("ppm_commitment") or 0) - (t.get("ppm_commitment") or 0)) / 1000
+            + particle.b_index * (self.index_protection(t) - self.index_protection(ref))
+            + particle.b_volume
+            * (t["volume_per_year"] / max(1, ref["volume_per_year"]) - 1)
+            * min(2, t["contract_months"] / 12)
         )
 
     def probabilities(self, terms, particle, quote, repeats=0):
-        gap = max(0, (quote - terms["unit_price"]) / max(quote, 0.01))
+        # Price alone overstates pressure when payment or freight compensates the supplier.
+        old_value = self.value(self.standing_terms, particle)
+        offered_value = self.value(terms, particle)
+        gap = max(0, (old_value - offered_value) / max(quote, 0.01))
         walk = sigmoid(self.walk_intercept + self.walk_pressure * gap + self.walk_repeat * repeats)
-        accept = (1 - walk) * sigmoid((self.value(terms, particle) - particle.r) / self.tau + self.accept_bias)
+        # Reservation value is a possible eventual agreement, not immediate willingness
+        # to accept. Estimate the next ask from observed concessions, separately from r.
+        threshold = max(particle.r, old_value - self.concession_rate * max(0, old_value - particle.r))
+        accept = (1 - walk) * sigmoid((offered_value - threshold) / self.tau + self.accept_bias)
+        t = closing_terms(self.case, terms, self.supplier["standard"])
+        if any(violated(t, c) for c in self.conditions):
+            accept *= 0.08  # a sourced negotiating condition is strong, but not a physical law
         if self.capacity_reference:
             volume = closing_terms(self.case, terms, self.supplier["standard"])["volume_per_year"]
             uplift = max(0, volume / self.capacity_reference - 1)
@@ -98,6 +142,92 @@ class Beliefs:
             accept *= math.exp(-particle.b_capacity * uplift)
         return {"accept": accept, "counter": 1 - walk - accept, "walk": walk}
 
+    def apply_conditions(self, conditions):
+        old = {json.dumps([c["when"], c["requires"]], sort_keys=True) for c in self.conditions}
+        added = []
+        for condition in conditions:
+            key = json.dumps([condition["when"], condition["requires"]], sort_keys=True)
+            if key not in old:
+                self.conditions.append(condition)
+                old.add(key)
+                added.append(condition)
+        if added:
+            self.condition_version += 1
+        return added
+
+    def check_cost_consistency(self, terms):
+        """A voluntary quote is weak evidence against a very high production-cost estimate.
+
+        Keep loss-making hypotheses: quotes are not proof of profitability. Dedupe by
+        package, and limit the total number of such updates in a negotiation.
+        """
+        # Every new executable quote constrains reservation value, even after the limited
+        # production-cost updates have been exhausted.
+        for part in self.particles:
+            part.r = min(part.r, self.value(terms, part))
+        key = json.dumps(terms, sort_keys=True)
+        if key in self.cost_checks or len(self.cost_checks) >= 3:
+            return
+        self.cost_checks.add(key)
+        cash = supplier_value(self.case, terms, self.supplier)
+        for part in self.particles:
+            part.weight *= (0.30 + 0.70 * sigmoid((cash - part.full_cost) / (self.tau * 1.5))) ** 0.5
+        self.normalise()
+
+    def normalise(self):
+        total = sum(p.weight for p in self.particles)
+        for p in self.particles:
+            p.weight /= total
+
+    def learn_counteroffer(self, event_id, previous, offered, proposed):
+        """Learn soft trade-offs from public counteroffers; never treat an ask as a floor."""
+        if event_id in self.numeric_seen or not offered.get("unit_price"):
+            return False
+        self.numeric_seen.add(event_id)
+        before = previous or self.reference
+        rates = []
+        for p in self.particles:
+            old, now, ask = self.value(before, p), self.value(offered, p), self.value(proposed, p)
+            gap = max(self.tau, old - ask)
+            rates.append(max(0, min(0.6, (old - now) / gap)))
+            # Upper-bound evidence only: a quoted package is usually above reservation value.
+            upper = max(0.10, sigmoid((now - p.r) / self.tau))
+            # A price decrease traded for payment/duration/etc. should roughly conserve value,
+            # allowing wide error for discretionary concessions and strategic posturing.
+            expected = old - self.concession_rate * max(0, old - ask)
+            residual = (now - expected) / (self.tau * 2)
+            trade = max(0.20, math.exp(-0.5 * min(16, residual * residual)))
+            p.weight *= (upper * trade) ** 0.25
+        self.normalise()
+        observed = sum(p.weight * v for p, v in zip(self.particles, rates, strict=True))
+        self.concession_rate = 0.5 * self.concession_rate + 0.5 * observed
+        self.numeric_observations += 1
+        self.check_cost_consistency(offered)
+        self.standing_terms = dict(offered)
+        # Directly contradictory behaviour weakens a textual condition: remove it when the
+        # supplier itself quotes a package violating that condition.
+        self.reconcile_conditions(offered)
+        return True
+
+    def learn_choice(self, event_id, chosen, alternatives):
+        """A clearly echoed package is noisy evidence about relative preferences."""
+        if event_id in self.choice_seen or len(alternatives) < 2:
+            return False
+        self.choice_seen.add(event_id)
+        for p in self.particles:
+            chosen_value = self.value(chosen, p)
+            other_value = max(self.value(t, p) for t in alternatives if t != chosen)
+            p.weight *= max(0.1, sigmoid((chosen_value - other_value) / (self.tau * 0.5))) ** 0.5
+        self.normalise()
+        return True
+
+    def reconcile_conditions(self, offered):
+        t = closing_terms(self.case, offered, self.supplier["standard"])
+        kept = [c for c in self.conditions if not violated(t, c)]
+        if len(kept) != len(self.conditions):
+            self.conditions = kept
+            self.condition_version += 1
+
     def update(self, event_id, offers, outcome, quote, repeats=0):
         if event_id in self.seen or not offers:
             return False
@@ -105,7 +235,10 @@ class Beliefs:
             raise ValueError("unknown outcome")
         self.seen.add(event_id)
         predicted = {
-            k: sum(p.weight * self.probabilities(offers[0], p, quote, repeats)[k] for p in self.particles)
+            k: sum(
+                p.weight * self.probabilities(max(offers, key=lambda t: self.value(t, p)), p, quote, repeats)[k]
+                for p in self.particles
+            )
             for k in ("accept", "walk")
         }
         for part in self.particles:
@@ -165,24 +298,29 @@ class Beliefs:
 
     def export_learning(self):
         price = self.reference["unit_price"]
-        fields = ("r", "b_pay", "b_term", "b_flex", "b_quality")
+        fields = ("r", "b_pay", "b_term", "b_flex", "b_quality", "b_index", "b_volume")
         return {
-            "version": 2,
+            "version": 3,
             "observations": self.learned_observations,
             "means": {f: sum(p.weight * getattr(p, f) for p in self.particles) / price for f in fields},
             "response": [self.walk_intercept, self.walk_pressure, self.walk_repeat, self.accept_bias],
+            "concession_rate": self.concession_rate,
+            "numeric_observations": self.numeric_observations,
         }
 
     def import_learning(self, memory):
-        models = [m for m in memory.get("models", []) if m.get("version") == 2 and m.get("observations", 0) > 0]
+        models = [m for m in memory.get("models", []) if m.get("version") in (2, 3) and m.get("observations", 0) > 0]
         if not models:
             return
         self.memory_source = memory["source"]
         blend = 0.25 if memory["source"] == "supplier" else 0.10
         price = self.reference["unit_price"]
-        for field in ("r", "b_pay", "b_term", "b_flex", "b_quality"):
+        for field in ("r", "b_pay", "b_term", "b_flex", "b_quality", "b_index", "b_volume"):
+            matching = [m for m in models if field in m["means"]]
+            if not matching:
+                continue
             prior = sum(p.weight * getattr(p, field) for p in self.particles)
-            learned = sum(m["means"][field] for m in models) / len(models) * price
+            learned = sum(m["means"][field] for m in matching) / len(matching) * price
             shift = blend * (learned - prior)
             for p in self.particles:
                 value = getattr(p, field) + shift
@@ -191,6 +329,10 @@ class Beliefs:
         for i, name in enumerate(names):
             value = sum(m["response"][i] for m in models) / len(models)
             setattr(self, name, (1 - blend) * getattr(self, name) + blend * value)
+        numeric = [m for m in models if m.get("numeric_observations", 0)]
+        if numeric:
+            learned = sum(m["concession_rate"] for m in numeric) / len(numeric)
+            self.concession_rate = (1 - blend) * self.concession_rate + blend * learned
 
     def summary(self):
         out = {
@@ -199,6 +341,9 @@ class Beliefs:
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
             "tau": self.tau,
+            "conditions": self.conditions,
+            "concession_rate": self.concession_rate,
+            "numeric_observations": self.numeric_observations,
             "response_coefficients": {
                 "w0": self.walk_intercept,
                 "w_d": self.walk_pressure,
@@ -207,7 +352,7 @@ class Beliefs:
                 "accept_bias": self.accept_bias,
             },
         }
-        for field in ("r", "b_pay", "b_term", "b_flex", "full_cost", "b_capacity", "b_quality"):
+        for field in ("r", "b_pay", "b_term", "b_flex", "full_cost", "b_capacity", "b_quality", "b_index", "b_volume"):
             values = sorted((getattr(p, field), p.weight) for p in self.particles)
 
             def quantile(q, values=values):

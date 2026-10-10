@@ -68,7 +68,7 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Bayesian Qwen agent
 
-`hollerau.analytical` uses Qwen to interpret supplier evidence **before** Python updates estimates and selects a complete offer. It compares all standing term sheets, searches discounts and premiums for non-price trade-offs, prevents unproductive repeated demands, and saves cautious supplier/category learning in SQLite. A single small-model call also supplies prose; the large model is reserved for material unresolved interpretation.
+`hollerau.analytical` uses Qwen to interpret supplier evidence **before** Python updates estimates and selects a complete offer. It compares all standing term sheets, searches discounts and premiums for non-price trade-offs, prevents unproductive repeated demands, and saves cautious supplier/category learning in SQLite. The v4 policy adds conditional preferences, numeric counteroffer learning, four-reply planning, comparable opening packages and competition-aware RFQ decisions. In local simulation it scored 0.901 on development games and 0.776 on 45 fresh games; the 0.90 fresh-evaluation target remains unmet. A single small-model call also supplies prose; the large model can clarify material uncertainty or independently review a proposed decision. Python validates and evaluates its suggestions before acting.
 
 See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). The existing agents remain available; select `--brain analytical` explicitly for the new agent in the team runner. Use `tacto-bayes` for bounded practice.
 

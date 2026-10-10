@@ -1,0 +1,97 @@
+{
+  "selection": "latest completed practice score strictly below 0.60",
+  "quota_before": {
+    "used": 20,
+    "left": 180,
+    "limit": 200,
+    "resets_at": "2026-10-11T11:20:31.834221+00:00"
+  },
+  "maximum_new_sessions": 8,
+  "one_run_per_case": true,
+  "cases": [
+    {
+      "session_id": "98e7e555d136db76",
+      "case_id": "case:P02",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.0,
+      "rounds": 1,
+      "created_at": 1791640394.570034
+    },
+    {
+      "session_id": "a692b47057e303d1",
+      "case_id": "case:P03",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.5612041500642857,
+      "rounds": 2,
+      "created_at": 1791640399.9533494
+    },
+    {
+      "session_id": "25533c1796f6c26b",
+      "case_id": "case:P05",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.4325706072725315,
+      "rounds": 4,
+      "created_at": 1791639344.5418293
+    },
+    {
+      "session_id": "b04751a35ebebff4",
+      "case_id": "case:P07",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.5683886557315823,
+      "rounds": 2,
+      "created_at": 1791640462.0783136
+    },
+    {
+      "session_id": "2a7cd398780284d6",
+      "case_id": "case:P08",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.304876324162573,
+      "rounds": 4,
+      "created_at": 1791640498.1210983
+    },
+    {
+      "session_id": "c02cc68ac9aaf974",
+      "case_id": "case:P10",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.5780733017301243,
+      "rounds": 3,
+      "created_at": 1791639412.8856318
+    },
+    {
+      "session_id": "d21041720fa74cfd",
+      "case_id": "case:P11",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.38045086780345994,
+      "rounds": 2,
+      "created_at": 1791642696.4143248
+    },
+    {
+      "session_id": "278575e640be63da",
+      "case_id": "case:P18",
+      "status": "ended",
+      "end_reason": "accepted",
+      "deal": 1,
+      "score": 0.18919400413336834,
+      "rounds": 5,
+      "created_at": 1791640592.704293
+    }
+  ],
+  "excluded": {
+    "case:P01": 0.6185848034441437,
+    "case:P04": 0.8153309653389462
+  }
+}
