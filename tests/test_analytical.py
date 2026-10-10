@@ -703,3 +703,19 @@ def test_continuation_credit_experimental_boundaries(tmp_path):
         with pytest.raises(ValueError, match="continuation_credit"):
             AnalyticalAgent(store=agent.store, continuation_credit=value)
     agent.store.close()
+
+
+def test_offline_risk_reduction_is_limited_to_price_oriented_goals(tmp_path):
+    case, _, _ = sample()
+    agent = AnalyticalAgent(store=Store(tmp_path / "risk-local.sqlite"))
+    expected = {
+        "quality_first": 0.05,
+        "leverage": 0.05,
+        "routine": 0.05,
+        "secure_supply": 0.25,
+        "stabilise": 0.25,
+    }
+    for goal, risk in expected.items():
+        case["buyer"]["category_goal"] = goal
+        assert agent.risk_for_case(case) == risk
+    agent.store.close()
