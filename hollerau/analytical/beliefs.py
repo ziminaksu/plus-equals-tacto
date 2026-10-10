@@ -44,6 +44,10 @@ class Beliefs:
         payment_max = p * (0.060 if self.signals["cash_short"] else 0.035)
         term_min, term_max = (-p * 0.005, p * 0.040) if self.signals["wants_partnership"] else (-p * 0.020, p * 0.025)
         capacity_min, capacity_max = (1.0, 6.0) if self.signals["spare_capacity"] else (3.0, 15.0)
+        # Quality-first cases already price defects in the official buyer TCO.
+        # Use a more cautiously optimistic supplier quality-cost prior, not an
+        # extra buyer-side quality penalty. This remains an uncalibrated sensitivity.
+        self.quality_cost_max = p * (0.012 if case["buyer"].get("category_goal") == "quality_first" else 0.020)
         self.particles = [
             Particle(
                 rng.uniform(center * 0.94, min(p * 1.015, center * 1.06)),
@@ -52,7 +56,7 @@ class Beliefs:
                 rng.uniform(0, p * 0.02),
                 supplier["full_cost"] * rng.uniform(0.90, 1.10),
                 rng.uniform(capacity_min, capacity_max),
-                rng.uniform(0, p * 0.02),
+                rng.uniform(0, self.quality_cost_max),
                 1 / count,
             )
             for _ in range(count)
@@ -198,6 +202,7 @@ class Beliefs:
             "memory_source": self.memory_source,
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
+            "quality_prior_max_eur_per_1000ppm": round(self.quality_cost_max, 6),
             "tau": self.tau,
             "response_coefficients": {
                 "w0": self.walk_intercept,
