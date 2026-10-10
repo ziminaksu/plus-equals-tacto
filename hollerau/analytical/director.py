@@ -468,7 +468,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     # +1.2 % per step never reached the supplier's 5.3-5.5 range and it closed at 5.58, 0.38)
                     last_p = th.last_terms.get("unit_price", ask)
                     cap = min(max(last_p * 1.012, last_p + (ask - last_p) / 4), ask - 0.01)
-                    paced = [pid for pid in allowed if price_of(pid) <= cap]
+                    # strictly above our last price: a repeated or lower price reads as "no move" and draws a
+                    # final offer (free Gemini P08: re-sent 4.84 plus 4.75/4.79, supplier closed at 5.38)
+                    paced = [pid for pid in allowed if last_p + 0.005 < price_of(pid) <= cap]
                     allowed = paced or allowed
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": allowed, "max_packages": 3}
