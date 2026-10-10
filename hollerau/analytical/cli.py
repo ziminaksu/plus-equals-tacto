@@ -100,7 +100,9 @@ def reissued_accept(client, session_id, supplier_id, message, error):
     offer:70210-2, the thread had timed out to -3 and -4 with the same terms, the accept got 422 and the
     run crashed). Returns one retry with the live id, only if its terms equal the ones we chose."""
     action = message.get("action") or {}
-    if getattr(error, "status", None) != 422 or action.get("type") != "accept" or "standing offer" not in str(error.detail):
+    if getattr(error, "status", None) != 422 or action.get("type") != "accept":
+        return None
+    if "standing offer" not in str(error.detail):
         return None
     state = client.session(session_id)
     live = (state.get("threads") or {}).get(supplier_id) or {}
