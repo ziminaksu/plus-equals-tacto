@@ -265,7 +265,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                 continue
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
-                                                   "refs": claim.refs,
+                                                   "refs": claim.refs, "kind": claim.kind,
                                                    "already_used": bool(set(claim.refs) & th.used)}
 
         # How close is the supplier, and how big was its last step? (P05: Dralveck dropped 30.50 -> 28.00,
@@ -438,9 +438,30 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                             board["packages"][paired]["paired_with"] = base_id
         for terms, origin in data_anchors(case, th, current):
             add_package(terms, origin)
+        if th.last_terms and th.last_terms.get("unit_price"):
+            for step in (1.004, 1.008, 1.012):  # small paced steps from our last price, same other terms
+                add_package({**th.last_terms, "unit_price": round(th.last_terms["unit_price"] * step, 2)},
+                            f"next step: +{round((step - 1) * 100, 1)} % on our last price")
         if keys:
+            # Price discipline (free Gemini P11: opened at 46.50 against an ask of 47.00 and never got below;
+            # the scripted 43.50 -> +0.4/+0.3/+0.25 ladder reached 45.50). First counter: data anchors at
+            # most 95 % of the supplier's price. Later counters: at most +1.2 % on our last price and below
+            # its standing price.
+            ask = (current or {}).get("unit_price")
+            allowed = list(keys.values())
+            if ask:
+                def price_of(pid):
+                    return board["packages"][pid]["terms"].get("unit_price") or float("inf")
+                if not th.last_terms:
+                    first = [pid for pid in allowed if "data anchor" in (board["packages"][pid].get("origin") or "")
+                             and price_of(pid) <= ask * 0.95]
+                    allowed = first or allowed
+                else:
+                    cap = min(th.last_terms.get("unit_price", ask) * 1.012, ask - 0.01)
+                    paced = [pid for pid in allowed if price_of(pid) <= cap]
+                    allowed = paced or allowed
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
-                                                  "package_ids": list(keys.values()), "max_packages": 3}
+                                                  "package_ids": allowed, "max_packages": 3}
     # RFQ round-robin: keep bargaining with a supplier only while every other open supplier is at most one
     # message behind - each must see the best rival offer (free Gemini P05: it bargained only with one of
     # three, 0.67, while the three-way run reached 0.875). Accepting stays possible at any time.
