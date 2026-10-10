@@ -364,7 +364,7 @@ class Beliefs:
             "memory_source": self.memory_source,
             "cost_prior_conflict": self.cost_prior_conflict,
             "cost_prior_note": (
-                "public estimate exceeds quote; quotes do not update production cost"
+                "public mean exceeds quote; this alone is not a contradiction within the public uncertainty interval"
                 if self.cost_prior_conflict else "public cost evidence kept independent of acceptance"
             ),
             "supplier_signals": dict(self.signals),

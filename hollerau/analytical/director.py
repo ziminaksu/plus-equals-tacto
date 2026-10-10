@@ -13,7 +13,8 @@ from arena_kit.cost import complete_offer, cost_breakdown
 from arena_kit.play import latest, live_threads, moves_left
 
 from .. import compliance
-from ..agent import describe
+from .communication import describe_complete, render_reply, reply_facts
+from .deliberation import add_action_consequences, economics_context, objective_scope
 
 
 class FinalDecisionUnavailable(RuntimeError):
@@ -32,7 +33,11 @@ def quantile(values, weights, q):
 def cost_card(agent, case, th, terms):
     """One consistent distribution for both Astra roles and the audit log."""
     if hasattr(th, "economics"):
-        return th.economics.card(terms)
+        card = th.economics.card(terms)
+        if not objective_scope(case)["relationship_cost_active"]:
+            card.pop("supplier_margin_pct_range", None)
+            card.pop("public_cost_scenario", None)
+        return card
     direct = cost_breakdown(case, terms, th.std)
     samples = [cost_breakdown(case, terms, th.std, {**th.sup, "full_cost": p.full_cost})
                for p in th.beliefs.particles]
@@ -111,13 +116,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
-            "sustainability": "Supplier acceptance is not evidence of profitability. Compare the original "
-                              "public should-cost, practice-calibrated interval and downside versus baselines. "
-                              "A higher price can reduce total cost. Astra selects the final action.",
+            "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
+                              "should-cost, practice-calibrated interval and downside. Acceptance is not "
+                              "profitability. Otherwise do not add a supplier-margin objective.",
             "comparisons": "Negative cost delta means cheaper, using shared cost scenarios. Historical "
                            "and opening packages are not executable unless freshly confirmed. "
                            "Scenario ranges and means are modelling assumptions, not calibrated probabilities.",
         },
+        "objective_scope": objective_scope(case),
+        "reply_facts": reply_facts(case),
         "fallback_estimated_cost_eur": agent.alternatives(case),
         "suppliers": {}, "packages": {}, "actions": {}, "evidence": {}, "questions": {},
     }
@@ -135,7 +142,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                 for e in events[-6:]],
             "beliefs": th.beliefs.summary(), "previous_buyer_terms": th.last_terms,
             "asked_questions": sorted(th.asked_quotes),
-            "supplier_economics": th.economics.evidence(),
+            "supplier_economics": economics_context(case, th),
+            "stagnant_replies": th.stagnation,
+            "observed_response_counts": th.response_counts,
             "previous_practice_outcomes": th.economics.feedback[-6:],
             "opening_comparison": {"terms": complete_offer(case, th.reference),
                                    **cost_card(agent, case, th, th.reference),
@@ -187,6 +196,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
         if closing_only or remaining <= 1:
             continue
+        if remaining >= 3:
+            board["actions"][f"{sid}:reply"] = {"supplier_id": sid, "kind": "reply"}
         for kind, body in questions(case, source, history):
             if kind in th.asked_quotes:
                 continue
@@ -246,12 +257,14 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
+    add_action_consequences(agent, board)
     return board
 
 
 def validate_selection(board, selection):
     if not isinstance(selection, dict) or set(selection) != {
         "action_id", "package_ids", "question_id", "evidence_ids", "tone", "rationale",
+        "reply_text", "continuation_review",
     }:
         raise ValueError("invalid final decision shape")
     action = board["actions"].get(selection["action_id"])
@@ -281,6 +294,28 @@ def validate_selection(board, selection):
         raise ValueError("invalid tone")
     if not isinstance(selection["rationale"], str) or not selection["rationale"].strip():
         raise ValueError("missing final rationale")
+    review = selection["continuation_review"]
+    if not isinstance(review, dict) or set(review) != {
+        "target_package_id", "walkout_probability_low", "walkout_probability_high",
+        "risk_reason", "information_needed", "stop_condition",
+    }:
+        raise ValueError("missing continuation risk review")
+    low, high = review["walkout_probability_low"], review["walkout_probability_high"]
+    if not isinstance(low, (int, float)) or not isinstance(high, (int, float)) or not 0 <= low <= high <= 1:
+        raise ValueError("invalid subjective walkout range")
+    target = review["target_package_id"]
+    if target and (target not in board["packages"] or board["packages"][target]["supplier_id"] != sid):
+        raise ValueError("invalid risk-review target")
+    if action["kind"] == "counter" and target not in ids:
+        raise ValueError("risk review must refer to a selected package")
+    if action["kind"] == "confirm" and target != action["package_id"]:
+        raise ValueError("confirmation risk review must refer to its package")
+    if not all(isinstance(review[k], str) and review[k].strip() for k in ("risk_reason", "stop_condition")):
+        raise ValueError("risk reason and stopping condition are required")
+    if action["kind"] in ("ask", "reply") and not review["information_needed"].strip():
+        raise ValueError("a question needs an explicit decision-relevant information goal")
+    if action["kind"] not in ("accept", "walk_away"):
+        render_reply(selection["reply_text"], board["reply_facts"])
     return action
 
 
@@ -300,31 +335,30 @@ def execute(agent, case, threads, board, selection):
         message = {"action": {"type": "walk_away"}}
     else:
         offers = []
-        if kind == "ask":
+        authored = render_reply(selection["reply_text"], board["reply_facts"])
+        if kind == "reply":
+            body = authored
+            th.pending = {"kind": "quote_request", "event_count": len(events)}
+        elif kind == "ask":
             question = board["questions"][action["question_id"]]
-            body = question["body"]
+            body = authored
             th.asked_quotes.add(question["kind"])
             th.pending = {"kind": "quote_request", "request": question, "event_count": len(events)}
         elif kind == "confirm":
             offers = [board["packages"][action["package_id"]]["terms"]]
-            body = "Please confirm the attached priced alternative as a standing offer for comparison. " \
-                   "This confirmation request is not acceptance or a commitment to conclude."
+            body = authored + "\n\n" + describe_complete(case, offers[0], th.std)
             th.asked_confirmations.add(json.dumps(offers[0], sort_keys=True))
             th.pending = {"kind": "quote_confirmation", "request": action, "event_count": len(events)}
         else:
             offers = [board["packages"][pid]["terms"] for pid in selection["package_ids"]]
-            opening = {
-                "warm": "Thank you for working with us toward a sustainable agreement.",
-                "cooperative": "We would like to agree on a workable exchange of price and terms.",
-                "firm": "We need a stronger complete package to move forward.",
-            }[selection["tone"]]
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
             qid = selection["question_id"]
-            question = board["questions"][qid]["body"] if qid else "Which package best addresses your priorities?"
-            body = "\n\n".join([opening, *[c["text"] for c in claims], *[
-                f"Package {i + 1}: {describe(offer, th.std)}." for i, offer in enumerate(offers)
+            question = board["questions"][qid]["body"] if qid else ""
+            body = "\n\n".join(x for x in [authored, *[c["text"] for c in claims], *[
+                f"Package {i + 1}: {describe_complete(case, offer, th.std)}."
+                for i, offer in enumerate(offers)
             ], "These are alternative complete packages, not cumulative concessions." if len(offers) > 1 else "",
-                question])
+                question] if x)
             for claim in claims:
                 th.used.update(claim["refs"])
             if qid:

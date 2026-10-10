@@ -78,4 +78,13 @@ def final_schema(board):
         "evidence_ids": ids(board["evidence"], 3),
         "tone": enum_values(["warm", "cooperative", "firm"]),
         "rationale": {"type": "string"},
+        "reply_text": {"type": "string"},
+        "continuation_review": obj({
+            "target_package_id": enum_values([""] + list(board["packages"])),
+            "walkout_probability_low": {"type": "number", "minimum": 0, "maximum": 1},
+            "walkout_probability_high": {"type": "number", "minimum": 0, "maximum": 1},
+            "risk_reason": {"type": "string"},
+            "information_needed": {"type": "string"},
+            "stop_condition": {"type": "string"},
+        }),
     })

@@ -15,17 +15,19 @@ from .. import compliance, intel, levers
 from ..agent import _opening_standard, describe
 from ..params import Params
 from .beliefs import Beliefs
+from .deliberation import economics_context, objective_scope
 from .director import FinalDecisionUnavailable, cost_card
 from .director import decide as astra_decide
 from .discovery import REBASE_QUESTION, discover_quote_requests, validate_quote_request
-from .offers import echoed_proposal, equivalent_alternative
+from .feedback import event_key, learn_reply
+from .offers import equivalent_alternative
 from .planning import counter_costs, paired_objective
 from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v7-supplier-economics"
+POLICY_VERSION = "astra-v8-decision-feedback"
 DECISION_BUDGET_S = 35
 
 
@@ -143,8 +145,6 @@ class AnalyticalAgent:
                     "wants_partnership": dossier.wants_partnership,
                 },
             )
-            memory = self.store.load_learning(sid, case["buyer"].get("category_goal", "unknown"))
-            beliefs.import_learning(memory)
             beliefs.check_cost_consistency(reference)
             self.threads[sid] = SimpleNamespace(
                 std=std,
@@ -175,7 +175,30 @@ class AnalyticalAgent:
                 planning_moves=case.get("round_limit", 10),
                 episodes=self.store.episodes(sid, case["case_id"], self.session_id, self.run_id),
                 seen_replies=set(),
+                feedback_seen=set(),
+                response_counts={},
             )
+            th = self.threads[sid]
+            history = self.store.behavior_history(sid, case, self.session_id)
+            old_session = None
+            labels = {}
+            for record in history:
+                if record["session_id"] != old_session:
+                    th.stagnation = th.repeats = 0
+                    old_session = record["session_id"]
+                learned = learn_reply(case, th, record["request"], record["reply"], record["event_id"],
+                                      record["previous"] or reference, record["previous_status"], th.repeats)
+                if learned:
+                    labels[learned["label"]] = labels.get(learned["label"], 0) + 1
+            # Historical observations inform beliefs; live conversational state starts fresh.
+            th.last_supplier_terms = dict(reference)
+            th.beliefs.standing_terms = dict(reference)
+            th.stagnation = th.repeats = 0
+            th.last_outcome = None
+            th.beliefs.memory_source = "reconstructed_same_context_messages" if history else "fresh_prior"
+            self.log("learning_reconstruction", {"legacy_models_ignored": True, "labels": labels,
+                                                 "response_counts": th.response_counts,
+                                                 "observations": len(history)}, sid)
             self.log("evidence", asdict(dossier), sid)
             self.log("cost_evidence", economics.evidence(), sid)
             self.log("coefficients", beliefs.snapshot(), sid)
@@ -208,56 +231,31 @@ class AnalyticalAgent:
             if not pending or len(events) <= pending["event_count"]:
                 continue
             reply = latest(events)
-            offered = standing(events)[1]
-            if pending.get("kind") in ("quote_request", "quote_confirmation"):
-                # An information request is not an offer rejection: no acceptance-rate training.
-                self.log("quote_response", {"response": reply, "request": pending["request"]}, sid)
-                if offered.get("unit_price"):
-                    th.last_supplier_terms = dict(offered)
-                th.pending = None
-                continue
-            status = reply.get("status")
-            outcome = "accept" if status == "agreed" else "walk" if status in ("walked_away", "no_bid") else "counter"
-            event_id = hashlib.sha256(json.dumps(reply, sort_keys=True, default=str).encode()).hexdigest()
-            proposals = pending.get("offers", [pending["terms"]])
-            echoed = echoed_proposal(case, th.std, proposals, offered) if offered else None
-            proposed = echoed or pending["terms"]
-            if echoed:
-                th.last_terms = echoed
-                th.last_price = echoed["unit_price"]
-            if th.beliefs.update(event_id, proposals, outcome, pending["quote"], pending["repeats"]):
-                if echoed and outcome in ("accept", "counter"):
-                    th.beliefs.learn_choice(event_id, echoed, proposals)
-                if outcome in ("accept", "counter"):
-                    th.beliefs.learn_counteroffer(event_id, th.last_supplier_terms, offered, proposed)
-                observed = [float(outcome == x) for x in ("accept", "counter", "walk")]
-                pred = pending["probabilities"]
-                self.log(
-                    "observation",
-                    {
-                        "response": reply,
-                        "outcome": outcome,
-                        "prediction": pred,
-                        "brier": sum(
-                            (pred[x] - o) ** 2 for x, o in zip(("accept", "counter", "walk"), observed, strict=True)
-                        ),
-                    },
-                    sid,
-                )
-                if case.get("type") == "capacity" and offered.get("volume_per_year"):
-                    th.beliefs.capacity_reference = offered["volume_per_year"]
+            request = next((e for e in reversed(events[:-1]) if e.get("from") == "buyer"), {})
+            previous_reply = next((e for e in reversed(events[:pending["event_count"]])
+                                   if e.get("from") != "buyer"), {})
+            safe_reply = {k: reply[k] for k in ("message_id", "from", "body", "status", "term_sheets",
+                                               "standing_offer_id") if k in reply}
+            learned = learn_reply(case, th, request, safe_reply,
+                                  event_key(self.session_id, request, safe_reply),
+                                  previous_status=previous_reply.get("status"), repeats=th.repeats)
+            if learned:
+                self.log("observation", learned, sid)
                 self.log("coefficients", th.beliefs.snapshot(), sid)
-            th.last_outcome = outcome
-            before = th.last_supplier_terms
-            same_package = all(offered.get(k) == before.get(k) for k in case["negotiable"] if k != "unit_price")
-            small_move = abs(offered.get("unit_price", 0) - before.get("unit_price", 0)) <= (
-                0.002 * max(0.01, before.get("unit_price", 0))
-            )
-            th.stagnation = th.stagnation + 1 if outcome == "counter" and same_package and small_move else 0
-            if offered.get("unit_price"):
-                th.last_supplier_terms = dict(offered)
-            self.store.save_learning(sid, case["buyer"].get("category_goal", "unknown"), th.beliefs.export_learning())
             th.pending = None
+
+    def receive_terminal(self, case, threads, sid, request, reply):
+        """Observe the final supplier response BEFORE returning its result to the caller."""
+        if sid not in self.threads:
+            return
+        safe = {k: reply[k] for k in ("message_id", "from", "body", "status", "term_sheets",
+                                      "standing_offer_id") if k in reply}
+        if not safe.get("status"):
+            # Ended/score-zero alone does not establish a supplier walkout (could be timeout).
+            self.log("terminal_observation_unavailable", {"reason": "no explicit supplier status"}, sid)
+            return
+        threads[sid] += [{**request, "from": "buyer"}, safe]
+        self.observe(case, threads)
 
     def cost_samples(self, case, th, terms):
         return [total_cost(case, terms, th.std, {**th.sup, "full_cost": p.full_cost}) for p in th.beliefs.particles]
@@ -492,7 +490,10 @@ class AnalyticalAgent:
                     "stagnant_replies": th.stagnation,
                     "uncertain_estimates": th.beliefs.summary(),
                     "current_cost": cost_card(self, case, th, current),
-                    "supplier_economics": th.economics.evidence(),
+                    "supplier_economics": economics_context(case, th),
+                    "objective_scope": objective_scope(case),
+                    "supplier_status": latest(events).get("status"),
+                    "observed_response_counts": th.response_counts,
                     "sustainability_packages": th.sustainability_candidates,
                     "past_exchanges": th.episodes,
                 },
