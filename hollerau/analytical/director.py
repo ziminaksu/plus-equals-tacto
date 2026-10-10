@@ -176,7 +176,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "When a real move of ours produced NO price reduction, the desk has reached its own "
                                  "limit, not the company's: do not accept yet. Counter with a package it values that "
                                  "is free for us (a contract longer than our horizon costs us nothing; volume/"
-                                 "commitment matters to suppliers focused on volume customers), attach the "
+                                 "commitment matters to suppliers focused on volume customers), add the share-of-business argument "
+                                 "if it is on the board, attach the "
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",

@@ -251,6 +251,23 @@ def build(case, supplier_id, package=None, asked_price=None):
                     f"Our orders show your price already rose this year from EUR {b['unit_price']:.2f} ({b_id}) "
                     f"to EUR {last['unit_price']:.2f} ({last_id}).",
                     1.25, last["unit_price"]))
+    # share of our business: a supplier that serves only part of a split-sourced part wants more of it
+    # (P18: 20 % of the case part, 60 % of another bar; "focus on customers with volume", "our whole
+    # range is at your disposal"). Part IDs are context, not checked claims; nothing here binds.
+    split = _query(
+        package,
+        "SELECT s.part_id, p.description, s.quota_pct FROM sourcing s JOIN parts p ON p.id = s.part_id "
+        "WHERE s.supplier_id = ? AND s.status = 'active' AND s.quota_pct < 100 ORDER BY s.quota_pct",
+        (supplier_id,),
+    )
+    if split:
+        names = ", ".join(f"{r['description']} ({r['part_id']})" for r in split[:2])
+        d.claims.append(Claim(
+            "share_of_business", [],
+            f"Today you supply only part of our need for {names}; a competitive base price here would put "
+            "you first in line for a larger share of that business.",
+            1.15, None))
+
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
     cash_denied = capacity_denied = False
