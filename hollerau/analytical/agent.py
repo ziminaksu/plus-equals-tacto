@@ -18,16 +18,19 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v2.3"
+POLICY_VERSION = "bayes-v2.4-experimental"
 
 
 class AnalyticalAgent:
-    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=None):
+    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=None, price_pressure=0.0):
         self.package = package
         self.store = store or Store()
         self.router = router or Router(enabled=False)
         self.run_id = run_id
         self.risk_aversion = risk_aversion
+        if not math.isfinite(price_pressure) or not 0 <= price_pressure <= 0.4:
+            raise ValueError("price_pressure must be between 0 and 0.4")
+        self.price_pressure = price_pressure
         self.threads = {}
         self.case_id = None
         self.session_id = None
@@ -50,9 +53,23 @@ class AnalyticalAgent:
     def objective(self, case, expected_cost, uncertainty):
         return expected_cost + self.risk_for_case(case) * uncertainty
 
+    def price_pressure_bonus(self, case, terms, quote):
+        """Bounded ranking-only reward for seeking a lower price, not reported as savings.
+
+        The true Arena cost is still evaluated separately by total_cost().
+        This is an experimental negotiation preference, not an official score term.
+        """
+        if not self.price_pressure or terms["unit_price"] >= quote:
+            return 0.0
+        full = closing_terms(case, terms)
+        months = full["contract_months"]
+        years = min(months / 12 if months else 1, case["buyer"]["horizon_years"])
+        committed = full["volume_per_year"] * years
+        return self.price_pressure * (quote - terms["unit_price"]) * committed
+
     def start(self, case, threads):
         self.case_id = case["case_id"]
-        self.log("case", {"case": case, "policy_version": POLICY_VERSION, "risk_aversion": self.risk_for_case(case)})
+        self.log("case", {"case": case, "policy_version": POLICY_VERSION, "risk_aversion": self.risk_for_case(case), "price_pressure": self.price_pressure})
         for sid, events in threads.items():
             _, terms = standing(events)
             std = _opening_standard(events)
@@ -315,7 +332,8 @@ class AnalyticalAgent:
                     "terms": terms,
                     "expected_cost": mean,
                     "uncertainty": sd,
-                    "objective": self.objective(case, mean, sd),
+                    "objective": self.objective(case, mean, sd) - self.price_pressure_bonus(case, terms, quote),
+                    "price_pressure_bonus": self.price_pressure_bonus(case, terms, quote),
                     "deal_cost": self.weighted(th, costs),
                     "probabilities": probabilities,
                     "scenario_costs": values,
