@@ -16,13 +16,13 @@ from hollerau.cases import kit_cases
 from hollerau.simulate import play_local
 
 
-def score_case(case, seed, policy):
+def score_case(case, seed, policy, risk_aversion=None):
     if policy == "naive":
         agent = NaiveAgent()
         return play_local(case, agent, seed=seed, log=True)
     store = Store(":memory:")
     try:
-        agent = AnalyticalAgent(store=store, router=Router(enabled=False), run_id=f"offline-{seed}")
+        agent = AnalyticalAgent(store=store, router=Router(enabled=False), run_id=f"offline-{seed}", risk_aversion=risk_aversion)
         return play_local(case, agent, seed=seed, log=True)
     finally:
         store.close()
@@ -32,6 +32,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--seeds", type=int, nargs="+", default=[2, 5, 11, 17, 29])
     p.add_argument("--case-ids", nargs="*", default=None)
+    p.add_argument("--risk-aversion", type=float, default=None)
     args = p.parse_args()
     cases = kit_cases(random.Random(99))
     if args.case_ids:
@@ -39,7 +40,7 @@ def main():
     rows = []
     for case in cases:
         for seed in args.seeds:
-            our = score_case(case, seed, "analytical")
+            our = score_case(case, seed, "analytical", args.risk_aversion)
             naive = score_case(case, seed, "naive")
             row = {
                 "case": case["case_id"],
@@ -55,6 +56,7 @@ def main():
     result = {
         "cases": len(cases),
         "games": len(rows),
+        "risk_aversion": args.risk_aversion,
         "mean_ours": statistics.mean(row["ours"] for row in rows),
         "mean_naive": statistics.mean(row["naive"] for row in rows),
         "min_ours": min(row["ours"] for row in rows),
