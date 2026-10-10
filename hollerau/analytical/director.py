@@ -144,6 +144,38 @@ def data_anchors(case, th, current):
     return out[:24]
 
 
+def concession_ladder(case, th, last):
+    """Single-lever steps from our last offer toward the supplier, cheapest for us first, price kept.
+    P18 response function: payment 90->60 bought 0.10 every time; a contract beyond our horizon is free
+    for us; deadband steps and further payment steps bought little. Astra follows it in order."""
+    if not last:
+        return []
+    fields, opts, b = case["negotiable"], case.get("term_options", {}), case["buyer"]
+    steps, cur = [], dict(last)
+    horizon_m = 12 * b["horizon_years"]
+    pays = sorted((x for x in opts.get("payment_days", []) if x < (cur.get("payment_days") or 0)),
+                  reverse=True)[:2] if "payment_days" in fields else []
+    if pays:  # payment first: in P18 it bought a step every time
+        cur = {**cur, "payment_days": pays[0]}
+        steps.append((dict(cur), f"payment {pays[0]} days"))
+    if "contract_months" in fields:
+        longer = [m for m in opts.get("contract_months", []) if m > (cur.get("contract_months") or 0)]
+        if longer and (cur.get("contract_months") or 0) >= horizon_m:
+            cur = {**cur, "contract_months": max(longer)}  # beyond the horizon: costs us nothing
+            steps.append((dict(cur), "longer contract (free for us beyond the horizon)"))
+    for d in pays[1:]:
+        cur = {**cur, "payment_days": d}
+        steps.append((dict(cur), f"payment {d} days"))
+    if "index_clause" in fields and cur.get("index_clause"):
+        narrower = sorted((c for c in opts.get("index_clause", []) if c
+                           and (c.get("deadband_pct") or 0) < (cur["index_clause"].get("deadband_pct") or 0)),
+                          key=lambda c: -(c.get("deadband_pct") or 0))[:1]
+        for c in narrower:
+            cur = {**cur, "index_clause": c}
+            steps.append((dict(cur), f"index deadband {c.get('deadband_pct')} %"))
+    return steps
+
+
 def build_board(agent, case, threads, source_map, history_map, closing_only=False):
     """Expose feasible actions, not a Python-selected winner. No guessed probability pruning."""
     board = {
@@ -181,6 +213,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
+            "ladder_plan": "When a supplier has a ladder_plan, your next counter is its FIRST step (one lever "
+                           "move, price unchanged) with one or two new verified arguments. Escalate with the "
+                           "approval-route question only when the ladder is used up, or two consecutive steps "
+                           "bought no price move, or three moves remain. Accept before that only on a final offer.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
@@ -344,6 +380,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                             board["packages"][paired]["paired_with"] = base_id
         for terms, origin in data_anchors(case, th, current):
             add_package(terms, origin)
+        ladder = []
+        for terms, label in concession_ladder(case, th, th.last_terms):
+            pid = add_package(terms, f"ladder step: {label}")
+            if pid:
+                ladder.append({"package_id": pid, "move": label})
+        if ladder:
+            supplier["ladder_plan"] = ladder
         if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
