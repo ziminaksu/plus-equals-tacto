@@ -110,6 +110,18 @@ class Beliefs:
         gap = max(0, (quote - terms["unit_price"]) / max(quote, 0.01))
         walk = sigmoid(self.walk_intercept + self.walk_pressure * gap + self.walk_repeat * repeats)
         accept = (1 - walk) * sigmoid((self.value(terms, particle) - particle.r) / self.tau + self.accept_bias)
+        # An explicit supplier requirement for index protection is a *soft*
+        # acceptance signal, not a new buyer-side must-have. In particular,
+        # offering a longer contract without any index clause remains possible
+        # but is predicted less likely to succeed (the factor is uncalibrated).
+        t = closing_terms(self.case, terms, self.supplier["standard"])
+        if (
+            self.signal_counts.get("index_protection")
+            and "index_clause" in self.case["negotiable"]
+            and not t.get("index_clause")
+            and t["contract_months"] >= 24
+        ):
+            accept *= 0.35
         if self.capacity_reference:
             volume = closing_terms(self.case, terms, self.supplier["standard"])["volume_per_year"]
             uplift = max(0, volume / self.capacity_reference - 1)
