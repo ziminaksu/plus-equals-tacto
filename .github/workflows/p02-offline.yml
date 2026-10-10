@@ -1,0 +1,33 @@
+name: P02 counteroffer local verification
+on:
+  push:
+    branches: [codex/p02-counteroffer-v41]
+  pull_request:
+    paths:
+      - "hollerau/**"
+      - "tools/p02_opening_probe_benchmark.py"
+      - "tests/**"
+      - ".github/workflows/p02-offline.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ARENA_API_KEY: ""
+      LLM_API_KEY: ""
+      HF_TOKEN: ""
+      LLM_PROVIDER: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - run: uv sync --locked --group dev
+      - name: Offline pytest
+        run: uv run pytest -q
+      - name: P02 opening probe reproducible baseline versus experiment
+        run: uv run python tools/p02_opening_probe_benchmark.py --seeds 2 5 11 17 29 42 43 47 53 59
