@@ -8,7 +8,7 @@ The existing `hollerau.agent` and `hollerau.brain` remain available for comparis
 
 ```sh
 uv sync --all-extras --locked
-# Configure ARENA_API_KEY, HF_TOKEN and ARENA_DATA in ignored .env first.
+# Configure ARENA_API_KEY, ARENA_DATA and either HF_TOKEN or OpenAI API credentials in ignored .env first.
 uv run tacto-bayes --run-id my-five-case-experiment --max-sessions 5 \
   --cases case:P01 case:P04 case:P05 case:P10 case:P11
 ```
@@ -122,3 +122,39 @@ session or invented activity is created. Earlier unrelated chat, image pixels an
 are omitted, transformations and source-record hashes are recorded, and the original Codex log
 is untouched. Keep `.entire/settings.local.json` and `.entire/tmp/` untracked. Verify the resulting
 commit trailer and checkpoint ref on GitHub after pushing; enabling hooks alone is not proof.
+
+## Team += review updates (after the five recorded practice cases)
+
+The supplier prior now conditions *hypothetically* on supplier evidence: cash shortages
+widen the early-payment benefit, partnership signals shift contract-duration value,
+spare capacity reduces the initial capacity-uplift penalty, and approval ladders
+increase the response to repeated/large price demands. All these are heuristic priors,
+**not learned population coefficients**; the actual official score is unchanged.
+
+Candidate shortlists diversify buyer-cheap, supplier-valuable and full-coverage packages.
+Across RFQ threads, selection favours valid and competitive standing offers over merely
+counting supplier contacts; one terminal thread no longer immediately forces global
+walk-away while eligible rivals remain. These changes have new local regression tests,
+but no additional Arena outcome has yet validated them.
+
+### Use the OpenAI API credit balance (optional)
+
+The Qwen/Hugging Face provider is still supported. To choose OpenAI instead, set
+the following **only in your ignored local .env**:
+
+```dotenv
+LLM_PROVIDER=openai
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_API_KEY=<new-private-OpenAI-project-key>
+ANALYTICAL_SMALL_MODEL=gpt-4.1-mini
+ANALYTICAL_LARGE_MODEL=gpt-4.1-mini
+```
+
+The same model is used for both routes by default to avoid slow escalation.
+ChatGPT credits and API credits are different. Do not reuse any key pasted into chat.
+
+This only adds an OpenAI-compatible endpoint option to `tacto-bayes`; it does
+**not** mean that the five previously recorded Qwen sessions were paid for with OpenAI.
+Before a remote session, run `uv run pytest -q` and verify API balance/limits.
+One hosted Arena case consumes **one** practice session, regardless of the
+number of model calls. Keep all tests offline until explicitly authorised.
