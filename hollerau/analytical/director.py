@@ -439,6 +439,19 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
+    # RFQ round-robin: keep bargaining with a supplier only while every other open supplier is at most one
+    # message behind - each must see the best rival offer (free Gemini P05: it bargained only with one of
+    # three, 0.67, while the three-way run reached 0.875). Accepting stays possible at any time.
+    live = live_threads(threads)
+    if len(live) > 1:
+        contacts = {sid: sum(m.get("from") == "buyer" for m in threads[sid]) for sid in live}
+        open_ones = [sid for sid in live if latest(threads[sid]).get("status") not in ("final_offer", "agreed")
+                     and moves_left(case, threads[sid]) > 1]
+        if open_ones:
+            floor = min(contacts[sid] for sid in open_ones)
+            ahead = {sid for sid in live if contacts[sid] > floor + 1}
+            board["actions"] = {k: v for k, v in board["actions"].items()
+                                if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
     add_action_consequences(agent, board)
     return board
 
