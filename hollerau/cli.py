@@ -112,7 +112,9 @@ def main(argv=None):
 
     from arena_kit.cli import summary
     from arena_kit.client import ArenaClient, ArenaError
-    from arena_kit.play import RemoteTable, hosted, play, play_all, play_waves
+    from arena_kit.play import hosted, play, play_all, play_waves
+
+    from .analytical.cli import SafeRemoteTable as RemoteTable
 
     client = ArenaClient()
     if args.cmd == "play":

@@ -268,16 +268,19 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         # What is a payment day worth to THIS supplier? Two of its sheets that differ only in payment days
         # price it (P02: 369.50 @30 vs 370.85 @60 = 1.35/unit per 30 days, while 30 days are worth 2.47/unit
         # to us at 8 %). Then keep long payment and concede on price; trade payment only if it values it more.
-        sheets = [ts["terms"] for m in events if m.get("from") != "buyer" for ts in m.get("term_sheets") or []
-                  if ts["terms"].get("unit_price") and ts["terms"].get("payment_days") is not None]
         rates = []
-        for i, a in enumerate(sheets):
-            for b2 in sheets[i + 1:]:
-                if a["payment_days"] != b2["payment_days"] and all(
-                        a.get(k) == b2.get(k) for k in a if k not in ("unit_price", "payment_days")):
-                    lo, hi = sorted((a, b2), key=lambda t: t["payment_days"])
-                    days = hi["payment_days"] - lo["payment_days"]
-                    rates.append((hi["unit_price"] - lo["unit_price"]) * 30 / days)
+        for m in events:  # alternatives in ONE message: across rounds the price also moved for other reasons
+            if m.get("from") == "buyer":
+                continue
+            sheets = [ts["terms"] for ts in m.get("term_sheets") or []
+                      if ts["terms"].get("unit_price") and ts["terms"].get("payment_days") is not None]
+            for i, a in enumerate(sheets):
+                for b2 in sheets[i + 1:]:
+                    if a["payment_days"] != b2["payment_days"] and all(
+                            a.get(k) == b2.get(k) for k in a if k not in ("unit_price", "payment_days")):
+                        lo, hi = sorted((a, b2), key=lambda t: t["payment_days"])
+                        days = hi["payment_days"] - lo["payment_days"]
+                        rates.append((hi["unit_price"] - lo["unit_price"]) * 30 / days)
         if rates and current.get("unit_price"):
             theirs = sum(rates) / len(rates)
             ours = current["unit_price"] * case["buyer"]["interest_rate"] * 30 / 360

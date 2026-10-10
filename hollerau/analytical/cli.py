@@ -83,39 +83,58 @@ class LoggedTable(RemoteTable):
         return result
 
     def reissued_accept(self, supplier_id, message, error):
-        """A timeout repeats the supplier's offer under a NEW id (P05: Astra accepted Dralveck's 28.00 as
-        offer:70210-2, the thread had timed out to -3 and -4 with the same terms, the accept got 422 and the
-        run crashed). Retry once with the live id, only if its terms equal the ones we chose."""
-        action = message.get("action") or {}
-        if error.status != 422 or action.get("type") != "accept" or "standing offer" not in str(error.detail):
-            return None
-        state = self.client.session(self.session_id)
-        live = (state.get("threads") or {}).get(supplier_id) or {}
-        new_id = live.get("offer_id")
-        if not new_id or new_id == action.get("term_sheet_id") or live.get("closed"):
-            return None
-        thread = self.client.thread(self.session_id, supplier_id)
-        terms = {}
-        for m in thread.get("messages", []):
-            for ts in m.get("term_sheets") or []:
-                terms[ts.get("term_sheet_id")] = ts.get("terms")
-        for t in thread.get("timeouts") or []:
-            terms[t.get("offer_id")] = t.get("terms")
-        for mv in state.get("moves") or []:
-            reply = mv.get("reply") or {}
-            if mv.get("supplier_id") == supplier_id and reply.get("offer_id"):
-                terms[reply["offer_id"]] = reply.get("terms")
-        old, new = terms.get(action["term_sheet_id"]), terms.get(new_id)
-        if not old or old != new:
-            return None
-        self.standing_ids[supplier_id] = new_id
-        return {"action": {"type": "accept", "term_sheet_id": new_id}}
+        retry = reissued_accept(self.client, self.session_id, supplier_id, message, error)
+        if retry:
+            self.standing_ids[supplier_id] = retry["action"]["term_sheet_id"]
+        return retry
 
     def missed(self, supplier_id, error):
         result = super().missed(supplier_id, error)
         if "result" not in result:
             self.remember_standing(supplier_id, [result])
         return result
+
+
+def reissued_accept(client, session_id, supplier_id, message, error):
+    """A timeout repeats the supplier's offer under a NEW id (P05: Astra accepted Dralveck's 28.00 as
+    offer:70210-2, the thread had timed out to -3 and -4 with the same terms, the accept got 422 and the
+    run crashed). Returns one retry with the live id, only if its terms equal the ones we chose."""
+    action = message.get("action") or {}
+    if getattr(error, "status", None) != 422 or action.get("type") != "accept" or "standing offer" not in str(error.detail):
+        return None
+    state = client.session(session_id)
+    live = (state.get("threads") or {}).get(supplier_id) or {}
+    new_id = live.get("offer_id")
+    if not new_id or new_id == action.get("term_sheet_id") or live.get("closed"):
+        return None
+    thread = client.thread(session_id, supplier_id)
+    terms = {}
+    for m in thread.get("messages", []):
+        for ts in m.get("term_sheets") or []:
+            terms[ts.get("term_sheet_id")] = ts.get("terms")
+    for t in thread.get("timeouts") or []:
+        terms[t.get("offer_id")] = t.get("terms")
+    for mv in state.get("moves") or []:
+        reply = mv.get("reply") or {}
+        if mv.get("supplier_id") == supplier_id and reply.get("offer_id"):
+            terms[reply["offer_id"]] = reply.get("terms")
+    old, new = terms.get(action["term_sheet_id"]), terms.get(new_id)
+    if not old or old != new:
+        return None
+    return {"action": {"type": "accept", "term_sheet_id": new_id}}
+
+
+class SafeRemoteTable(RemoteTable):
+    """The kit's table plus the reissued-id accept retry - for the Live Final runner."""
+
+    def close(self, supplier_id, message):
+        try:
+            return super().close(supplier_id, message)
+        except ArenaError as e:
+            retry = reissued_accept(self.client, self.session_id, supplier_id, message, e)
+            if not retry:
+                raise
+            return super().close(supplier_id, retry)
 
 
 def main(argv=None):
