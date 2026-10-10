@@ -18,11 +18,11 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v2.2"
+POLICY_VERSION = "bayes-v2.3"
 
 
 class AnalyticalAgent:
-    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=0.25):
+    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=None):
         self.package = package
         self.store = store or Store()
         self.router = router or Router(enabled=False)
@@ -36,9 +36,23 @@ class AnalyticalAgent:
     def log(self, kind, payload, sid=None):
         self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
 
+    def risk_for_case(self, case):
+        """Conservative default except for quality-first cases where tail risk can overprice quality.
+
+        The P11 audit shows the 0.25 standard-deviation surcharge ranked EUR 48.41
+        above EUR 47.64 despite the latter having lower expected cost. This
+        lower coefficient is a modelling choice, not an observed acceptance rate.
+        """
+        if self.risk_aversion is not None:
+            return self.risk_aversion
+        return 0.05 if case["buyer"].get("category_goal") == "quality_first" else 0.25
+
+    def objective(self, case, expected_cost, uncertainty):
+        return expected_cost + self.risk_for_case(case) * uncertainty
+
     def start(self, case, threads):
         self.case_id = case["case_id"]
-        self.log("case", {"case": case, "policy_version": POLICY_VERSION, "risk_aversion": self.risk_aversion})
+        self.log("case", {"case": case, "policy_version": POLICY_VERSION, "risk_aversion": self.risk_for_case(case)})
         for sid, events in threads.items():
             _, terms = standing(events)
             std = _opening_standard(events)
@@ -301,7 +315,7 @@ class AnalyticalAgent:
                     "terms": terms,
                     "expected_cost": mean,
                     "uncertainty": sd,
-                    "objective": mean + self.risk_aversion * sd,
+                    "objective": self.objective(case, mean, sd),
                     "deal_cost": self.weighted(th, costs),
                     "probabilities": probabilities,
                     "scenario_costs": values,
@@ -346,11 +360,11 @@ class AnalyticalAgent:
 
         sid = min(actionable, key=supplier_priority)
         th, events = self.threads[sid], threads[sid]
-        sheets = latest(events).get("term_sheets", [])
-        # Consider every offered package when choosing the reference for the next negotiation move.
-        current = min(
-            (x["terms"] for x in sheets), key=lambda t: total_cost(case, t, th.std, th.sup), default=th.reference
-        )
+        # Only the standing offer is executable. Indicative alternatives can
+        # inform negotiation, but must not silently become the pricing baseline.
+        _, current = standing(events)
+        if not current:
+            current = th.reference
         analysis, sources = self.interpret(case, sid, events, deadline)
         # Interpretation changes belief weights BEFORE cost scenarios and offers are evaluated.
         available = self.available(case, threads, fallback)
