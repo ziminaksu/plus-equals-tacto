@@ -164,6 +164,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                          "step (a data anchor between your last offer and its counter, or a lever it values). In our "
                          "practice history suppliers walked only after a push past a final offer or after a timeout, "
                          "never after an ordinary step while 'open'.",
+            "concession_ladder": "Suppliers give nothing without a move from us and send a final offer soon after "
+                                 "we stop moving (P18: every final came one or two messages after a repeated or "
+                                 "near-repeated offer). Plan the remaining moves as a ladder: in EACH counter make "
+                                 "exactly one real move toward the supplier on a lever (payment 90 -> 60 -> 45 -> "
+                                 "30 days, a longer contract, an index clause with a wide then narrower deadband) "
+                                 "while keeping the price at or barely above your previous offer, and add one or "
+                                 "two UNUSED verified arguments. Keep a lever in reserve for every remaining step; "
+                                 "do not give the whole lever at once. When the supplier quotes the same price for "
+                                 "different values of a lever, that lever is worth nothing to it - keep our side.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
@@ -205,6 +214,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
         for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
+            # A re-cited ID scores 'duplicate' and buys nothing (P18 rounds 2-3): offer unused ones only.
+            if set(claim.refs) & th.used:
+                continue
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
                                                    "refs": claim.refs,
