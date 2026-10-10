@@ -257,6 +257,7 @@ class Router:
             else os.environ.get("QWEN_LARGE_MODEL", LARGE)
         )
         self.client = httpx.Client(transport=transport, timeout=12)
+        self._schema_rejected = False
         self.calls = []
         self.cache = {}
         self.large_failures = 0
@@ -390,11 +391,19 @@ class Router:
                         {"role": "user", "content": "Review the following evidence and return one JSON object.\n"
                                                     + json.dumps(data, ensure_ascii=False)},
                     ],
-                    "response_format": {"type": "json_object"},
+                    "response_format": (
+                        {"type": "json_schema", "json_schema": {"name": role, "schema": schema}}
+                        if schema and not self._schema_rejected else {"type": "json_object"}
+                    ),
                     "max_tokens": 4096,
                 },
             )
             record["http_status"] = response.status_code
+            if response.status_code == 400 and schema and not self._schema_rejected:
+                # the provider rejected the schema format: plain JSON mode from now on, schema stays in the text
+                self._schema_rejected = True
+                record["status"] = "schema_rejected"
+                return self._chat_once(base, model, system, data, remaining - (time.monotonic() - start), role, schema)
             response.raise_for_status()
             result = response.json()
             record["usage"] = result.get("usage", {})
@@ -647,7 +656,20 @@ The application appends the exact offer and verified arguments separately."""
         try:
             result = self.call_astra(FINAL_DIRECTOR, board, deadline, role="final_decision",
                                      schema=final_schema(board))
-            validate_selection(board, result)
+            try:
+                validate_selection(board, result)
+            except (ValueError, KeyError, TypeError) as invalid:
+                # A weaker model without enforced schemas (round 4: gemini lite) may slip on the shape: one
+                # repair attempt with the exact error, still validated by the same code.
+                if not os.environ.get("ASTRA_BASE_URL") or deadline - time.monotonic() < 6:
+                    raise
+                fixed = dict(board, previous_answer=result,
+                             previous_answer_error=f"{type(invalid).__name__}: {invalid}"[:300],
+                             instruction="Your previous answer was invalid. Return a corrected JSON object with "
+                                         "exactly the schema's keys, using only ids that exist on this board.")
+                result = self.call_astra(FINAL_DIRECTOR, fixed, deadline, role="final_decision",
+                                         schema=final_schema(board))
+                validate_selection(board, result)
             return result
         except Exception as exc:
             if self.calls and self.calls[-1].get("role") == "final_decision":
