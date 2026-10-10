@@ -1,0 +1,229 @@
+{
+  "run_id": "ehl-v51-astra-two-20261010",
+  "policy": "bayes-v5.1-quote-discovery",
+  "commit": "b3498a9adb5cb7a4cba9d2e9b665ad6ac46b0918",
+  "sessions_authorised": 2,
+  "sessions_started": 2,
+  "models": {
+    "primary": "gpt-6-astra",
+    "reviewer": "gpt-6-astra",
+    "reasoning_effort": "low"
+  },
+  "cases": {
+    "case:P02": {
+      "session_id": "ffef7b040ab4a7e6",
+      "previous_run_score": 0.15698901705979842,
+      "earlier_best_score": 0.15698901705979842,
+      "score": 0.15698901705979842,
+      "deal": true,
+      "terms": {
+        "payment_days": 14,
+        "lead_time_days": 35,
+        "volume_per_year": 6110,
+        "contract_months": 12,
+        "effective_date": "2027-01-01",
+        "index_clause": null,
+        "incoterm": "DAP",
+        "tooling_eur": 0.0,
+        "ppm_commitment": 250,
+        "chargeback_eur_per_complaint": 0.0,
+        "unit_price": 368.45
+      },
+      "c_open": 2282867.49,
+      "c_deal": 2275433.52,
+      "c_alt": 2604227.78,
+      "cost_breakdown": {
+        "price": 2251229.5,
+        "uncovered_need": 0.0,
+        "fallback_risk": 0.0,
+        "payment_terms": 23012.57,
+        "freight": 0.0,
+        "late_delivery": 0.0,
+        "quality": 1191.45,
+        "tooling": 0.0,
+        "index_clause": 0.0,
+        "index_risk": 0.0,
+        "relationship": 0.0
+      },
+      "decisions": [
+        {
+          "kind": "counter",
+          "seconds": 19.619566667010076,
+          "terms": {
+            "unit_price": 341.95,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "action": null
+        },
+        {
+          "kind": "counter",
+          "seconds": 7.5388163750758395,
+          "terms": {
+            "unit_price": 358.0,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "action": null
+        },
+        {
+          "kind": "counter",
+          "seconds": 10.84142608300317,
+          "terms": {
+            "unit_price": 359.47,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "action": null
+        },
+        {
+          "kind": "counter",
+          "seconds": 19.176710749976337,
+          "terms": {
+            "unit_price": 360.94,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "action": null
+        },
+        {
+          "kind": "all threads closing; best valid package across suppliers",
+          "seconds": null,
+          "terms": null,
+          "action": {
+            "type": "accept",
+            "term_sheet_id": "offer:70510-4"
+          }
+        }
+      ],
+      "model_calls": [
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 7.121
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 7.691
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 5.117
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 8.566
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 6.573
+        },
+        {
+          "role": "strategic_review",
+          "status": "ok",
+          "seconds": 8.327
+        }
+      ]
+    },
+    "case:P18": {
+      "session_id": "de148f11c2bcdeb3",
+      "previous_run_score": 0.0,
+      "earlier_best_score": 0.33963340207573,
+      "score": 0.33963340207573,
+      "deal": true,
+      "terms": {
+        "payment_days": 14,
+        "lead_time_days": 14,
+        "volume_per_year": 23700,
+        "contract_months": 24,
+        "effective_date": "2027-01-01",
+        "index_clause": {
+          "series": "AS-14404",
+          "material_share": 0.45,
+          "deadband_pct": 5.0,
+          "base_month": "2026-08"
+        },
+        "incoterm": "DAP",
+        "tooling_eur": 0.0,
+        "ppm_commitment": 70,
+        "chargeback_eur_per_complaint": 0.0,
+        "unit_price": 5.6
+      },
+      "c_open": 295173.23,
+      "c_deal": 270542.35,
+      "c_alt": 301087.96,
+      "cost_breakdown": {
+        "price": 265440.0,
+        "uncovered_need": 0.0,
+        "fallback_risk": 0.0,
+        "payment_terms": 2713.39,
+        "freight": 0.0,
+        "late_delivery": 0.0,
+        "quality": 0.0,
+        "tooling": 0.0,
+        "index_clause": 1194.48,
+        "index_risk": 1194.48,
+        "relationship": 0.0
+      },
+      "decisions": [
+        {
+          "kind": "counter",
+          "seconds": 24.07612120907288,
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": null,
+            "payment_days": 14,
+            "contract_months": 36
+          },
+          "action": null
+        },
+        {
+          "kind": "confirm_quote",
+          "seconds": null,
+          "terms": null,
+          "action": null
+        },
+        {
+          "kind": "all threads closing; best valid package across suppliers",
+          "seconds": null,
+          "terms": null,
+          "action": {
+            "type": "accept",
+            "term_sheet_id": "offer:70740-2"
+          }
+        }
+      ],
+      "model_calls": [
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 9.129
+        },
+        {
+          "role": "strategic_review",
+          "status": "ReadTimeout",
+          "seconds": 9.668
+        },
+        {
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 11.779
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "One hosted run per case; no repeat trials or isolated causal comparison.",
+    "Supplier replies are stochastic and learning state was retained from prior sessions.",
+    "No practice sessions beyond the two newly authorised starts.",
+    "Scores are observed Arena results, not local estimates."
+  ],
+  "findings": {
+    "case:P02": "Same EUR 368.45 unindexed deal. Supplier did not explicitly offer indexed rebasing; discovery gate never activated. Agent questions focused on payment and did not proactively obtain the indexed price.",
+    "case:P18": "Confirmed the supplier-priced EUR 5.60 / 24-month / 14-day / 5% deadband indexed alternative and accepted its standing ID. Recovered the earlier best score. Reviewer timed out once, but the local fallback completed the decision and the Arena negotiation closed successfully."
+  }
+}
