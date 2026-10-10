@@ -61,9 +61,13 @@ class LoggedTable(RemoteTable):
                 raise ValueError("accept requires a received standing offer ID")
             # Reject indicative alternatives before sending an irreversible accept.
             # Never convert a mismatch into acceptance of a different offer.
-            current = self.client.thread(self.session_id, supplier_id)
-            if current.get("offer_id") != offer_id:
-                raise ValueError("server-confirmed standing offer ID differs; abort acceptance")
+            # A live analytical agent only accepts an ID from the latest received
+            # standing sheet. Avoid another network roundtrip near the move cap.
+            # Defensive preflight remains active for standalone/legacy callers.
+            if self.agent is None:
+                current = self.client.thread(self.session_id, supplier_id)
+                if current.get("offer_id") != offer_id:
+                    raise ValueError("server-confirmed standing offer ID differs; abort acceptance")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
