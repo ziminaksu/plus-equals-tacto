@@ -9,8 +9,47 @@ quote. Each carries a `strength` so the strategy can spend the strong ones at th
 import re
 from dataclasses import dataclass, field
 
-CASH_WORDS = re.compile(r"cash|liquidit|pay (?:our|the) invoices|within \d+ days|discount|prepay|early payment", re.I)
-CAPACITY_WORDS = re.compile(r"capacity|second shift|idle|on hold|fill|take additional", re.I)
+# Conservative priors: generic mentions of "cash" or "capacity" are NOT evidence.
+# Explicit denials veto a positive signal in the same note.
+CASH_WORDS = re.compile(
+    r"cash (?:shortage|shortfall|crunch|pressure|constraints)|"
+    r"(?:liquidity|working.capital) (?:shortage|shortfall|pressure|problem|constraint)|"
+    r"(?:need|prefer|require|appreciate) (?:earlier|early|faster|advance) payment|"
+    r"(?:payment|invoices?) within \d+ days|"
+    r"(?:cash.flow|liquidity) (?:is|remains) (?:tight|strained)",
+    re.I,
+)
+CASH_DENIAL = re.compile(
+    r"(?:no|without|not experiencing|do not have|don't have) "
+    r"(?:cash.flow|cash|liquidity|working.capital) "
+    r"(?:issues?|problems?|shortages?|shortfalls?|constraints?|pressure)|"
+    r"(?:cash.flow|liquidity) (?:is|remains) (?:healthy|stable|strong)",
+    re.I,
+)
+CAPACITY_WORDS = re.compile(
+    r"(?:spare|unused|idle|available|excess|free) capacity|"
+    r"capacity (?:is|remains) (?:available|free|unused)|"
+    r"(?:have|can offer|can provide) (?:a )?second shift|"
+    r"(?:can|could|able to) (?:take|accept|supply|deliver) (?:more|additional|extra) "
+    r"(?:volume|units|orders?)",
+    re.I,
+)
+CAPACITY_DENIAL = re.compile(
+    r"(?:no|without|lack of) (?:spare|unused|idle|available|excess|free) capacity|"
+    r"capacity (?:is|remains) (?:fully booked|full|at (?:its |our )?limit|constrained|limited)|"
+    r"(?:cannot|can't|unable to|not able to) (?:take|accept|supply|deliver) "
+    r"(?:more|additional|extra) (?:volume|units|orders?)|"
+    r"(?:fully booked|no room for additional volume)",
+    re.I,
+)
+
+
+def supplier_signals_from_note(body):
+    """Only explicit, non-contradicted claims may shift supplier priors."""
+    return {
+        "cash_short": bool(CASH_WORDS.search(body)) and not bool(CASH_DENIAL.search(body)),
+        "spare_capacity": bool(CAPACITY_WORDS.search(body)) and not bool(CAPACITY_DENIAL.search(body)),
+    }
 STALE_COSTING = re.compile(r"spreadsheet|not followed|last updated|own figures|costing", re.I)
 APPROVAL = re.compile(r"approval|committee|board|boss|head office|group", re.I)
 PARTNER = re.compile(r"partnership|kept supplying|loyal|many years|relationship", re.I)
@@ -166,6 +205,7 @@ def build(case, supplier_id, package=None, asked_price=None):
 
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
+    cash_denied = capacity_denied = False
     for row in docs[-12:]:
         try:
             text = package.document(row["id"])
@@ -173,11 +213,20 @@ def build(case, supplier_id, package=None, asked_price=None):
             continue
         body = text.split("\n", 4)[-1].strip()
         d.notes.append(f"{row['id']} ({row['kind']}): {body[:300]}")
-        d.cash_short |= bool(CASH_WORDS.search(body))
-        d.spare_capacity |= bool(CAPACITY_WORDS.search(body))
+        signals = supplier_signals_from_note(body)
+        cash_denied |= bool(CASH_DENIAL.search(body))
+        capacity_denied |= bool(CAPACITY_DENIAL.search(body))
+        d.cash_short |= signals["cash_short"]
+        d.spare_capacity |= signals["spare_capacity"]
         d.stale_costing |= bool(STALE_COSTING.search(body))
         d.approval_ladder |= bool(APPROVAL.search(body))
         d.wants_partnership |= bool(PARTNER.search(body))
+    # A later contradictory note makes spare capacity unknown, not available.
+    # Financial metrics below can independently justify cash pressure.
+    if cash_denied:
+        d.cash_short = False
+    if capacity_denied:
+        d.spare_capacity = False
     intel = _query(package, "SELECT equity_ratio_pct, credit_index, credit_index_12m_ago FROM supplier_intel WHERE supplier_id = ?", (supplier_id,))
     if intel:
         i = intel[0]
