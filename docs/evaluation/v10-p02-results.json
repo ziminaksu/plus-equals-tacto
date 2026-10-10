@@ -1,0 +1,1597 @@
+{
+  "policy": "astra-v10-traceable-plans",
+  "sessions_started": 2,
+  "runs": [
+    {
+      "run_id": "ehl-v10-p02-20261010",
+      "evaluated_commit": "9f98e44e978adf49074b8ddf4b62c884e073a012",
+      "authorization": "Initial one P02 session",
+      "attempts": [
+        {
+          "case_id": "case:P02",
+          "status": "error",
+          "session_id": "c9a62f9310efe8f3"
+        }
+      ],
+      "result": {
+        "score": 0.0,
+        "deal": false,
+        "terms": null,
+        "supplier_id": null,
+        "cost_breakdown": null,
+        "c_open": 2282867.49,
+        "c_deal": null,
+        "end_reason": "timeout"
+      },
+      "previous_best_score": 0.25476459577171884,
+      "delta_vs_previous_best": -0.25476459577171884,
+      "source_freeze_matches_evaluated_commit": true,
+      "source_freeze_matches_current_runtime": false,
+      "source_changes_since_freeze": [
+        "hollerau/analytical/contracts.py",
+        "hollerau/analytical/router.py"
+      ],
+      "source_note": "Validation patch was made after the first process failed; that session ended remotely and was not resumed.",
+      "reproducibility": {
+        "git_commit": "9f98e44e978adf49074b8ddf4b62c884e073a012",
+        "source_sha256": {
+          "arena_kit/__init__.py": "52f097f44c4e871d5793607d3f6214758c84da61f5cac1b59a1465fbfc7c2bfe",
+          "arena_kit/agents/__init__.py": "626eca5281eab26c36bf8d3a32733281a03176b2112f210c414b5b9fb2263d02",
+          "arena_kit/agents/llm.py": "a93030c558ba32a5f6f68a62b1a1f9030dcc26a51c1f73d38008c1e1cf83e417",
+          "arena_kit/agents/naive.py": "bf1574b7db0dd330547c1840c192e26a4ba459990788243f15fc522e24853f77",
+          "arena_kit/cli.py": "7469d1597668e8292502db8d3c1edefcc38b499f3d221cf2ab610efc0d334cec",
+          "arena_kit/client.py": "19df0fac991696a8d0d8ec17ae3cc8c48c7fe283d89fe1d27e8f087be4ef4f4f",
+          "arena_kit/cost.py": "697010bcc1bbf51a0deb8f4c0edaa605b0a05005bf7a1ec4cc595fea25e84c68",
+          "arena_kit/data.py": "5ab541637a17c9ad47ea907dfd3d09a30f51f5dd427bd834250d89ef3d888123",
+          "arena_kit/docs.py": "7fc69cce070dc9696ac018ba2581a6cba1c3b6184d81083da8ff31df1c358647",
+          "arena_kit/mcp_server.py": "40fa2f9e09c9f30305763e0ec35dc6c370939297f441546dcbdd2cf6dfa22de5",
+          "arena_kit/play.py": "b4ac0d3306d552341de3b2b377752832d3ab8b92b5f0c4b15a4d5f13a3a09713",
+          "arena_kit/sim.py": "df9a22cd277113ac22be16ecbcf9a9de3258b27aebb80b0a8a3c015979c9404f",
+          "hollerau/__init__.py": "aacf031402d1b38d35924e1c623862e51b5a04c69303b708a113142483a2d04b",
+          "hollerau/__main__.py": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+          "hollerau/agent.py": "1b266c3460e413c2a2ec95215fbc597a32b2e08c4723eeae86d19aaf3a304879",
+          "hollerau/analytical/__init__.py": "d0dd00ea39bb484a834ad833200285cb280a9c39c545b3af393a3cc8cb20c7e0",
+          "hollerau/analytical/agent.py": "1a7c378b24976792d46749ee516738d1a7afa60a41a0b7fcbbda7fce22ba8fa5",
+          "hollerau/analytical/beliefs.py": "84bf8ffd305e23407bb56bf5b8ce61e9884339af345e741ff69cac58dbf35fe7",
+          "hollerau/analytical/budget.py": "318007c793223de7701a6d3df2e05d43d02805439ac29a0a5257216347ef696a",
+          "hollerau/analytical/cli.py": "03c4407574d2a1ea939ae1d6c85557a2976d9c3ff6a5663232a4335e62b1651c",
+          "hollerau/analytical/communication.py": "f4445fa0e23bab58592914fd59e1213d83a6c3ec7d5dcfbc2c78ed3b29d66f12",
+          "hollerau/analytical/contracts.py": "06d2324a40e4b8c25eae4ec2d603c9d44f6251799c7453776ac9c7d631d6f6e2",
+          "hollerau/analytical/decision_record.py": "52eaa8365df70c2dfc16a063ff35c8bb4dabeaa36e6e59191d3a020531b546c9",
+          "hollerau/analytical/deliberation.py": "321f7ffe8612457cfbad195a5f362dbfd6c54c6e094a0c0186eb1e8602b8e72f",
+          "hollerau/analytical/director.py": "a96caec546ab04f249d6e9d2f6d4d43406f2445a391605826dbbe3576af82096",
+          "hollerau/analytical/discovery.py": "eb4f5b6faa8663337beed3b9158151ba14d8144ac0fe48cd4e6bb67885dcb81b",
+          "hollerau/analytical/experiment.py": "e266f382856e392a893fdae084e19ff1cb3ccfff23db8574ae30f36f193df5a2",
+          "hollerau/analytical/feedback.py": "2fa98a9d63f2acd89f96199f0bb15c59541ec1bab1d2bf3356e64828d681f6f5",
+          "hollerau/analytical/offers.py": "b7df00ee2003943e9613d3f6218a47441a3075486d2e4e1f884e8db70f14e172",
+          "hollerau/analytical/planning.py": "764cea6b1b1e3fb90b85cf75d710d069d3d1ddd24e588ed83be0a0c99e19fb16",
+          "hollerau/analytical/playbook.py": "ae72e259b54950daccca8c6af26642251dc325e530e0bf72092af56248503f57",
+          "hollerau/analytical/preferences.py": "96a846dea40bfd35f28b58f60067490775d37d9f073ec9c91d7fc307c8919933",
+          "hollerau/analytical/prompt_context.py": "c251ce613354f624da2065ba456aa011811de346a94ec3cad2ace3785c652fb7",
+          "hollerau/analytical/report.py": "bbcdbe2ca6c8a9da2b3806a33228ab6e8b511196caa3c131645f2c8bfd779096",
+          "hollerau/analytical/retrieval.py": "512bda017663c7d200fe4c7e6cdff44220b0a4f6f10d246078e25804bed6b039",
+          "hollerau/analytical/router.py": "2a0c66546cd02444c706bdd765c65c4ec4446bc2a69bc5937d0cb78134f46fa4",
+          "hollerau/analytical/storage.py": "d1b158065ecd9aac9248a6c21382af6b77b0cfc1242443e6dcb6404a116d22f8",
+          "hollerau/analytical/sustainability.py": "f7913b9e21c1cf1f36d5db9421f0b3881e2f06c95324141f1ce0a1733a89319d",
+          "hollerau/brain.py": "c12e2ee0386743709e850f7f172e291b67cfd64f8fdb9bf961b9c32f3debd07f",
+          "hollerau/cases.py": "9cb3d3c7f0d853c9f934d2c8ca9c23fa2323908de99ca07f0e050d45389ae0e3",
+          "hollerau/cli.py": "c870cf7a5fd4a9d618efa7bdde96b8478c4999cb59082d108cbf97cd6034580e",
+          "hollerau/compliance.py": "ed15976f3ff2c4fe04639eb4ca6c598ea811baee2ea895091b691ec55920cc5e",
+          "hollerau/intel.py": "193c425b39d1ccd964ca7f601ad5f026fd309f3bcc829315c359d89781b9a2f0",
+          "hollerau/levers.py": "a658a4625405bbe9d55e896d442fb8bf4e078b87f505c464c49637347c07232e",
+          "hollerau/llm.py": "ba2b8fef7bc4059bb1552cea03d05373f44a4f2ff8d8c8d7c1ed9fd2ac34d530",
+          "hollerau/params.py": "265181ced384e60e0d5e45a09eb126fac57180622d418b2d58fa1ec53c1c79db",
+          "hollerau/persona.py": "d621fa433cefbdb5bbc4a4961ed770c550c825ee3950868dd2daf19e331442d1",
+          "hollerau/simulate.py": "13ca6f2d26f220fa5ae09b35ac32ad3455491bf244927d1c7d8a92394d9a2be7",
+          "hollerau/tune.py": "33d77e4904db1de756b76262a81ab2e167ba0fce1951ce6f1f32f5ff214587f6",
+          "hollerau/writer.py": "eaa37e6a3f70dc6f0c89ff066e0498f370982f0aa836f92f530b441e79714c93"
+        },
+        "source_manifest_sha256": "6be060aa9b9cfa7afa74db8522db547f39de7db8cae93379200ac2c437e6fa37",
+        "initial_memory_sha256": "7dd001339c3ae48030a7612d2c4d8b3adf8de404ec361813e6ed5b4d02e04d8a",
+        "public_data_manifest_sha256": "1f0dce06a916564d04d667149e4c8a6c75d60e3c0c6bebcdcaa3bd1f5e6e979f",
+        "public_data_files": 286,
+        "model_settings": {
+          "astra_reasoning_effort": "low",
+          "max_output_tokens": 4096
+        },
+        "comparison_warning": "One fresh session is exploratory; historical best is not a matched control."
+      },
+      "call_summary": [
+        {
+          "role": "final_decision",
+          "count": 1,
+          "status_counts": {
+            "ok": 1
+          },
+          "seconds": [
+            18.721
+          ],
+          "final_validation_counts": {
+            "ValueError": 1
+          },
+          "validation_warnings": [
+            []
+          ],
+          "correction_calls": 0
+        },
+        {
+          "role": "negotiator",
+          "count": 1,
+          "status_counts": {
+            "ok": 1
+          },
+          "seconds": [
+            9.45
+          ],
+          "final_validation_counts": {},
+          "validation_warnings": [
+            []
+          ],
+          "correction_calls": 0
+        }
+      ],
+      "decisions": [],
+      "outcomes": [],
+      "errors": [
+        {
+          "event_id": 1427,
+          "kind": "final_decision_failed",
+          "error_type": "FinalDecisionUnavailable",
+          "sent": false,
+          "board_event_id": 1426,
+          "model_availability": {
+            "sup:70510": {
+              "status": "ok",
+              "failure_type": null,
+              "accepted_proposals": 2,
+              "cache_hit": false
+            }
+          },
+          "budget": {
+            "remaining_seconds": 22.566,
+            "proposer_available_seconds": 0.0,
+            "final_reserve_seconds": 24.0,
+            "board_reserve_seconds": 3.0,
+            "execution_reserve_seconds": 2.0
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "allocated_seconds": 19.739,
+              "raw_input_chars": 37163,
+              "input_chars": 34915,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "afd692efc17f4328604a4eae80bd62ab4db1965a113d13c9e67691849e9b2edb",
+              "raw_input_sha256": "68f1f22329ce2c841d8b7e077c9b7b38460133af370632554f6814ebab5cf5a9",
+              "schema_chars": 5326,
+              "preparation_seconds": 0.002,
+              "network_budget_seconds": 19.738,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 11532,
+                "input_tokens_details": {
+                  "cache_write_tokens": 11529,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 447,
+                "output_tokens_details": {
+                  "reasoning_tokens": 89
+                },
+                "total_tokens": 11979
+              },
+              "seconds": 9.45,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "allocated_seconds": 30.0,
+              "raw_input_chars": 201791,
+              "input_chars": 177712,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "9ca114f8344f23aeb0006275f98e7b8d2b2a0476fba3048728e430f891e9e994",
+              "raw_input_sha256": "117a25f8287d4616591771b9329f8d84a75719cb18f7b6b109cb511abb492c37",
+              "schema_chars": 7146,
+              "preparation_seconds": 0.011,
+              "network_budget_seconds": 29.989,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 60874,
+                "input_tokens_details": {
+                  "cache_write_tokens": 60871,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 864,
+                "output_tokens_details": {
+                  "reasoning_tokens": 81
+                },
+                "total_tokens": 61738
+              },
+              "seconds": 18.721,
+              "final_validation": "ValueError"
+            }
+          ]
+        },
+        {
+          "event_id": 1428,
+          "kind": "error",
+          "type": "FinalDecisionUnavailable"
+        }
+      ]
+    },
+    {
+      "run_id": "ehl-v10-p02-validation-20261010",
+      "evaluated_commit": "0c2f92f93463bd5f3a49b0c753b09d23a9233050",
+      "authorization": "Separately approved one additional P02 session",
+      "attempts": [
+        {
+          "case_id": "case:P02",
+          "status": "completed",
+          "session_id": "6c0e69bb910e3009"
+        }
+      ],
+      "result": {
+        "score": 0.23513349822104282,
+        "deal": true,
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 367.84
+        },
+        "supplier_id": "sup:70510",
+        "cost_breakdown": {
+          "price": 2247502.4,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 22974.47,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 64.79
+        },
+        "c_open": 2282867.49,
+        "c_deal": 2271733.11,
+        "end_reason": null
+      },
+      "previous_best_score": 0.25476459577171884,
+      "delta_vs_previous_best": -0.01963109755067602,
+      "source_freeze_matches_evaluated_commit": true,
+      "source_freeze_matches_current_runtime": true,
+      "source_changes_since_freeze": [],
+      "source_note": "Runtime source matched the freeze after this session completed.",
+      "reproducibility": {
+        "git_commit": "0c2f92f93463bd5f3a49b0c753b09d23a9233050",
+        "source_sha256": {
+          "arena_kit/__init__.py": "52f097f44c4e871d5793607d3f6214758c84da61f5cac1b59a1465fbfc7c2bfe",
+          "arena_kit/agents/__init__.py": "626eca5281eab26c36bf8d3a32733281a03176b2112f210c414b5b9fb2263d02",
+          "arena_kit/agents/llm.py": "a93030c558ba32a5f6f68a62b1a1f9030dcc26a51c1f73d38008c1e1cf83e417",
+          "arena_kit/agents/naive.py": "bf1574b7db0dd330547c1840c192e26a4ba459990788243f15fc522e24853f77",
+          "arena_kit/cli.py": "7469d1597668e8292502db8d3c1edefcc38b499f3d221cf2ab610efc0d334cec",
+          "arena_kit/client.py": "19df0fac991696a8d0d8ec17ae3cc8c48c7fe283d89fe1d27e8f087be4ef4f4f",
+          "arena_kit/cost.py": "697010bcc1bbf51a0deb8f4c0edaa605b0a05005bf7a1ec4cc595fea25e84c68",
+          "arena_kit/data.py": "5ab541637a17c9ad47ea907dfd3d09a30f51f5dd427bd834250d89ef3d888123",
+          "arena_kit/docs.py": "7fc69cce070dc9696ac018ba2581a6cba1c3b6184d81083da8ff31df1c358647",
+          "arena_kit/mcp_server.py": "40fa2f9e09c9f30305763e0ec35dc6c370939297f441546dcbdd2cf6dfa22de5",
+          "arena_kit/play.py": "b4ac0d3306d552341de3b2b377752832d3ab8b92b5f0c4b15a4d5f13a3a09713",
+          "arena_kit/sim.py": "df9a22cd277113ac22be16ecbcf9a9de3258b27aebb80b0a8a3c015979c9404f",
+          "hollerau/__init__.py": "aacf031402d1b38d35924e1c623862e51b5a04c69303b708a113142483a2d04b",
+          "hollerau/__main__.py": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+          "hollerau/agent.py": "1b266c3460e413c2a2ec95215fbc597a32b2e08c4723eeae86d19aaf3a304879",
+          "hollerau/analytical/__init__.py": "d0dd00ea39bb484a834ad833200285cb280a9c39c545b3af393a3cc8cb20c7e0",
+          "hollerau/analytical/agent.py": "1a7c378b24976792d46749ee516738d1a7afa60a41a0b7fcbbda7fce22ba8fa5",
+          "hollerau/analytical/beliefs.py": "84bf8ffd305e23407bb56bf5b8ce61e9884339af345e741ff69cac58dbf35fe7",
+          "hollerau/analytical/budget.py": "318007c793223de7701a6d3df2e05d43d02805439ac29a0a5257216347ef696a",
+          "hollerau/analytical/cli.py": "03c4407574d2a1ea939ae1d6c85557a2976d9c3ff6a5663232a4335e62b1651c",
+          "hollerau/analytical/communication.py": "f4445fa0e23bab58592914fd59e1213d83a6c3ec7d5dcfbc2c78ed3b29d66f12",
+          "hollerau/analytical/contracts.py": "53c58f1e33d55009abb229a09e7ae81279b6cc210475379c008d75996831ea58",
+          "hollerau/analytical/decision_record.py": "52eaa8365df70c2dfc16a063ff35c8bb4dabeaa36e6e59191d3a020531b546c9",
+          "hollerau/analytical/deliberation.py": "321f7ffe8612457cfbad195a5f362dbfd6c54c6e094a0c0186eb1e8602b8e72f",
+          "hollerau/analytical/director.py": "a96caec546ab04f249d6e9d2f6d4d43406f2445a391605826dbbe3576af82096",
+          "hollerau/analytical/discovery.py": "eb4f5b6faa8663337beed3b9158151ba14d8144ac0fe48cd4e6bb67885dcb81b",
+          "hollerau/analytical/experiment.py": "e266f382856e392a893fdae084e19ff1cb3ccfff23db8574ae30f36f193df5a2",
+          "hollerau/analytical/feedback.py": "2fa98a9d63f2acd89f96199f0bb15c59541ec1bab1d2bf3356e64828d681f6f5",
+          "hollerau/analytical/offers.py": "b7df00ee2003943e9613d3f6218a47441a3075486d2e4e1f884e8db70f14e172",
+          "hollerau/analytical/planning.py": "764cea6b1b1e3fb90b85cf75d710d069d3d1ddd24e588ed83be0a0c99e19fb16",
+          "hollerau/analytical/playbook.py": "ae72e259b54950daccca8c6af26642251dc325e530e0bf72092af56248503f57",
+          "hollerau/analytical/preferences.py": "96a846dea40bfd35f28b58f60067490775d37d9f073ec9c91d7fc307c8919933",
+          "hollerau/analytical/prompt_context.py": "c251ce613354f624da2065ba456aa011811de346a94ec3cad2ace3785c652fb7",
+          "hollerau/analytical/report.py": "bbcdbe2ca6c8a9da2b3806a33228ab6e8b511196caa3c131645f2c8bfd779096",
+          "hollerau/analytical/retrieval.py": "512bda017663c7d200fe4c7e6cdff44220b0a4f6f10d246078e25804bed6b039",
+          "hollerau/analytical/router.py": "c7488b37cd026d1fef0b813534bc94c5d1f76edbcd05538a4ad60afc04c4ddfe",
+          "hollerau/analytical/storage.py": "d1b158065ecd9aac9248a6c21382af6b77b0cfc1242443e6dcb6404a116d22f8",
+          "hollerau/analytical/sustainability.py": "f7913b9e21c1cf1f36d5db9421f0b3881e2f06c95324141f1ce0a1733a89319d",
+          "hollerau/brain.py": "c12e2ee0386743709e850f7f172e291b67cfd64f8fdb9bf961b9c32f3debd07f",
+          "hollerau/cases.py": "9cb3d3c7f0d853c9f934d2c8ca9c23fa2323908de99ca07f0e050d45389ae0e3",
+          "hollerau/cli.py": "c870cf7a5fd4a9d618efa7bdde96b8478c4999cb59082d108cbf97cd6034580e",
+          "hollerau/compliance.py": "ed15976f3ff2c4fe04639eb4ca6c598ea811baee2ea895091b691ec55920cc5e",
+          "hollerau/intel.py": "193c425b39d1ccd964ca7f601ad5f026fd309f3bcc829315c359d89781b9a2f0",
+          "hollerau/levers.py": "a658a4625405bbe9d55e896d442fb8bf4e078b87f505c464c49637347c07232e",
+          "hollerau/llm.py": "ba2b8fef7bc4059bb1552cea03d05373f44a4f2ff8d8c8d7c1ed9fd2ac34d530",
+          "hollerau/params.py": "265181ced384e60e0d5e45a09eb126fac57180622d418b2d58fa1ec53c1c79db",
+          "hollerau/persona.py": "d621fa433cefbdb5bbc4a4961ed770c550c825ee3950868dd2daf19e331442d1",
+          "hollerau/simulate.py": "13ca6f2d26f220fa5ae09b35ac32ad3455491bf244927d1c7d8a92394d9a2be7",
+          "hollerau/tune.py": "33d77e4904db1de756b76262a81ab2e167ba0fce1951ce6f1f32f5ff214587f6",
+          "hollerau/writer.py": "eaa37e6a3f70dc6f0c89ff066e0498f370982f0aa836f92f530b441e79714c93"
+        },
+        "source_manifest_sha256": "4d41e50c9d34bd6ba0e2c7f414cffadf808f99265cda7c08f2632b8690dd1365",
+        "initial_memory_sha256": "a04ec95b15e929154cafc5fdb7d24bcb006f9c8cef3c3fcd5622b070c64b89c7",
+        "public_data_manifest_sha256": "1f0dce06a916564d04d667149e4c8a6c75d60e3c0c6bebcdcaa3bd1f5e6e979f",
+        "public_data_files": 286,
+        "model_settings": {
+          "astra_reasoning_effort": "low",
+          "max_output_tokens": 4096
+        },
+        "comparison_warning": "One fresh session is exploratory; historical best is not a matched control."
+      },
+      "call_summary": [
+        {
+          "role": "final_decision",
+          "count": 3,
+          "status_counts": {
+            "ok": 3
+          },
+          "seconds": [
+            16.872,
+            16.031,
+            14.491
+          ],
+          "final_validation_counts": {
+            "ok": 3
+          },
+          "validation_warnings": [
+            [],
+            [],
+            []
+          ],
+          "correction_calls": 0
+        },
+        {
+          "role": "negotiator",
+          "count": 3,
+          "status_counts": {
+            "ok": 3
+          },
+          "seconds": [
+            8.277,
+            13.964,
+            10.376
+          ],
+          "final_validation_counts": {},
+          "validation_warnings": [
+            [],
+            [
+              "interpretations[2]:rejected"
+            ],
+            []
+          ],
+          "correction_calls": 0
+        }
+      ],
+      "decisions": [
+        {
+          "event_id": 1440,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:1:sup:70510",
+          "board_event_id": 1438,
+          "phase": "open",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p52"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70510:e2",
+              "sup:70510:e0"
+            ],
+            "tone": "cooperative",
+            "rationale": "Offer earlier payment for a reduced fixed price: p52 retains full coverage and yields modeled savings of €30,933 after the active relationship penalty, with €27,010 downside savings and a lower public-cost scenario total than opening. A counteroffer is valuable progress rather than failure; assess its complete cost, then consider moderating the fixed-price request to p2 before spending the indexation lever.",
+            "reply_text": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of {{fixed:volume_per_year}} units annually for the specified contract period and attach our shared forecast as planning evidence, not an extension of our binding commitments. We value continuity of supply and a stable fixed price. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. The attached opportunity for additional business is conditional, not an additional volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?",
+            "plan": {
+              "expected_response": "counteroffer",
+              "expected_price_low": 363.9,
+              "expected_price_high": 369.5,
+              "basis_source_ids": [
+                "history:1284",
+                "history:1093",
+                "history:1302"
+              ],
+              "basis": "Earlier-payment opening proposals previously produced fixed-price counters; forecast-supported history supports seeking progress, not assuming exact acceptance.",
+              "if_counteroffer": "Compare total costs and, if still open, consider p2 as a moderated fixed-price request.",
+              "if_unchanged": "Acknowledge the boundary and consider a materially different rebased indexed exchange rather than repeating this package.",
+              "if_accepted": "Reassess any supported alternative structure against the secured savings before deciding whether to close.",
+              "if_walkout": "Record zero Arena improvement and use the available fallback process.",
+              "why_not_alternative": "p17 offers greater calibrated savings but carries a much larger relationship penalty and a public-cost total above opening; p52 is a more credible stabilisation exchange.",
+              "revision_from_previous": "Initial move: there is no prior plan or stop condition; historical concessions require fresh agreement.",
+              "rejected_alternative_id": "sup:70510:p17"
+            },
+            "continuation_review": {
+              "target_package_id": "sup:70510:p52",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "This subjective range reflects an open first exchange and histories dominated by counters, but sparse observations do not establish supplier patience. It is below the target's optimistic break-even threshold of 100%, with no secured improvement currently at risk; counteroffers still require separate valuation.",
+              "information_needed": "The supplier's executable price for earlier payment and fixed pricing will determine whether to moderate the request or consider an indexed alternative.",
+              "stop_condition": "After a useful counter, consider one moderated fixed-price proposal while open; on a final warning or repeated unchanged offers, close the best executable positive-improvement deal rather than recycle requests."
+            }
+          },
+          "plan": {
+            "expected_response": "counteroffer",
+            "expected_price_low": 363.9,
+            "expected_price_high": 369.5,
+            "basis_source_ids": [
+              "history:1284",
+              "history:1093",
+              "history:1302"
+            ],
+            "basis": "Earlier-payment opening proposals previously produced fixed-price counters; forecast-supported history supports seeking progress, not assuming exact acceptance.",
+            "if_counteroffer": "Compare total costs and, if still open, consider p2 as a moderated fixed-price request.",
+            "if_unchanged": "Acknowledge the boundary and consider a materially different rebased indexed exchange rather than repeating this package.",
+            "if_accepted": "Reassess any supported alternative structure against the secured savings before deciding whether to close.",
+            "if_walkout": "Record zero Arena improvement and use the available fallback process.",
+            "why_not_alternative": "p17 offers greater calibrated savings but carries a much larger relationship penalty and a public-cost total above opening; p52 is a more credible stabilisation exchange.",
+            "revision_from_previous": "Initial move: there is no prior plan or stop condition; historical concessions require fresh agreement.",
+            "rejected_alternative_id": "sup:70510:p17"
+          },
+          "timing": {
+            "at_start": {
+              "remaining_seconds": 54.279,
+              "proposer_available_seconds": 20.0,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "source_seconds": 0.005,
+            "proposer_stage_seconds": 8.545,
+            "board_seconds": 0.504,
+            "before_final": {
+              "remaining_seconds": 45.229,
+              "proposer_available_seconds": 16.229,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "total_decision_seconds": 25.948,
+            "remaining_before_send_seconds": 28.336
+          },
+          "model_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "allocated_seconds": 19.733,
+              "raw_input_chars": 37163,
+              "input_chars": 34915,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "afd692efc17f4328604a4eae80bd62ab4db1965a113d13c9e67691849e9b2edb",
+              "raw_input_sha256": "68f1f22329ce2c841d8b7e077c9b7b38460133af370632554f6814ebab5cf5a9",
+              "schema_chars": 5326,
+              "preparation_seconds": 0.002,
+              "network_budget_seconds": 19.732,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 11532,
+                "input_tokens_details": {
+                  "cache_write_tokens": 0,
+                  "cached_tokens": 11529
+                },
+                "output_tokens": 370,
+                "output_tokens_details": {
+                  "reasoning_tokens": 64
+                },
+                "total_tokens": 11902
+              },
+              "seconds": 8.277,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "allocated_seconds": 30.0,
+              "raw_input_chars": 203178,
+              "input_chars": 178908,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "9510296df469450165ff5a98326faec7b5ae4a90ac4c35965dc147f485aa311c",
+              "raw_input_sha256": "f6dbb6b69b6722c429156283f0f0e9a02b083641b1c524553fd019b5c426c7b6",
+              "schema_chars": 7785,
+              "preparation_seconds": 0.011,
+              "network_budget_seconds": 29.989,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 61448,
+                "input_tokens_details": {
+                  "cache_write_tokens": 61445,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 823,
+                "output_tokens_details": {
+                  "reasoning_tokens": 96
+                },
+                "total_tokens": 62271
+              },
+              "seconds": 16.872,
+              "returned_decision": {
+                "action_id": "sup:70510:counter",
+                "package_ids": [
+                  "sup:70510:p52"
+                ],
+                "question_id": "",
+                "evidence_ids": [
+                  "sup:70510:e2",
+                  "sup:70510:e0"
+                ],
+                "tone": "cooperative",
+                "rationale": "Offer earlier payment for a reduced fixed price: p52 retains full coverage and yields modeled savings of €30,933 after the active relationship penalty, with €27,010 downside savings and a lower public-cost scenario total than opening. A counteroffer is valuable progress rather than failure; assess its complete cost, then consider moderating the fixed-price request to p2 before spending the indexation lever.",
+                "reply_text": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of {{fixed:volume_per_year}} units annually for the specified contract period and attach our shared forecast as planning evidence, not an extension of our binding commitments. We value continuity of supply and a stable fixed price. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. The attached opportunity for additional business is conditional, not an additional volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?",
+                "plan": {
+                  "expected_response": "counteroffer",
+                  "expected_price_low": 363.9,
+                  "expected_price_high": 369.5,
+                  "basis_source_ids": [
+                    "history:1284",
+                    "history:1093",
+                    "history:1302"
+                  ],
+                  "basis": "Earlier-payment opening proposals previously produced fixed-price counters; forecast-supported history supports seeking progress, not assuming exact acceptance.",
+                  "if_counteroffer": "Compare total costs and, if still open, consider p2 as a moderated fixed-price request.",
+                  "if_unchanged": "Acknowledge the boundary and consider a materially different rebased indexed exchange rather than repeating this package.",
+                  "if_accepted": "Reassess any supported alternative structure against the secured savings before deciding whether to close.",
+                  "if_walkout": "Record zero Arena improvement and use the available fallback process.",
+                  "why_not_alternative": "p17 offers greater calibrated savings but carries a much larger relationship penalty and a public-cost total above opening; p52 is a more credible stabilisation exchange.",
+                  "revision_from_previous": "Initial move: there is no prior plan or stop condition; historical concessions require fresh agreement.",
+                  "rejected_alternative_id": "sup:70510:p17"
+                },
+                "continuation_review": {
+                  "target_package_id": "sup:70510:p52",
+                  "walkout_probability_low": 0.01,
+                  "walkout_probability_high": 0.12,
+                  "risk_reason": "This subjective range reflects an open first exchange and histories dominated by counters, but sparse observations do not establish supplier patience. It is below the target's optimistic break-even threshold of 100%, with no secured improvement currently at risk; counteroffers still require separate valuation.",
+                  "information_needed": "The supplier's executable price for earlier payment and fixed pricing will determine whether to moderate the request or consider an indexed alternative.",
+                  "stop_condition": "After a useful counter, consider one moderated fixed-price proposal while open; on a final warning or repeated unchanged offers, close the best executable positive-improvement deal rather than recycle requests."
+                }
+              },
+              "validation_attempt": 1,
+              "final_validation": "ok"
+            }
+          ],
+          "authorized_action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of 6110 units annually for the specified contract period and attach our shared forecast as planning evidence, not an extension of our binding commitments. We value continuity of supply and a stable fixed price. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. The attached opportunity for additional business is conditional, not an additional volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?\n\nOur shared forecast snapshot 2026-09 plans 6110 pc for 2026-10 through 2027-09 (fc:350011@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nToday you supply only part of our need for Motor IE3 4 kW, 4-pole (part:350010, our total need about 8,490 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 363.9 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 363.9,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                }
+              ]
+            }
+          },
+          "board_sha256": "05d2ceeb4b1b5e3c136a24b219c8ff9637eebe963d5b14200af73102fec8d9df",
+          "model_availability": {
+            "sup:70510": {
+              "status": "ok",
+              "failure_type": null,
+              "accepted_proposals": 2,
+              "cache_hit": false
+            }
+          },
+          "candidate_counts": {
+            "attempted": 114,
+            "duplicates": 19,
+            "anchor_cap_per_supplier": 24,
+            "exhaustive": false,
+            "retained": 95
+          },
+          "decision_context": {
+            "status": "open",
+            "remaining_moves": 10,
+            "buyer_messages_sent": 0,
+            "standing": {
+              "term_sheet_id": "offer:70510-0",
+              "terms": {
+                "unit_price": 370.96,
+                "payment_days": 30,
+                "index_clause": null
+              },
+              "direct_cost_eur": 2282867.49,
+              "expected_total_eur": 2282868.85,
+              "expected_breakdown_eur": {
+                "price": 2266565.6,
+                "uncovered_need": 0.0,
+                "fallback_risk": 0.0,
+                "payment_terms": 15110.44,
+                "freight": 0.0,
+                "late_delivery": 0.0,
+                "quality": 1191.45,
+                "tooling": 0.0,
+                "index_clause": 0.0,
+                "index_risk": 0.0,
+                "relationship": 1.36
+              },
+              "total_p10_p90_eur": [
+                2282867.49,
+                2282879.71
+              ],
+              "public_cost_scenario": {
+                "total_eur": 2290791.55,
+                "relationship_eur": 7924.06
+              },
+              "supplier_margin_pct_range": [
+                0.438,
+                1.373
+              ],
+              "uncertainty": "Independent cost scenarios, not calibrated probabilities or a predicted score. Public should-cost scenario is shown separately. Acceptance is not sustainability.",
+              "versus_opening": {
+                "mean_delta_eur": 0.0,
+                "p90_delta_eur": 0.0,
+                "worst_delta_eur": 0.0
+              }
+            },
+            "continuation_risk": {
+              "current_offer_executable": true,
+              "outside_option_cost_eur": 2604227.78,
+              "cash_loss_if_offer_lost_eur": 321358.93,
+              "secured_improvement_at_risk_eur": 0,
+              "objective_warning": "Cash fallback loss is business context, NOT Arena score loss. The only negotiation reward at risk is improvement already secured. Accepting an unchanged opening offer locks in zero improvement; a feasible beneficial counter may still earn improvement even when the fallback is expensive.",
+              "final_offer_warning": false,
+              "offer_history": {
+                "context": "offer",
+                "observed_outcomes": {
+                  "counteroffer": 15,
+                  "unchanged_offer": 7,
+                  "accepted_proposal": 5
+                },
+                "walkout_proportion_interval": [
+                  0.0,
+                  0.125
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "question_history": {
+                "context": "question",
+                "observed_outcomes": {
+                  "unchanged_offer": 4
+                },
+                "walkout_proportion_interval": [
+                  0,
+                  0.49
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "forecast_limitations": "Package response estimates omit final-warning hazard. Break-even assumes EVERY non-walkout wins the target. Expected gain assumes counters preserve the current offer; reality can be worse. No guarantee that it stays available.",
+              "decision_rule": "At a final warning or repeated unchanged offers, continuation needs an explicit gain/loss justification. Remaining moves are not permission from the supplier. For questions, identify the answer that would change the decision. Astra decides."
+            }
+          },
+          "rejected_alternative": {
+            "supplier_id": "sup:70510",
+            "terms": {
+              "unit_price": 356.16,
+              "payment_days": 14,
+              "index_clause": null
+            },
+            "origin": "sustainability trade-off: mean total cost; unconfirmed",
+            "origins": [
+              "sustainability trade-off: mean total cost; unconfirmed"
+            ],
+            "direct_cost_eur": 2199574.01,
+            "expected_total_eur": 2235631.8,
+            "expected_breakdown_eur": {
+              "price": 2176137.6,
+              "uncovered_need": 0.0,
+              "fallback_risk": 0.0,
+              "payment_terms": 22244.96,
+              "freight": 0.0,
+              "late_delivery": 0.0,
+              "quality": 1191.45,
+              "tooling": 0.0,
+              "index_clause": 0.0,
+              "index_risk": 0.0,
+              "relationship": 36057.79
+            },
+            "total_p10_p90_eur": [
+              2225701.9,
+              2246438.92
+            ],
+            "public_cost_scenario": {
+              "total_eur": 2292229.19,
+              "relationship_eur": 92655.18
+            },
+            "supplier_margin_pct_range": [
+              -3.332,
+              -2.361
+            ],
+            "versus_standing": {
+              "mean_delta_eur": -47237.05,
+              "p90_delta_eur": -36440.79,
+              "worst_delta_eur": -36440.79
+            },
+            "versus_opening": {
+              "mean_delta_eur": -47237.05,
+              "p90_delta_eur": -36440.79,
+              "worst_delta_eur": -36440.79
+            },
+            "next_action": {
+              "gain_if_exact_package_agreed_eur": 47237.05,
+              "secured_improvement_at_risk_eur": 0.0,
+              "target_improvement_eur": 47237.05,
+              "optimistic_break_even_walkout_probability": 1.0,
+              "response_estimates_uncalibrated": {
+                "accept": 0.2607,
+                "counter": 0.7294,
+                "walk": 0.0099
+              },
+              "partial_accept_walk_value_eur": 12317.03,
+              "counteroffer_future_value": "not numerically estimated; Astra must plan this branch explicitly",
+              "not_total_expected_value": true,
+              "cash_cost_if_offer_lost_eur": 321358.93,
+              "final_offer_warning": false
+            }
+          }
+        },
+        {
+          "event_id": 1452,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:2:sup:70510",
+          "board_event_id": 1450,
+          "phase": "exchange",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p2"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Moderating our fixed-price request to p2 preserves full supply coverage and early payment while seeking another €9,835 of modelled total-cost improvement, including the active relationship penalty, rather than closing at €5,961 secured savings. Seek a fixed-price counter now, then consider one rebased indexed exchange only if necessary and still open; a useful intermediate counter has value even without exact acceptance.",
+            "reply_text": "Dear Ms Lechner, thank you for revising your offer and taking our volume evidence and earlier payment into account. We retain the confirmed enquiry volume and early-payment terms, and have moderated our price request in the attached package. We prefer a fixed-price agreement for continuity and planning stability, with all remaining enquiry terms unchanged. Could you approve this revised package, or submit it to the responsible pricing committee, while keeping your current offer available for comparison?",
+            "plan": {
+              "expected_response": "counteroffer",
+              "expected_price_low": 367,
+              "expected_price_high": 368.68,
+              "basis_source_ids": [
+                "reply:msg:70510-1-2",
+                "history:1302",
+                "history:1101"
+              ],
+              "basis": "Comparable second-stage moderation produced progress when paired with indexation; a fixed-only counter is a subjective forecast, not an observed commitment.",
+              "if_counteroffer": "Compare the complete counter's relationship-adjusted total cost and consider closing meaningful fixed-price progress.",
+              "if_unchanged": "Acknowledge the fixed-price boundary and assess one p3 indexed exchange before deciding whether to close.",
+              "if_accepted": "Prefer closing the improved fixed-price package unless new evidence supports a materially better exchange.",
+              "if_walkout": "Record the loss of secured Arena improvement and proceed through the fallback process.",
+              "why_not_alternative": "p3 has historical willingness support but less calibrated savings, greater relationship downside and a public-cost total above opening; preserve it rather than offer it alongside the preferred fixed package now.",
+              "revision_from_previous": "The predicted counter arrived within range; follow the prior plan's moderated fixed-price step rather than repeat the original request.",
+              "rejected_alternative_id": "sup:70510:p3"
+            },
+            "continuation_review": {
+              "target_package_id": "sup:70510:p2",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "This subjective range reflects recent progress, no final warning and histories dominated by counters, without treating remaining moves as patience. It is below the optimistic 62.26% break-even threshold, but that threshold overstates safety because not every surviving reply improves the offer.",
+              "information_needed": "Whether a moderated fixed-price package is executable determines whether to close fixed pricing or consider the historically supported indexed alternative.",
+              "stop_condition": "After this moderated request, close meaningful fixed-price progress; if unchanged and still open, consider at most one rebased indexed exchange, then close the best executable positive-improvement offer on another unchanged response or any final warning."
+            }
+          },
+          "plan": {
+            "expected_response": "counteroffer",
+            "expected_price_low": 367,
+            "expected_price_high": 368.68,
+            "basis_source_ids": [
+              "reply:msg:70510-1-2",
+              "history:1302",
+              "history:1101"
+            ],
+            "basis": "Comparable second-stage moderation produced progress when paired with indexation; a fixed-only counter is a subjective forecast, not an observed commitment.",
+            "if_counteroffer": "Compare the complete counter's relationship-adjusted total cost and consider closing meaningful fixed-price progress.",
+            "if_unchanged": "Acknowledge the fixed-price boundary and assess one p3 indexed exchange before deciding whether to close.",
+            "if_accepted": "Prefer closing the improved fixed-price package unless new evidence supports a materially better exchange.",
+            "if_walkout": "Record the loss of secured Arena improvement and proceed through the fallback process.",
+            "why_not_alternative": "p3 has historical willingness support but less calibrated savings, greater relationship downside and a public-cost total above opening; preserve it rather than offer it alongside the preferred fixed package now.",
+            "revision_from_previous": "The predicted counter arrived within range; follow the prior plan's moderated fixed-price step rather than repeat the original request.",
+            "rejected_alternative_id": "sup:70510:p3"
+          },
+          "timing": {
+            "at_start": {
+              "remaining_seconds": 54.977,
+              "proposer_available_seconds": 20.0,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "source_seconds": 0.005,
+            "proposer_stage_seconds": 14.23,
+            "board_seconds": 0.634,
+            "before_final": {
+              "remaining_seconds": 40.113,
+              "proposer_available_seconds": 11.113,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "total_decision_seconds": 30.911,
+            "remaining_before_send_seconds": 24.071
+          },
+          "model_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "allocated_seconds": 19.736,
+              "raw_input_chars": 38441,
+              "input_chars": 36193,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "b2d2356fb98242d93f2a5e30695eda0b8bc5d224c67a8b1e0aac768855f37aeb",
+              "raw_input_sha256": "c134cc42f715e223c8325d77e9c302e62c0a42e9b1903b6073afddc56f6164de",
+              "schema_chars": 5326,
+              "preparation_seconds": 0.002,
+              "network_budget_seconds": 19.735,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 11913,
+                "input_tokens_details": {
+                  "cache_write_tokens": 10038,
+                  "cached_tokens": 1872
+                },
+                "output_tokens": 629,
+                "output_tokens_details": {
+                  "reasoning_tokens": 131
+                },
+                "total_tokens": 12542
+              },
+              "seconds": 13.964,
+              "validation_errors": [
+                "interpretations[2]:rejected"
+              ]
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "allocated_seconds": 30.0,
+              "raw_input_chars": 246807,
+              "input_chars": 215750,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "18d6d6776a1d2d6018eaf7e1177283d67220df2c1ca3819865cbc6417693bf45",
+              "raw_input_sha256": "a3da68ecc3c27281362051d2656344d7c20167bcbdf7e5ed1a5fe763b27709f5",
+              "schema_chars": 8956,
+              "preparation_seconds": 0.013,
+              "network_budget_seconds": 29.987,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 73790,
+                "input_tokens_details": {
+                  "cache_write_tokens": 73787,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 751,
+                "output_tokens_details": {
+                  "reasoning_tokens": 45
+                },
+                "total_tokens": 74541
+              },
+              "seconds": 16.031,
+              "returned_decision": {
+                "action_id": "sup:70510:counter",
+                "package_ids": [
+                  "sup:70510:p2"
+                ],
+                "question_id": "",
+                "evidence_ids": [],
+                "tone": "cooperative",
+                "rationale": "Moderating our fixed-price request to p2 preserves full supply coverage and early payment while seeking another €9,835 of modelled total-cost improvement, including the active relationship penalty, rather than closing at €5,961 secured savings. Seek a fixed-price counter now, then consider one rebased indexed exchange only if necessary and still open; a useful intermediate counter has value even without exact acceptance.",
+                "reply_text": "Dear Ms Lechner, thank you for revising your offer and taking our volume evidence and earlier payment into account. We retain the confirmed enquiry volume and early-payment terms, and have moderated our price request in the attached package. We prefer a fixed-price agreement for continuity and planning stability, with all remaining enquiry terms unchanged. Could you approve this revised package, or submit it to the responsible pricing committee, while keeping your current offer available for comparison?",
+                "plan": {
+                  "expected_response": "counteroffer",
+                  "expected_price_low": 367,
+                  "expected_price_high": 368.68,
+                  "basis_source_ids": [
+                    "reply:msg:70510-1-2",
+                    "history:1302",
+                    "history:1101"
+                  ],
+                  "basis": "Comparable second-stage moderation produced progress when paired with indexation; a fixed-only counter is a subjective forecast, not an observed commitment.",
+                  "if_counteroffer": "Compare the complete counter's relationship-adjusted total cost and consider closing meaningful fixed-price progress.",
+                  "if_unchanged": "Acknowledge the fixed-price boundary and assess one p3 indexed exchange before deciding whether to close.",
+                  "if_accepted": "Prefer closing the improved fixed-price package unless new evidence supports a materially better exchange.",
+                  "if_walkout": "Record the loss of secured Arena improvement and proceed through the fallback process.",
+                  "why_not_alternative": "p3 has historical willingness support but less calibrated savings, greater relationship downside and a public-cost total above opening; preserve it rather than offer it alongside the preferred fixed package now.",
+                  "revision_from_previous": "The predicted counter arrived within range; follow the prior plan's moderated fixed-price step rather than repeat the original request.",
+                  "rejected_alternative_id": "sup:70510:p3"
+                },
+                "continuation_review": {
+                  "target_package_id": "sup:70510:p2",
+                  "walkout_probability_low": 0.02,
+                  "walkout_probability_high": 0.12,
+                  "risk_reason": "This subjective range reflects recent progress, no final warning and histories dominated by counters, without treating remaining moves as patience. It is below the optimistic 62.26% break-even threshold, but that threshold overstates safety because not every surviving reply improves the offer.",
+                  "information_needed": "Whether a moderated fixed-price package is executable determines whether to close fixed pricing or consider the historically supported indexed alternative.",
+                  "stop_condition": "After this moderated request, close meaningful fixed-price progress; if unchanged and still open, consider at most one rebased indexed exchange, then close the best executable positive-improvement offer on another unchanged response or any final warning."
+                }
+              },
+              "validation_attempt": 1,
+              "final_validation": "ok"
+            }
+          ],
+          "authorized_action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, thank you for revising your offer and taking our volume evidence and earlier payment into account. We retain the confirmed enquiry volume and early-payment terms, and have moderated our price request in the attached package. We prefer a fixed-price agreement for continuity and planning stability, with all remaining enquiry terms unchanged. Could you approve this revised package, or submit it to the responsible pricing committee, while keeping your current offer available for comparison?\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 367.0 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 367.0,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                }
+              ]
+            }
+          },
+          "board_sha256": "425f1075dce654b3576c416d9fddb8622bc8053b540b4daf3a57a1e62b150890",
+          "model_availability": {
+            "sup:70510": {
+              "status": "partial",
+              "failure_type": null,
+              "accepted_proposals": 3,
+              "cache_hit": false
+            }
+          },
+          "candidate_counts": {
+            "attempted": 146,
+            "duplicates": 27,
+            "anchor_cap_per_supplier": 24,
+            "exhaustive": false,
+            "retained": 119
+          },
+          "decision_context": {
+            "status": "open",
+            "remaining_moves": 9,
+            "buyer_messages_sent": 1,
+            "standing": {
+              "term_sheet_id": "offer:70510-1",
+              "terms": {
+                "unit_price": 368.68,
+                "payment_days": 14,
+                "index_clause": null
+              },
+              "direct_cost_eur": 2276853.18,
+              "expected_total_eur": 2276907.84,
+              "expected_breakdown_eur": {
+                "price": 2252634.8,
+                "uncovered_need": 0.0,
+                "fallback_risk": 0.0,
+                "payment_terms": 23026.93,
+                "freight": 0.0,
+                "late_delivery": 0.0,
+                "quality": 1191.45,
+                "tooling": 0.0,
+                "index_clause": 0.0,
+                "index_risk": 0.0,
+                "relationship": 54.66
+              },
+              "total_p10_p90_eur": [
+                2276853.18,
+                2277185.52
+              ],
+              "public_cost_scenario": {
+                "total_eur": 2287664.02,
+                "relationship_eur": 10810.84
+              },
+              "supplier_margin_pct_range": [
+                0.177,
+                1.115
+              ],
+              "uncertainty": "Independent cost scenarios, not calibrated probabilities or a predicted score. Public should-cost scenario is shown separately. Acceptance is not sustainability.",
+              "versus_opening": {
+                "mean_delta_eur": -5961.0,
+                "p90_delta_eur": -5694.19,
+                "worst_delta_eur": -5694.19
+              }
+            },
+            "continuation_risk": {
+              "current_offer_executable": true,
+              "outside_option_cost_eur": 2604227.78,
+              "cash_loss_if_offer_lost_eur": 327319.94,
+              "secured_improvement_at_risk_eur": 5961.01,
+              "objective_warning": "Cash fallback loss is business context, NOT Arena score loss. The only negotiation reward at risk is improvement already secured. Accepting an unchanged opening offer locks in zero improvement; a feasible beneficial counter may still earn improvement even when the fallback is expensive.",
+              "final_offer_warning": false,
+              "offer_history": {
+                "context": "offer",
+                "observed_outcomes": {
+                  "counteroffer": 16,
+                  "unchanged_offer": 7,
+                  "accepted_proposal": 5
+                },
+                "walkout_proportion_interval": [
+                  0,
+                  0.121
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "question_history": {
+                "context": "question",
+                "observed_outcomes": {
+                  "unchanged_offer": 4
+                },
+                "walkout_proportion_interval": [
+                  0,
+                  0.49
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "forecast_limitations": "Package response estimates omit final-warning hazard. Break-even assumes EVERY non-walkout wins the target. Expected gain assumes counters preserve the current offer; reality can be worse. No guarantee that it stays available.",
+              "decision_rule": "At a final warning or repeated unchanged offers, continuation needs an explicit gain/loss justification. Remaining moves are not permission from the supplier. For questions, identify the answer that would change the decision. Astra decides."
+            }
+          },
+          "rejected_alternative": {
+            "supplier_id": "sup:70510",
+            "terms": {
+              "unit_price": 364.12,
+              "payment_days": 14,
+              "index_clause": {
+                "series": "CU-NOTATION",
+                "material_share": 0.2,
+                "deadband_pct": 5.0,
+                "base_month": "2026-08"
+              }
+            },
+            "origin": "historical buyer proposal: observed response in historical_moves",
+            "origins": [
+              "historical buyer proposal: observed response in historical_moves",
+              "historical quote: must renegotiate/reconfirm"
+            ],
+            "direct_cost_eur": 2266504.96,
+            "expected_total_eur": 2270653.32,
+            "expected_breakdown_eur": {
+              "price": 2224773.2,
+              "uncovered_need": 0.0,
+              "fallback_risk": 0.0,
+              "payment_terms": 22742.13,
+              "freight": 0.0,
+              "late_delivery": 0.0,
+              "quality": 1191.45,
+              "tooling": 0.0,
+              "index_clause": 0.0,
+              "index_risk": 17798.19,
+              "relationship": 4148.36
+            },
+            "total_p10_p90_eur": [
+              2267745.11,
+              2274400.83
+            ],
+            "public_cost_scenario": {
+              "total_eur": 2297367.6,
+              "relationship_eur": 30862.63
+            },
+            "supplier_margin_pct_range": [
+              -1.073,
+              -0.123
+            ],
+            "versus_standing": {
+              "mean_delta_eur": -6254.52,
+              "p90_delta_eur": -2784.69,
+              "worst_delta_eur": -2784.69
+            },
+            "versus_opening": {
+              "mean_delta_eur": -12215.52,
+              "p90_delta_eur": -8478.88,
+              "worst_delta_eur": -8478.88
+            },
+            "next_action": {
+              "gain_if_exact_package_agreed_eur": 6254.52,
+              "secured_improvement_at_risk_eur": 5961.01,
+              "target_improvement_eur": 12215.53,
+              "optimistic_break_even_walkout_probability": 0.512,
+              "response_estimates_uncalibrated": {
+                "accept": 0.2802,
+                "counter": 0.7123,
+                "walk": 0.0075
+              },
+              "partial_accept_walk_value_eur": 1708.01,
+              "counteroffer_future_value": "not numerically estimated; Astra must plan this branch explicitly",
+              "not_total_expected_value": true,
+              "cash_cost_if_offer_lost_eur": 327319.94,
+              "final_offer_warning": false
+            }
+          }
+        },
+        {
+          "event_id": 1464,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:3:sup:70510",
+          "board_event_id": 1462,
+          "phase": "close",
+          "selection": {
+            "action_id": "sup:70510:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the meaningful second-stage fixed-price concession, securing approximately €10,975 of relationship-adjusted improvement with full coverage and lead time within need, as required by the previous stopping rule. The historically supported indexed exchange offers only approximately €1,241 additional mean savings, worse downside and higher relationship exposure; a further counter could provide progress, but its value is insufficiently supported to reopen the agreed sequence.",
+            "reply_text": "",
+            "plan": {
+              "expected_response": "closed",
+              "expected_price_low": null,
+              "expected_price_high": null,
+              "basis_source_ids": [
+                "reply:msg:70510-2-4",
+                "reply:msg:70510-1-2",
+                "history:1302"
+              ],
+              "basis": "The forecast counter arrived within range, and the executable fixed-price offer improves on opening across the supplied paired scenarios while retaining supply coverage.",
+              "if_counteroffer": "Not applicable after acceptance closes the negotiation.",
+              "if_unchanged": "Not applicable after acceptance closes the negotiation.",
+              "if_accepted": "Record the standing terms and proceed with the agreed purchasing process.",
+              "if_walkout": "Not an expected branch after closure; address any subsequent supply failure separately.",
+              "why_not_alternative": "p3 requires fresh agreement, adds index risk and raises estimated relationship cost from €226 to €4,148; its modest mean advantage reverses in the downside scenario, while the public-cost scenario is substantially worse. More aggressive shortlisted packages would reverse our price moderation without new reciprocal support.",
+              "revision_from_previous": "The predicted counteroffer materialised within the forecast interval and delivered meaningful fixed-price progress; honour the previous stop condition rather than activate the indexed branch reserved for an unchanged response.",
+              "rejected_alternative_id": "sup:70510:p3"
+            },
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "For a hypothetical further exchange, this subjective range reflects recent concessions and no final warning, but sparse non-independent observations do not establish continued patience. It straddles p3's optimistic 10.16% break-even threshold, which also assumes every surviving response achieves the target; a counteroffer may have value but is not guaranteed to improve the standing deal.",
+              "information_needed": "None needed to close the executable offer; no new evidence justifies departing from the prior stopping rule.",
+              "stop_condition": "Close now: the moderated fixed-price request produced the meaningful concession specified in the previous plan, so no further concession or escalation is warranted."
+            }
+          },
+          "plan": {
+            "expected_response": "closed",
+            "expected_price_low": null,
+            "expected_price_high": null,
+            "basis_source_ids": [
+              "reply:msg:70510-2-4",
+              "reply:msg:70510-1-2",
+              "history:1302"
+            ],
+            "basis": "The forecast counter arrived within range, and the executable fixed-price offer improves on opening across the supplied paired scenarios while retaining supply coverage.",
+            "if_counteroffer": "Not applicable after acceptance closes the negotiation.",
+            "if_unchanged": "Not applicable after acceptance closes the negotiation.",
+            "if_accepted": "Record the standing terms and proceed with the agreed purchasing process.",
+            "if_walkout": "Not an expected branch after closure; address any subsequent supply failure separately.",
+            "why_not_alternative": "p3 requires fresh agreement, adds index risk and raises estimated relationship cost from €226 to €4,148; its modest mean advantage reverses in the downside scenario, while the public-cost scenario is substantially worse. More aggressive shortlisted packages would reverse our price moderation without new reciprocal support.",
+            "revision_from_previous": "The predicted counteroffer materialised within the forecast interval and delivered meaningful fixed-price progress; honour the previous stop condition rather than activate the indexed branch reserved for an unchanged response.",
+            "rejected_alternative_id": "sup:70510:p3"
+          },
+          "timing": {
+            "at_start": {
+              "remaining_seconds": 54.977,
+              "proposer_available_seconds": 20.0,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "source_seconds": 0.005,
+            "proposer_stage_seconds": 10.64,
+            "board_seconds": 0.611,
+            "before_final": {
+              "remaining_seconds": 43.727,
+              "proposer_available_seconds": 14.727,
+              "final_reserve_seconds": 24.0,
+              "board_reserve_seconds": 3.0,
+              "execution_reserve_seconds": 2.0
+            },
+            "total_decision_seconds": 25.754,
+            "remaining_before_send_seconds": 29.228
+          },
+          "model_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "allocated_seconds": 19.738,
+              "raw_input_chars": 39115,
+              "input_chars": 36867,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "253e2fb4239fbfb979143a6cb1370fdc010d4de70b12fd9552d2e7e2b4bbe4c7",
+              "raw_input_sha256": "27b3aea131f1b30bd1448f79753ffd7252bd391586db761012eb060aa59710a3",
+              "schema_chars": 5326,
+              "preparation_seconds": 0.002,
+              "network_budget_seconds": 19.736,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 12071,
+                "input_tokens_details": {
+                  "cache_write_tokens": 10196,
+                  "cached_tokens": 1872
+                },
+                "output_tokens": 483,
+                "output_tokens_details": {
+                  "reasoning_tokens": 88
+                },
+                "total_tokens": 12554
+              },
+              "seconds": 10.376,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "allocated_seconds": 30.0,
+              "raw_input_chars": 241873,
+              "input_chars": 211276,
+              "encoding": "lossless_tables_v1",
+              "input_sha256": "20701c96681035eff86007cfc21282e48fc099f4965ec1f292fedfbd69405e95",
+              "raw_input_sha256": "d797fe5944424881db42f1f0827735371fbfe2db0d33d2e6e4b97d39fd5e48d5",
+              "schema_chars": 8723,
+              "preparation_seconds": 0.013,
+              "network_budget_seconds": 29.987,
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 71943,
+                "input_tokens_details": {
+                  "cache_write_tokens": 71940,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 664,
+                "output_tokens_details": {
+                  "reasoning_tokens": 46
+                },
+                "total_tokens": 72607
+              },
+              "seconds": 14.491,
+              "returned_decision": {
+                "action_id": "sup:70510:accept",
+                "package_ids": [],
+                "question_id": "",
+                "evidence_ids": [],
+                "tone": "cooperative",
+                "rationale": "Accept the meaningful second-stage fixed-price concession, securing approximately €10,975 of relationship-adjusted improvement with full coverage and lead time within need, as required by the previous stopping rule. The historically supported indexed exchange offers only approximately €1,241 additional mean savings, worse downside and higher relationship exposure; a further counter could provide progress, but its value is insufficiently supported to reopen the agreed sequence.",
+                "reply_text": "",
+                "plan": {
+                  "expected_response": "closed",
+                  "expected_price_low": null,
+                  "expected_price_high": null,
+                  "basis_source_ids": [
+                    "reply:msg:70510-2-4",
+                    "reply:msg:70510-1-2",
+                    "history:1302"
+                  ],
+                  "basis": "The forecast counter arrived within range, and the executable fixed-price offer improves on opening across the supplied paired scenarios while retaining supply coverage.",
+                  "if_counteroffer": "Not applicable after acceptance closes the negotiation.",
+                  "if_unchanged": "Not applicable after acceptance closes the negotiation.",
+                  "if_accepted": "Record the standing terms and proceed with the agreed purchasing process.",
+                  "if_walkout": "Not an expected branch after closure; address any subsequent supply failure separately.",
+                  "why_not_alternative": "p3 requires fresh agreement, adds index risk and raises estimated relationship cost from €226 to €4,148; its modest mean advantage reverses in the downside scenario, while the public-cost scenario is substantially worse. More aggressive shortlisted packages would reverse our price moderation without new reciprocal support.",
+                  "revision_from_previous": "The predicted counteroffer materialised within the forecast interval and delivered meaningful fixed-price progress; honour the previous stop condition rather than activate the indexed branch reserved for an unchanged response.",
+                  "rejected_alternative_id": "sup:70510:p3"
+                },
+                "continuation_review": {
+                  "target_package_id": "",
+                  "walkout_probability_low": 0.02,
+                  "walkout_probability_high": 0.12,
+                  "risk_reason": "For a hypothetical further exchange, this subjective range reflects recent concessions and no final warning, but sparse non-independent observations do not establish continued patience. It straddles p3's optimistic 10.16% break-even threshold, which also assumes every surviving response achieves the target; a counteroffer may have value but is not guaranteed to improve the standing deal.",
+                  "information_needed": "None needed to close the executable offer; no new evidence justifies departing from the prior stopping rule.",
+                  "stop_condition": "Close now: the moderated fixed-price request produced the meaningful concession specified in the previous plan, so no further concession or escalation is warranted."
+                }
+              },
+              "validation_attempt": 1,
+              "final_validation": "ok"
+            }
+          ],
+          "authorized_action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70510-2"
+              }
+            }
+          },
+          "board_sha256": "f627b402f2ee408a7c1f74b46f176c618eb4364c74e17e2a7fa9af3e042ab52e",
+          "model_availability": {
+            "sup:70510": {
+              "status": "ok",
+              "failure_type": null,
+              "accepted_proposals": 3,
+              "cache_hit": false
+            }
+          },
+          "candidate_counts": {
+            "attempted": 146,
+            "duplicates": 32,
+            "anchor_cap_per_supplier": 24,
+            "exhaustive": false,
+            "retained": 114
+          },
+          "decision_context": {
+            "status": "open",
+            "remaining_moves": 8,
+            "buyer_messages_sent": 2,
+            "standing": {
+              "term_sheet_id": "offer:70510-2",
+              "terms": {
+                "unit_price": 367.84,
+                "payment_days": 14,
+                "index_clause": null
+              },
+              "direct_cost_eur": 2271668.32,
+              "expected_total_eur": 2271893.96,
+              "expected_breakdown_eur": {
+                "price": 2247502.4,
+                "uncovered_need": 0.0,
+                "fallback_risk": 0.0,
+                "payment_terms": 22974.47,
+                "freight": 0.0,
+                "late_delivery": 0.0,
+                "quality": 1191.45,
+                "tooling": 0.0,
+                "index_clause": 0.0,
+                "index_risk": 0.0,
+                "relationship": 225.65
+              },
+              "total_p10_p90_eur": [
+                2271668.32,
+                2272636.09
+              ],
+              "public_cost_scenario": {
+                "total_eur": 2285369.01,
+                "relationship_eur": 13700.69
+              },
+              "supplier_margin_pct_range": [
+                -0.051,
+                0.889
+              ],
+              "uncertainty": "Independent cost scenarios, not calibrated probabilities or a predicted score. Public should-cost scenario is shown separately. Acceptance is not sustainability.",
+              "versus_opening": {
+                "mean_delta_eur": -10974.88,
+                "p90_delta_eur": -10243.62,
+                "worst_delta_eur": -10243.62
+              }
+            },
+            "continuation_risk": {
+              "current_offer_executable": true,
+              "outside_option_cost_eur": 2604227.78,
+              "cash_loss_if_offer_lost_eur": 332333.82,
+              "secured_improvement_at_risk_eur": 10974.89,
+              "objective_warning": "Cash fallback loss is business context, NOT Arena score loss. The only negotiation reward at risk is improvement already secured. Accepting an unchanged opening offer locks in zero improvement; a feasible beneficial counter may still earn improvement even when the fallback is expensive.",
+              "final_offer_warning": false,
+              "offer_history": {
+                "context": "offer",
+                "observed_outcomes": {
+                  "counteroffer": 17,
+                  "unchanged_offer": 7,
+                  "accepted_proposal": 5
+                },
+                "walkout_proportion_interval": [
+                  0,
+                  0.117
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "question_history": {
+                "context": "question",
+                "observed_outcomes": {
+                  "unchanged_offer": 4
+                },
+                "walkout_proportion_interval": [
+                  0,
+                  0.49
+                ],
+                "limitation": "Few, non-independent past exchanges. This interval is descriptive, not predictive."
+              },
+              "forecast_limitations": "Package response estimates omit final-warning hazard. Break-even assumes EVERY non-walkout wins the target. Expected gain assumes counters preserve the current offer; reality can be worse. No guarantee that it stays available.",
+              "decision_rule": "At a final warning or repeated unchanged offers, continuation needs an explicit gain/loss justification. Remaining moves are not permission from the supplier. For questions, identify the answer that would change the decision. Astra decides."
+            }
+          },
+          "rejected_alternative": {
+            "supplier_id": "sup:70510",
+            "terms": {
+              "unit_price": 364.12,
+              "payment_days": 14,
+              "index_clause": {
+                "series": "CU-NOTATION",
+                "material_share": 0.2,
+                "deadband_pct": 5.0,
+                "base_month": "2026-08"
+              }
+            },
+            "origin": "historical buyer proposal: observed response in historical_moves",
+            "origins": [
+              "historical buyer proposal: observed response in historical_moves",
+              "historical quote: must renegotiate/reconfirm"
+            ],
+            "direct_cost_eur": 2266504.96,
+            "expected_total_eur": 2270653.32,
+            "expected_breakdown_eur": {
+              "price": 2224773.2,
+              "uncovered_need": 0.0,
+              "fallback_risk": 0.0,
+              "payment_terms": 22742.13,
+              "freight": 0.0,
+              "late_delivery": 0.0,
+              "quality": 1191.45,
+              "tooling": 0.0,
+              "index_clause": 0.0,
+              "index_risk": 17798.19,
+              "relationship": 4148.36
+            },
+            "total_p10_p90_eur": [
+              2267745.11,
+              2274400.83
+            ],
+            "public_cost_scenario": {
+              "total_eur": 2297367.6,
+              "relationship_eur": 30862.63
+            },
+            "supplier_margin_pct_range": [
+              -1.073,
+              -0.123
+            ],
+            "versus_standing": {
+              "mean_delta_eur": -1240.64,
+              "p90_delta_eur": 1764.74,
+              "worst_delta_eur": 1764.74
+            },
+            "versus_opening": {
+              "mean_delta_eur": -12215.52,
+              "p90_delta_eur": -8478.88,
+              "worst_delta_eur": -8478.88
+            },
+            "next_action": {
+              "gain_if_exact_package_agreed_eur": 1240.64,
+              "secured_improvement_at_risk_eur": 10974.89,
+              "target_improvement_eur": 12215.53,
+              "optimistic_break_even_walkout_probability": 0.1016,
+              "response_estimates_uncalibrated": {
+                "accept": 0.2102,
+                "counter": 0.7826,
+                "walk": 0.0073
+              },
+              "partial_accept_walk_value_eur": 181.04,
+              "counteroffer_future_value": "not numerically estimated; Astra must plan this branch explicitly",
+              "not_total_expected_value": true,
+              "cash_cost_if_offer_lost_eur": 332333.82,
+              "final_offer_warning": false
+            }
+          }
+        }
+      ],
+      "outcomes": [
+        {
+          "event_id": 1447,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:1:sup:70510",
+          "phase": "learn",
+          "observed_response": "counteroffer",
+          "expected_response": "counteroffer",
+          "response_matched": true,
+          "price_within_forecast": true,
+          "actual_reply": {
+            "message_id": "msg:70510-1-2",
+            "from": "sales@70510",
+            "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nWe checked the volume change data you cited; it holds and we took it into account. Furthermore, we appreciate the confirmation of the annual volume and the offer of 14 days net payment. In response to these improved terms, we are pleased to offer a revised price of €368.68.\n\nOur present Angebot is structured with a price of €368.68 per unit, Zahlungsziel 14 days net, and no Preisgleitklausel. Please note that this offer remains valid for 30 days.\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-1",
+                "terms": {
+                  "unit_price": 368.68,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              }
+            ]
+          },
+          "actual_terms": {
+            "unit_price": 368.68,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "changed_terms": {
+            "unit_price": {
+              "before": 370.96,
+              "after": 368.68
+            },
+            "payment_days": {
+              "before": 30,
+              "after": 14
+            }
+          },
+          "belief_update_recorded": true,
+          "observation_label": "counteroffer",
+          "forecast_status": "subjective forecast compared with observation, not calibrated probability",
+          "requires_plan_revision": false
+        },
+        {
+          "event_id": 1459,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:2:sup:70510",
+          "phase": "learn",
+          "observed_response": "counteroffer",
+          "expected_response": "counteroffer",
+          "response_matched": true,
+          "price_within_forecast": true,
+          "actual_reply": {
+            "message_id": "msg:70510-2-4",
+            "from": "sales@70510",
+            "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We acknowledge your revised offer and your preference for a fixed-price agreement. In recognition of your movement, we are prepared to make a further concession to €367.84 per unit. \n\nOur offer comprises a price of €367.84 per unit, Zahlungsziel 14 days net, and no Preisgleitklausel. Please note that this offer remains valid for 30 days.\n\nWe trust this demonstrates our commitment to a stable partnership and look forward to your confirmation.\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-2",
+                "terms": {
+                  "unit_price": 367.84,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              }
+            ]
+          },
+          "actual_terms": {
+            "unit_price": 367.84,
+            "payment_days": 14,
+            "index_clause": null
+          },
+          "changed_terms": {
+            "unit_price": {
+              "before": 368.68,
+              "after": 367.84
+            }
+          },
+          "belief_update_recorded": true,
+          "observation_label": "counteroffer",
+          "forecast_status": "subjective forecast compared with observation, not calibrated probability",
+          "requires_plan_revision": false
+        },
+        {
+          "event_id": 1468,
+          "decision_id": "ehl-v10-p02-validation-20261010:6c0e69bb910e3009:3:sup:70510",
+          "phase": "learn",
+          "observed_response": "closed",
+          "expected_response": "closed",
+          "response_matched": true,
+          "actual_result": {
+            "deal": true,
+            "supplier_id": "sup:70510",
+            "terms": {
+              "payment_days": 14,
+              "lead_time_days": 35,
+              "volume_per_year": 6110,
+              "contract_months": 12,
+              "effective_date": "2027-01-01",
+              "index_clause": null,
+              "incoterm": "DAP",
+              "tooling_eur": 0.0,
+              "ppm_commitment": 250,
+              "chargeback_eur_per_complaint": 0.0,
+              "unit_price": 367.84
+            },
+            "end_reason": null
+          },
+          "belief_update_recorded": false
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Two separately authorized P02 sessions; the first failed before sending an action and is included.",
+    "No P18, third session, local runtime tests, simulations or LLM replays.",
+    "No matched baseline rerun; historical-best comparison does not establish a causal effect.",
+    "Second run required no correction call, so the bounded correction path remains unexercised in Arena.",
+    "Forecast price intervals covered the two counters but were subjective and uncalibrated."
+  ]
+}

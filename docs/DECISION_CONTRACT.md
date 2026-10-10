@@ -1,6 +1,7 @@
 # Decision contract and controlled improvement
 
-**Status: core contract implemented in v10; evaluation pending.**
+**Status: core contract implemented in v10; one completed P02 trace after an
+initial validation failure.** See [observed results and limits](evaluation/v10-p02-results.md).
 `contracts.py` requires a plan; `decision_record.py` validates it and records linked
 outcomes. [The current architecture](CURRENT_ARCHITECTURE.md) maps the execution
 path. More records do not prove better decisions or a score gain.
@@ -120,7 +121,8 @@ Historical best and historical latest are useful context but are not matched con
 Preserve no-deals, timeouts and unfavorable outcomes. Do not select only successful
 runs or change memory during a comparison without recording it. No minimum score
 is guaranteed. Local simulator tests remain stopped under the current instruction;
-the user has separately authorized one P02 run for v10.
+the initial P02 and separately authorized additional P02 have both finished.
+Further Arena runs need authorization.
 
 ## File boundaries
 

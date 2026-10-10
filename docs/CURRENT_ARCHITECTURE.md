@@ -1,7 +1,8 @@
 # How the negotiation system works
 
 **Current runtime:** `astra-v10-traceable-plans`.
-**Current validation scope:** one authorized P02 Arena session; no P18 or local tests.
+**Current evidence:** one failed P02 session plus one separately authorized P02
+completion at 0.235; all six calls returned in the latter. No P18 or local tests.
 The v9 baseline remains evaluated at `b7c1dbc`. V10 implements the timing and
 linked-plan structure described here. See [the implementation record](evaluation/v10-traceable-plans.md)
 and [the decision contract](DECISION_CONTRACT.md).
@@ -123,6 +124,14 @@ benchmark fields. A supplier response, a prediction and an evaluation are differ
 kinds of evidence. Credentials and raw databases stay out of Git.
 
 ## What the latest evidence says
+
+[The v10 P02 report](evaluation/v10-p02-results.md) separates execution recovery
+from strategy quality. The initial final action failed validation and the remote
+session timed out with zero score. After a diagnostic/schema correction, the
+separately authorized additional session completed with six successful API calls,
+three valid final actions and linked outcomes. It scored 0.235 against a historical
+best of 0.255. Astra chose fixed-price concessions and then closed; no timeout or
+Python substitution forced that choice. The output-correction path was not needed.
 
 [Six v9 sessions](evaluation/v9-arena-results.md) produced three improvements over
 previous bests, one tie and two declines. P08 never started after the request to

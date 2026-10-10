@@ -8,8 +8,9 @@ Earlier version descriptions and experiments are preserved in
 
 ## Current authorization and status
 
-The user authorized one P02 session after the v10 fixes. No P18 session is authorized for this batch. Local tests,
-simulations and LLM replays remain stopped under the user's instruction. The
+The initial P02 and separately approved additional P02 have both finished.
+See [both outcomes](evaluation/v10-p02-results.md). Further Arena sessions need
+authorization. Local runtime tests, simulations and LLM replays remain stopped. The
 examples below explain operation; they are not instructions to launch a batch.
 
 ## Configuration
