@@ -12,7 +12,7 @@ from pathlib import Path
 import httpx
 
 from arena_kit.cli import load_env
-from arena_kit.client import ArenaClient
+from arena_kit.client import ArenaClient, ArenaError
 from arena_kit.data import DataPackage
 from arena_kit.play import RemoteTable, hosted, play
 
@@ -71,9 +71,45 @@ class LoggedTable(RemoteTable):
             if not action.get("term_sheet_id") or action["term_sheet_id"] != self.standing_ids.get(supplier_id):
                 raise ValueError("accept requires the received server-confirmed standing offer ID")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
-        result = super().close(supplier_id, message)
+        try:
+            result = super().close(supplier_id, message)
+        except ArenaError as e:
+            retry = self.reissued_accept(supplier_id, message, e)
+            if not retry:
+                raise
+            self.store.log(self.run, "sent", retry, self.case_id, supplier_id, self.session_id)
+            result = super().close(supplier_id, retry)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
         return result
+
+    def reissued_accept(self, supplier_id, message, error):
+        """A timeout repeats the supplier's offer under a NEW id (P05: Astra accepted Dralveck's 28.00 as
+        offer:70210-2, the thread had timed out to -3 and -4 with the same terms, the accept got 422 and the
+        run crashed). Retry once with the live id, only if its terms equal the ones we chose."""
+        action = message.get("action") or {}
+        if error.status != 422 or action.get("type") != "accept" or "standing offer" not in str(error.detail):
+            return None
+        state = self.client.session(self.session_id)
+        live = (state.get("threads") or {}).get(supplier_id) or {}
+        new_id = live.get("offer_id")
+        if not new_id or new_id == action.get("term_sheet_id") or live.get("closed"):
+            return None
+        thread = self.client.thread(self.session_id, supplier_id)
+        terms = {}
+        for m in thread.get("messages", []):
+            for ts in m.get("term_sheets") or []:
+                terms[ts.get("term_sheet_id")] = ts.get("terms")
+        for t in thread.get("timeouts") or []:
+            terms[t.get("offer_id")] = t.get("terms")
+        for mv in state.get("moves") or []:
+            reply = mv.get("reply") or {}
+            if mv.get("supplier_id") == supplier_id and reply.get("offer_id"):
+                terms[reply["offer_id"]] = reply.get("terms")
+        old, new = terms.get(action["term_sheet_id"]), terms.get(new_id)
+        if not old or old != new:
+            return None
+        self.standing_ids[supplier_id] = new_id
+        return {"action": {"type": "accept", "term_sheet_id": new_id}}
 
     def missed(self, supplier_id, error):
         result = super().missed(supplier_id, error)
