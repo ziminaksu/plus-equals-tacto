@@ -39,3 +39,5 @@ jobs:
           uv run python tools/offline_benchmark.py --seeds 2 5 11
           uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0.05
           uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0
+          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0 --continuation-credit 0.01
+          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0 --continuation-credit 0.03
