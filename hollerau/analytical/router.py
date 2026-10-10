@@ -351,7 +351,26 @@ class Router:
         """Astra's roles over an OpenAI-compatible /chat/completions endpoint (ASTRA_BASE_URL, ASTRA_MODEL,
         key in OPENAI_API_KEY): used when no OpenAI credits are available. JSON mode; the exact schema is
         given in the instructions and the result is validated by the same code as before."""
-        model = os.environ.get("ASTRA_MODEL", "gemini-2.5-flash")
+        # ASTRA_MODEL may list fallbacks: "a,b,c". A free tier answers 503 (high demand), 429 or times out
+        # on one model while another is fine (round 3: gemini-3.6-flash overloaded, lite models up).
+        models = [m.strip() for m in os.environ.get("ASTRA_MODEL", "gemini-3.6-flash").split(",") if m.strip()]
+        stop_at = time.monotonic() + remaining
+        last_exc = None
+        for i, model in enumerate(models):
+            left = stop_at - time.monotonic()
+            if left < 2:
+                break
+            try:
+                return self._chat_once(base, model, system, data, left if i == len(models) - 1 else min(left, 9),
+                                       role, schema)
+            except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as exc:
+                last_exc = exc
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                if status not in (None, 408, 429, 500, 502, 503, 504):
+                    raise
+        raise last_exc or TimeoutError("no Astra model answered in time")
+
+    def _chat_once(self, base, model, system, data, remaining, role, schema):
         record = {"model": model, "provider": base.split("/")[2], "role": role, "status": "started"}
         self.calls.append(record)
         start = time.monotonic()
