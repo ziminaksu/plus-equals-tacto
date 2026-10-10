@@ -4,7 +4,6 @@ import json
 import random
 import statistics
 
-from arena_kit.agents.naive import NaiveAgent
 from hollerau.analytical.agent import AnalyticalAgent
 from hollerau.analytical.router import Router
 from hollerau.analytical.storage import Store
@@ -12,10 +11,7 @@ from hollerau.cases import kit_cases
 from hollerau.simulate import play_local
 
 
-def evaluate(case, seed, probe=False, naive=False):
-    if naive:
-        agent = NaiveAgent()
-        return play_local(case, agent, seed=seed, log=True)
+def evaluate(case, seed, probe=False):
     db = Store(":memory:")
     try:
         agent = AnalyticalAgent(
@@ -36,11 +32,9 @@ def main():
         for seed in opts.seeds:
             base = evaluate(case, seed)
             candidate = evaluate(case, seed, probe=True)
-            naive = evaluate(case, seed, naive=True)
             row = {
                 "case": case["case_id"], "seed": seed,
                 "base": base["score"], "candidate": candidate["score"],
-                "naive": naive["score"],
                 "candidate_deal": candidate["deal"],
                 "candidate_problems": candidate["problems"],
                 "delta": candidate["score"] - base["score"],
@@ -50,7 +44,7 @@ def main():
     mean = lambda name: statistics.mean(row[name] for row in rows)
     result = {
         "games": len(rows), "mean_base": mean("base"),
-        "mean_candidate": mean("candidate"), "mean_naive": mean("naive"),
+        "mean_candidate": mean("candidate"),
         "minimum_candidate": min(row["candidate"] for row in rows),
         "improved": sum(r["delta"] > 1e-8 for r in rows),
         "regressed": sum(r["delta"] < -1e-8 for r in rows),
