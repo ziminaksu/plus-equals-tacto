@@ -121,6 +121,17 @@ def data_anchors(case, th, current):
     prices |= {round(p, 2) for p in refs.values() if p and p < quote}
     fields, opts = case["negotiable"], case.get("term_options", {})
     base = complete_offer(case, current or th.reference)
+    # Anchors must satisfy the must-haves: an opening at 6400 ppm against "ppm <= 1500" made every anchor
+    # invalid and the first counter fell back to 46.25 vs an ask of 47.00 (free Gemini P11).
+    for m in case["buyer"].get("must_haves", []):
+        f, op, val = m["field"], m["op"], m["value"]
+        if f in fields and opts.get(f) and base.get(f) is not None and op in ("<=", "<", ">=", ">"):
+            ok = {"<=": lambda x, v=val: x <= v, "<": lambda x, v=val: x < v,
+                  ">=": lambda x, v=val: x >= v, ">": lambda x, v=val: x > v}[op]
+            if not ok(base[f]):
+                good = [o for o in opts[f] if o is not None and ok(o)]
+                if good:
+                    base[f] = min(good) if op in ("<=", "<") else max(good)
     best = dict(base)
     pay = [d for d in opts.get("payment_days", []) if d >= case["buyer"]["reference_payment_days"]]
     if "payment_days" in fields and pay:
@@ -447,6 +458,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             if gap > last_p * 0.012:  # a big gap needs a bigger step: a quarter of the distance to its price
                 add_package({**th.last_terms, "unit_price": round(last_p + gap / 4, 2)},
                             "next step: a quarter of the gap to its price")
+            elif gap > 0.02:  # close to its price: half the remaining gap (P11: 46.40 vs 46.50 had no step)
+                add_package({**th.last_terms, "unit_price": round(last_p + gap / 2, 2)},
+                            "next step: half the remaining gap to its price")
         if keys:
             # Price discipline (free Gemini P11: opened at 46.50 against an ask of 47.00 and never got below;
             # the scripted 43.50 -> +0.4/+0.3/+0.25 ladder reached 45.50). First counter: data anchors at
