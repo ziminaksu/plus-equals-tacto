@@ -637,6 +637,10 @@ def test_index_supplier_value_activates_only_after_quoted_evidence():
     ]) == ["index_protection"]
     assert b.value(index_12, p) > b.value(base, p)
     assert b.value(index_36, p) - b.value(no_index_36, p) > b.value(index_12, p) - b.value(base, p)
+    assert b.probabilities(index_36, p, 100)["accept"] > b.probabilities(no_index_36, p, 100)["accept"]
+    assert b.probabilities(index_36, p, 100)["walk"] == pytest.approx(
+        b.probabilities(no_index_36, p, 100)["walk"]
+    )
     # Do not double-credit a clause already contained in the supplier's opening terms.
     indexed_ref = {**ref, "index_clause": clause}
     indexed_sup = {**sup, "standard": indexed_ref}
