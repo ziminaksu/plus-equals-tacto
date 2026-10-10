@@ -472,6 +472,16 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     # final offer (free Gemini P08: re-sent 4.84 plus 4.75/4.79, supplier closed at 5.38)
                     paced = [pid for pid in allowed if last_p + 0.005 < price_of(pid) <= cap]
                     allowed = paced or allowed
+            # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
+            # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
+            # supplier at 2376 ppm - it stood at 47.00; without a chargeback the price reached 45.50).
+            real_ppm = next((c.figure for c in th.dossier.claims if c.kind == "quality" and c.figure), None)
+            if real_ppm and "chargeback_eur_per_complaint" in case["negotiable"]:
+                def cb_ok(pid, real_ppm=real_ppm):
+                    t = board["packages"][pid]["terms"]
+                    cb, ppm = t.get("chargeback_eur_per_complaint") or 0, t.get("ppm_commitment") or 0
+                    return cb == 0 or ppm * min(cb, case["buyer"].get("cost_per_defect", cb)) >= 0.25 * real_ppm * cb
+                allowed = [pid for pid in allowed if cb_ok(pid)] or allowed
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": allowed, "max_packages": 3}
     # RFQ round-robin: keep bargaining with a supplier only while every other open supplier is at most one
@@ -594,6 +604,11 @@ def execute(agent, case, threads, board, selection):
             offers = [p["terms"] for p in picked
                       if (p.get("direct_cost_eur") or float("inf")) <= cheapest * 1.01] or [picked[0]["terms"]]
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
+            if not th.last_terms:  # first counter: the punctual-payment commitment rides along (P11 probe +0.08)
+                punctual = next((e for e in board["evidence"].values()
+                                 if e["supplier_id"] == sid and e.get("kind") == "punctual_payment"), None)
+                if punctual and punctual not in claims:
+                    claims = (claims + [punctual])[-3:] if len(claims) >= 3 else claims + [punctual]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
             body = "\n\n".join(x for x in [authored, *[c["text"] for c in claims], *[
