@@ -26,8 +26,14 @@ from hollerau import intel
 def describe(t):
     clause = t.get("index_clause")
     idx = f"index on {clause['series']} with deadband {clause['deadband_pct']}%" if clause else "no index clause"
-    return (f"EUR {t['unit_price']:.2f} per unit, payment {t['payment_days']} days net, "
-            f"{t['contract_months']} months, {idx}")
+    parts = [f"EUR {t['unit_price']:.2f} per unit", f"payment {t['payment_days']} days net"]
+    if t.get("contract_months"):
+        parts.append(f"{t['contract_months']} months")
+    if t.get("lead_time_days"):
+        parts.append(f"lead time {t['lead_time_days']} days")
+    if "index_clause" in t:
+        parts.append(idx)
+    return ", ".join(parts)
 
 
 def main(path):
@@ -82,7 +88,7 @@ def main(path):
             print(f"    (alt) {a.get('unit_price')} {a.get('payment_days')}d "
                   f"db{(a.get('index_clause') or {}).get('deadband_pct', '-')} {a.get('contract_months')}m")
         print(f"    SUP {status}: {t.get('unit_price')} {t.get('payment_days')}d "
-              f"db{(t.get('index_clause') or {}).get('deadband_pct', '-')} {t.get('contract_months')}m "
+              f"db{(t.get('index_clause') or {}).get('deadband_pct', '-')} {t.get('contract_months', '')}m "
               f"| checks {[r['result'] for r in reply.get('claim_results') or []]}")
         print("    " + (reply.get("body") or "").replace("\n", " ")[:700])
     c = total_cost(case, standing["terms"], std)

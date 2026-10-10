@@ -111,7 +111,9 @@ def data_anchors(case, th, current):
     quote = (current or th.reference).get("unit_price")
     if not quote:
         return []
-    prices = {round(quote * m, 2) for m in (0.80, 0.85, 0.90, 0.94)}
+    # near-ask anchors too: with a relationship penalty deep cuts are worthless (P02: 297-349 on the
+    # board, the supplier agreed at once to 361 = -2.7 % with 90 days and a deadband-5 copper clause)
+    prices = {round(quote * m, 2) for m in (0.80, 0.85, 0.90, 0.94, 0.96, 0.97, 0.98)}
     refs = dict(getattr(th.dossier, "reference_prices", {}) or {})
     if case["buyer"].get("current_unit_price"):
         refs["current_price"] = case["buyer"]["current_unit_price"]
@@ -196,6 +198,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                        "(supplier.closeness). A supplier that has just made a big step is at its limit: one more "
                        "push made it walk away (P05: 28.00 refused, 27.20 asked, supplier withdrew). This rule "
                        "outranks the 'do not accept while open' guidance.",
+            "index_trade": "An index clause whose deadband is at least the case's expected index move "
+                           "(buyer.index_paths) costs us only the index risk (index_risk_pct x material share), "
+                           "while a supplier passing on raw-material costs values it highly. Offer it in the "
+                           "FIRST counter together with our longest payment term in exchange for a lower base "
+                           "price (P02: 361.00 / 90 days / copper clause with deadband 5 was agreed at once = 0.73, "
+                           "while every price-only or payment-step path ended near 0.4). A clause with a deadband "
+                           "below the expected move costs us the move itself - avoid it.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
