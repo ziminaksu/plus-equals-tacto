@@ -518,3 +518,27 @@ def test_quality_first_prior_reduces_unproven_supplier_quality_resistance():
     assert quality.quality_cost_max < routine.quality_cost_max
     assert max(p.b_quality for p in quality.particles) < max(p.b_quality for p in routine.particles)
     assert quality.summary()["quality_prior_max_eur_per_1000ppm"] > 0
+
+
+def test_quality_first_risk_coefficient_replays_p11_audit_ordering():
+    """Offline reproduction of the recorded v2.2 P11 decision; no remote Arena call.
+
+    Same ppm (300), chargeback (0), and opening terms in both candidate rows.
+    The old risk coefficient of 0.25 preferred an unnecessarily expensive
+    EUR 48.41 offer; v2.3 prefers the lower expected-cost EUR 47.64 proposal.
+    This only verifies the ranking, NOT supplier acceptance of EUR 47.64.
+    """
+    case, _, _ = sample()
+    case["buyer"]["category_goal"] = "quality_first"
+    agent = AnalyticalAgent(router=Router(enabled=False))
+    lower = agent.objective(case, 816023.3833769511, 28040.13183758494)
+    higher = agent.objective(case, 816553.0164572278, 20423.696360588096)
+    assert agent.risk_for_case(case) == pytest.approx(0.05)
+    assert lower < higher
+    other_case = {**case, "buyer": {**case["buyer"], "category_goal": "routine"}}
+    assert agent.risk_for_case(other_case) == pytest.approx(0.25)
+    # Overrides remain available for matched offline sensitivity experiments.
+    conservative = AnalyticalAgent(router=Router(enabled=False), risk_aversion=0.25)
+    assert conservative.objective(case, 816023.3833769511, 28040.13183758494) > (
+        conservative.objective(case, 816553.0164572278, 20423.696360588096)
+    )
