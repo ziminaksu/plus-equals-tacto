@@ -18,7 +18,7 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v2.5-index-evidence"
+POLICY_VERSION = "bayes-v2.6-offline-risk-experimental"
 
 
 class AnalyticalAgent:
@@ -53,7 +53,10 @@ class AnalyticalAgent:
         """
         if self.risk_aversion is not None:
             return self.risk_aversion
-        return 0.05 if case["buyer"].get("category_goal") == "quality_first" else 0.25
+        goal = case["buyer"].get("category_goal")
+        # Offline matched-seed games support reducing tail penalties for price-focused cases.
+        # Keep strategic/supply-risk goals conservative until independent validation.
+        return 0.05 if goal in ("quality_first", "leverage", "routine") else 0.25
 
     def objective(self, case, expected_cost, uncertainty):
         return expected_cost + self.risk_for_case(case) * uncertainty
