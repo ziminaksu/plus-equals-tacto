@@ -319,6 +319,19 @@ def build(case, supplier_id, package=None, asked_price=None):
                 f"Your own quote of {v['date']} offered EUR {v['unit_price']:.2f} per unit for this part ({k}).",
                 1.4, v["unit_price"]))
 
+    # We pay this supplier late (invoices): punctual payment is a free, honest lever for a cash-tight
+    # supplier (P11: 126 of 135 invoices late by 8.8 days on average; "late payments are a problem",
+    # "the bank is watching every month" - promising due-date payment moved it 46.50 -> 45.50).
+    late = _query(package, "SELECT count(*) n, avg(julianday(paid_date) - julianday(due_date)) days, "
+                           "sum(julianday(paid_date) > julianday(due_date)) late FROM invoices "
+                           "WHERE supplier_id = ? AND paid_date IS NOT NULL", (supplier_id,))
+    if late and late[0]["n"] and late[0]["late"] and late[0]["late"] / late[0]["n"] >= 0.5 and (late[0]["days"] or 0) >= 3:
+        d.claims.append(Claim(
+            "punctual_payment", [],
+            "We know we have often paid your invoices late; from the new contract on we commit to paying every "
+            "invoice on its due date, without delay - predictable liquidity for you every month.",
+            1.3, None))
+
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
     cash_denied = capacity_denied = False

@@ -26,13 +26,19 @@ from hollerau import intel
 def describe(t):
     clause = t.get("index_clause")
     idx = f"index on {clause['series']} with deadband {clause['deadband_pct']}%" if clause else "no index clause"
-    parts = [f"EUR {t['unit_price']:.2f} per unit", f"payment {t['payment_days']} days net"]
+    parts = [f"EUR {t['unit_price']:.2f} per unit"]
+    if t.get("payment_days") is not None:
+        parts.append(f"payment {t['payment_days']} days net")
     if t.get("contract_months"):
         parts.append(f"{t['contract_months']} months")
     if t.get("lead_time_days"):
         parts.append(f"lead time {t['lead_time_days']} days")
     if "index_clause" in t:
         parts.append(idx)
+    if t.get("ppm_commitment") is not None:
+        parts.append(f"quality commitment {t['ppm_commitment']} ppm")
+    if t.get("chargeback_eur_per_complaint") is not None:
+        parts.append(f"chargeback EUR {t['chargeback_eur_per_complaint']} per complaint")
     return ", ".join(parts)
 
 
@@ -87,7 +93,7 @@ def main(path):
             a = alt_sheet["terms"]
             print(f"    (alt) {a.get('unit_price')} {a.get('payment_days')}d "
                   f"db{(a.get('index_clause') or {}).get('deadband_pct', '-')} {a.get('contract_months')}m")
-        print(f"    SUP {status}: {t.get('unit_price')} {t.get('payment_days')}d "
+        print(f"    SUP {status}: {t.get('unit_price')} ppm{t.get('ppm_commitment')} cb{t.get('chargeback_eur_per_complaint')} {t.get('payment_days')}d "
               f"db{(t.get('index_clause') or {}).get('deadband_pct', '-')} {t.get('contract_months', '')}m "
               f"| checks {[r['result'] for r in reply.get('claim_results') or []]}")
         print("    " + (reply.get("body") or "").replace("\n", " ")[:700])
