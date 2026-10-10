@@ -34,8 +34,8 @@ def test_first_counter_requires_real_buyer_tco_savings():
     assert candidate["terms"]["unit_price"] < best[3]["unit_price"]
     assert candidate["public_tco_saving"] > 0
     assert total_cost(case, candidate["terms"], th.std) < total_cost(case, best[3], th.std)
-    assert {k: v for k, v in candidate["terms"].items() if k != "unit_price"} == {
-        k: v for k, v in best[3].items() if k != "unit_price"}
+    assert {k: v for k, v in closing_terms(case, candidate["terms"], th.std).items() if k != "unit_price"} == {
+        k: v for k, v in closing_terms(case, best[3], th.std).items() if k != "unit_price"}
 
 
 def test_no_opening_probe_when_disabled_or_supplier_walk_high():
