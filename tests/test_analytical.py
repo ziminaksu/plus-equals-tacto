@@ -232,3 +232,39 @@ def test_capacity_search_keeps_full_volume_long_contracts(tmp_path):
             th, [th.beliefs.value(offer, p) - th.beliefs.value(th.last_terms, p) for p in th.beliefs.particles]
         )
         assert delta >= -0.01
+
+
+def test_supplier_signals_adjust_priors_without_overriding_score():
+    case, ref, sup = sample()
+    normal = Beliefs(case, ref, sup, seed=11)
+    signals = {"cash_short": True, "spare_capacity": True,
+               "approval_ladder": True, "wants_partnership": True}
+    targeted = Beliefs(case, ref, sup, seed=11, signals=signals)
+    assert targeted.summary()["supplier_signals"] == signals
+    assert max(p.b_pay for p in targeted.particles) > max(p.b_pay for p in normal.particles)
+    assert max(p.b_capacity for p in targeted.particles) < max(p.b_capacity for p in normal.particles)
+    assert targeted.walk_pressure > normal.walk_pressure
+    assert targeted.walk_repeat > normal.walk_repeat
+    assert sum(p.weight for p in targeted.particles) == pytest.approx(1)
+
+
+def test_candidate_shortlist_keeps_capacity_coverage(tmp_path):
+    case, ref, _ = sample()
+    case["type"] = "capacity"
+    need = case["buyer"]["need_per_year"]
+    case["negotiable"] = ["unit_price", "volume_per_year", "contract_months"]
+    for field in case["negotiable"]:
+        case.get("fixed_terms", {}).pop(field, None)
+    case["term_options"] = {
+        "volume_per_year": [int(need * 0.7), need],
+        "contract_months": [12, 24, 36],
+    }
+    case["buyer"]["must_haves"] = [{"field": "volume_per_year", "op": ">=", "value": need}]
+    opening = {**ref, "volume_per_year": need, "contract_months": 12}
+    events = [{"from": "supplier", "status": "open", "body": "Offer",
+               "term_sheets": [{"term_sheet_id": "offer:1", "terms": opening}]}]
+    agent = AnalyticalAgent(store=Store(tmp_path / "capacity.sqlite"), router=Router(enabled=False))
+    agent.start(case, {"sup:1": events})
+    candidates = agent.candidates(case, agent.threads["sup:1"], opening)
+    assert candidates
+    assert any(t["volume_per_year"] == need and t["contract_months"] >= 24 for t in candidates)
