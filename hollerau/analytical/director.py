@@ -188,6 +188,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                "package; repeat as the best offer improves. Compare complete costs, not unit "
                                "price: payment days, lead time and quality change the total. Do not close while "
                                "a supplier that has not yet seen the best rival offer is still open.",
+            "lock_in": "Accept a supplier's live offer when it is the best complete offer on the table AND either "
+                       "its last step was 5 % or more, or its price is within 3 % of our last offer "
+                       "(supplier.closeness). A supplier that has just made a big step is at its limit: one more "
+                       "push made it walk away (P05: 28.00 refused, 27.20 asked, supplier withdrew). This rule "
+                       "outranks the 'do not accept while open' guidance.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
@@ -239,6 +244,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                                    "refs": claim.refs,
                                                    "already_used": bool(set(claim.refs) & th.used)}
 
+        # How close is the supplier, and how big was its last step? (P05: Dralveck dropped 30.50 -> 28.00,
+        # we pushed to 27.20 and it walked away; 28.00 would have scored ~0.82.)
+        prices = [ts["terms"].get("unit_price") for m in events if m.get("from") != "buyer"
+                  for ts in (m.get("term_sheets") or [])[:1] if ts["terms"].get("unit_price")]
+        if current_sheet and th.last_terms and current.get("unit_price"):
+            supplier["closeness"] = {
+                "gap_to_our_last_offer_pct": round((current["unit_price"] / th.last_terms["unit_price"] - 1) * 100, 2),
+                "its_last_step_pct": round((prices[-1] / prices[-2] - 1) * 100, 2) if len(prices) >= 2 else None,
+            }
         # RFQ: a rival's live offer is the strongest argument and counts once per supplier (P05: a
         # supplier asked "which figures is that competing offer based on?" and got none).
         mine = current_sheet["terms"] if current_sheet else None
