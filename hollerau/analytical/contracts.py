@@ -65,3 +65,17 @@ def decode_conditions(output):
                     raise ValueError("duplicate condition predicate")
                 condition[key] = {v["field"]: v["value"] for v in values}
     return output
+
+
+def final_schema(board):
+    def ids(values, maximum):
+        return {"type": "array", "items": enum_values(list(values) or [""]), "maxItems": maximum}
+
+    return obj({
+        "action_id": enum_values(list(board["actions"])),
+        "package_ids": ids(board["packages"], 3),
+        "question_id": enum_values([""] + list(board["questions"])),
+        "evidence_ids": ids(board["evidence"], 3),
+        "tone": enum_values(["warm", "cooperative", "firm"]),
+        "rationale": {"type": "string"},
+    })

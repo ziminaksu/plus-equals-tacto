@@ -212,7 +212,7 @@ def build(case, supplier_id, package=None, asked_price=None):
         except Exception:
             continue
         body = text.split("\n", 4)[-1].strip()
-        d.notes.append(f"{row['id']} ({row['kind']}): {body[:300]}")
+        d.notes.append(f"{row['id']} ({row['kind']}): {body[:1600]}")
         signals = supplier_signals_from_note(body)
         cash_denied |= bool(CASH_DENIAL.search(body))
         capacity_denied |= bool(CAPACITY_DENIAL.search(body))

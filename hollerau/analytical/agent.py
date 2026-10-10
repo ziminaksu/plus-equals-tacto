@@ -15,6 +15,8 @@ from .. import compliance, intel, levers
 from ..agent import _opening_standard, describe
 from ..params import Params
 from .beliefs import Beliefs
+from .director import FinalDecisionUnavailable, cost_card
+from .director import decide as astra_decide
 from .discovery import REBASE_QUESTION, discover_quote_requests, validate_quote_request
 from .offers import echoed_proposal, equivalent_alternative
 from .planning import counter_costs, paired_objective
@@ -22,7 +24,7 @@ from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v5.1-quote-discovery"
+POLICY_VERSION = "astra-v6-final-authority"
 DECISION_BUDGET_S = 35
 
 
@@ -55,7 +57,10 @@ class AnalyticalAgent:
         self.session_id = None
         self.turn = 0
         self.move_deadline = None  # set on receipt, before downloading supplier attachments
+        self.decision_budget_s = DECISION_BUDGET_S
         self.decision_deadline = None
+        self.final_authority = bool(getattr(self.router, "final_authority", False))
+        self.closing_only = False
 
     def check_budget(self):
         if self.decision_deadline is not None and time.monotonic() >= self.decision_deadline - 3:
@@ -160,6 +165,8 @@ class AnalyticalAgent:
                 asked_confirmations=set(),
                 planning_anchor=None,
                 planning_moves=case.get("round_limit", 10),
+                episodes=self.store.episodes(sid, case["case_id"], self.session_id, self.run_id),
+                seen_replies=set(),
             )
             self.log("evidence", asdict(dossier), sid)
             self.log("coefficients", beliefs.snapshot(), sid)
@@ -167,6 +174,16 @@ class AnalyticalAgent:
     def observe(self, case, threads):
         for sid, events in threads.items():
             th = self.threads[sid]
+            # Persist exchanges even with the generic Live Final table, which does
+            # not use LoggedTable. Repeated decide() calls must not duplicate them.
+            for index, reply in enumerate(events):
+                if reply.get("from") == "buyer" or not index:
+                    continue
+                previous = next((e for e in reversed(events[:index]) if e.get("from") == "buyer"), None)
+                key = hashlib.sha256(json.dumps(reply, sort_keys=True, default=str).encode()).hexdigest()
+                if previous and key not in th.seen_replies:
+                    self.log("exchange", {"buyer_request": previous, "supplier_reply": reply}, sid)
+                    th.seen_replies.add(key)
             pending = th.pending
             if not pending or len(events) <= pending["event_count"]:
                 continue
@@ -258,7 +275,8 @@ class AnalyticalAgent:
         for terms in proposals[:3]:
             try:
                 if (isinstance(terms, dict) and set(terms) == set(case["negotiable"])
-                        and self.valid(case, th, terms) and 0.5 * quote <= terms["unit_price"] <= 1.2 * quote):
+                        and self.valid(case, th, terms)
+                        and (self.final_authority or 0.5 * quote <= terms["unit_price"] <= 1.2 * quote)):
                     approved.append(terms)
             except (TypeError, ValueError, KeyError, ArithmeticError):
                 continue
@@ -411,7 +429,7 @@ class AnalyticalAgent:
                         available.append((cost, sid, sheet["term_sheet_id"], terms))
         return sorted(available, key=lambda r: r[0])
 
-    def interpret(self, case, sid, events, deadline):
+    def sources(self, sid, events):
         th = self.threads[sid]
         sources = {}
         for index, event in enumerate(events):
@@ -423,6 +441,11 @@ class AnalyticalAgent:
                         sources[f"attachment:{ref}:{j}"] = att["text"][:1800]
         for index, note in enumerate(th.dossier.notes[-6:]):
             sources[f"note:{index}"] = note
+        return sources
+
+    def interpret(self, case, sid, events, deadline):
+        th = self.threads[sid]
+        sources = self.sources(sid, events)
         if self.router.enabled:
             current = standing(events)[1] or th.reference
             analysis = self.router.analyse(
@@ -433,14 +456,15 @@ class AnalyticalAgent:
                 allow_escalation=False,
                 term_options=case.get("term_options", {}),
                 context={
-                    "case": {k: case.get(k) for k in ("type", "title", "buyer", "fixed_terms")},
+                    "case": {k: case.get(k) for k in ("type", "title", "briefing", "buyer", "fixed_terms")},
                     "current_terms": current,
                     "previous_buyer_terms": th.last_terms,
                     "supplier_term_sheets": latest(events).get("term_sheets", []),
                     "remaining_moves": moves_left(case, events),
                     "stagnant_replies": th.stagnation,
                     "uncertain_estimates": th.beliefs.summary(),
-                    "current_cost_at_estimate": cost_breakdown(case, current, th.std, th.sup),
+                    "current_cost": cost_card(self, case, th, current),
+                    "past_exchanges": th.episodes,
                 },
             )
         else:
@@ -696,8 +720,13 @@ class AnalyticalAgent:
         self.observe(case, threads)
         try:
             self.check_budget()
+            if self.final_authority:
+                return astra_decide(self, case, threads, deadline, self.closing_only)
             return self._decide(case, threads, started, deadline)
         except DecisionBudgetExpired:
+            if self.final_authority:
+                self.log("final_decision_failed", {"reason": "move budget exhausted", "sent": False})
+                raise FinalDecisionUnavailable("No time for Astra authorization; no substitute was sent") from None
             decision = closing_move(case, threads)
             self.log("decision", {"action": decision, "reason": "shared move budget exhausted; close before timeout",
                                   "seconds": time.monotonic() - started, "llm_calls": self.router.calls})
@@ -705,6 +734,14 @@ class AnalyticalAgent:
             return decision
         finally:
             self.decision_deadline = None
+
+    def close_decision(self, case, threads):
+        """The wave-cap path must receive the same final Astra authorization."""
+        self.closing_only = True
+        try:
+            return self.decide(case, threads)
+        finally:
+            self.closing_only = False
 
     def _decide(self, case, threads, started, deadline):
         self.check_budget()

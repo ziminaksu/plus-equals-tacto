@@ -2,7 +2,7 @@
 
 Autonomous AI buyer for Hollerau Pumpenwerke · EHL Munich 2026.
 
-The agent negotiates with suppliers by e-mail to minimise **total cost**, not just unit price. Deterministic code calculates offers and checks constraints; an OpenAI API model selects a move and drafts the message. A code-only fallback handles model errors and timeouts.
+The agent negotiates with suppliers by e-mail to minimise **total cost**, not just unit price. In the analytical agent, Astra proposes packages and a separate Astra call chooses every final action. Python calculates costs and validates constraints. If final authorization fails, this path stops without sending a substitute offer or acceptance. Legacy agents retain their explicit fallback modes.
 
 ## Strategy
 
@@ -22,7 +22,7 @@ cp -n .env.example .env
 uv run arena data
 ```
 
-Fill `.env` locally with `ARENA_API_KEY` and `LLM_API_KEY`; never commit it. `.env.example` defines the OpenAI endpoint and default model. The negotiation model uses `BRAIN_MODEL` (default in the template: `gpt-4.1-mini`). OpenAI API usage is billed separately from ChatGPT plans.
+Fill `.env` locally with `ARENA_API_KEY` and `OPENAI_API_KEY`; never commit it. The default `play` and `run` commands now select the analytical Astra agent. `.env.example` also retains `LLM_API_KEY` and `BRAIN_MODEL` for explicit legacy `--brain llm` comparisons. OpenAI API usage is billed separately from ChatGPT plans.
 
 ## Run
 
@@ -68,10 +68,12 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Analytical negotiation agent
 
-`hollerau.analytical` now uses `gpt-6-astra` for a negotiator and a separately prompted strategic reviewer. Python validates complete proposals, calculates all buyer costs and updates uncertain supplier preferences in SQLite. The v5 changes preserve alternative packages after concessions, revisit supplier-proposed indicative quotes, distinguish explicit requirements from acceptance of our own offer, and make partial validation failures visible. Qwen remains an explicit comparison mode. These mechanisms do not guarantee higher Arena scores.
+`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v6 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
 
-The v5.1 repair makes requests for missing rebased quotes executable, compares supplier-priced alternatives before using hypothetical counteroffer forecasts, and shares a shorter time budget across attachments, models and planning. Its two hosted retests returned P02 **0.157** and P18 **0.340**: P02 stayed unchanged; P18 recovered from a timeout but only matched its earlier best. See [the latest evaluation](docs/evaluation/v51-arena-results.md) and [the original diagnosis](docs/evaluation/v5-results-and-repair.md).
+Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
 
-See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). The existing agents remain available; select `--brain analytical` explicitly for the new agent in the team runner. Use `tacto-bayes` for bounded practice.
+The last hosted scores remain P02 **0.157** and P18 **0.340**, from v5.1. They are not v6 results. V6 removes the automatic-confirmation/closing path implicated in those runs. See [the v6 validation](docs/evaluation/v6-final-authority.md), [the earlier hosted evaluation](docs/evaluation/v51-arena-results.md) and [the original diagnosis](docs/evaluation/v5-results-and-repair.md).
+
+See [setup, parameters and current decision flow](docs/ANALYTICAL.md), [initial five-session results](docs/evaluation/FIVE_PRACTICE.md), and [improved five-session comparison](docs/evaluation/IMPROVED_FIVE_PRACTICE.md). `play` and `run` default to `--brain analytical`; the legacy agents remain explicitly selectable. Use `tacto-bayes` for bounded practice. `local` retains its model-free default.
 
 The implementation uses Entire's supported external-agent import to attach actual scoped Codex development records. Earlier unrelated history and credentials are excluded; original source-session IDs, timestamps and record hashes are preserved. See the provenance section of the setup guide. Commit trailers and remote checkpoint refs are verified after publishing.

@@ -199,6 +199,7 @@ def test_p18_closing_does_not_spend_time_on_redundant_offer_refresh():
 
     client = SimpleNamespace(send_message=send, thread=lambda *a: pytest.fail("redundant network read"))
     table = LoggedTable(client, Store(":memory:"), "offline", agent)
+    table.remember_standing(sid, threads[sid])
     decision = {"action": {"type": "accept", "term_sheet_id": standing(threads[sid])[0]}}
     assert table.close(sid, decision) == {"deal": True}
     assert calls == [decision]

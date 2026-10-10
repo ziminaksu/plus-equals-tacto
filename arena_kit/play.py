@@ -150,6 +150,10 @@ def play(table, case_id, agent, deadline=None):
     """Play one case to its end. `deadline` (time.time(), or a function returning it): a Live Final
     wave's cap - shortly before it, `closing_move` closes the case so it does not end without a deal."""
     case, threads = table.open(case_id)
+    if hasattr(agent, "session_id") and hasattr(table, "session_id"):
+        agent.session_id = table.session_id
+    if hasattr(agent, "move_deadline"):
+        agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
     if getattr(table, "done", None):  # resumed a case that had already ended
         return table.done
     for events in threads.values():
@@ -161,7 +165,9 @@ def play(table, case_id, agent, deadline=None):
         cap = deadline() if callable(deadline) else deadline
         if cap and time.time() > cap - max(CLOSE_BEFORE_CAP_S, slowest + ROUND_MARGIN_S):
             log.info("%s: the wave's cap is near - closing", case_id)
-            decision = closing_move(case, threads)
+            decision = agent.close_decision(case, threads) if getattr(agent, "final_authority", False) else (
+                closing_move(case, threads)
+            )
         else:
             decision = agent.decide(case, threads)
         if (took := time.monotonic() - t0) > MOVE_LIMIT_S * 0.75:
@@ -178,10 +184,14 @@ def play(table, case_id, agent, deadline=None):
             log.info("%s: %s", sid, e.detail)
             reply = table.missed(sid, e)  # e.g. late, or the thread or the case has ended
             if msg.get("action") and "result" not in reply:  # the case goes on: decide again
+                if hasattr(agent, "move_deadline"):
+                    agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
                 threads[sid].append(fetch_documents(table, reply))
                 continue
         if "result" in reply:  # the reply ended the case, e.g. the last supplier walked away
             return reply["result"]
+        if hasattr(agent, "move_deadline"):
+            agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
         threads[sid] += [{**msg, "from": "buyer"}, fetch_documents(table, reply)]
         slowest = max(slowest, time.monotonic() - t0)
         log.info("%s %s %s", sid, reply.get("status"), standing(threads[sid])[1])

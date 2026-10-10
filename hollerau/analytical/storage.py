@@ -103,3 +103,49 @@ class Store:
             "SELECT model FROM learned_models WHERE goal=? ORDER BY supplier LIMIT 10", (goal,)
         ).fetchall()
         return {"source": "category", "models": [json.loads(r[0]) for r in rows]}
+
+    def episodes(self, supplier, case, session=None, run=None, limit=10):
+        """Retrieve actual exchanges, never outcomes, scores or hidden benchmark data.
+
+        Only the same supplier AND case qualify. Old quotes are evidence of a route,
+        not live offers. Include the preceding buyer request to explain each reply.
+        """
+        excluded_run = run if session is None else None
+        rows = self.db.execute(
+            "SELECT id,timestamp,run_id,session_id,payload FROM events "
+            "WHERE supplier_id=? AND case_id=? AND kind IN ('received','exchange') "
+            "AND (? IS NULL OR session_id IS NULL OR session_id!=?) "
+            "AND (? IS NULL OR run_id!=?) ORDER BY id DESC LIMIT 160",
+            (supplier, case, session, session, excluded_run, excluded_run),
+        ).fetchall()
+        episodes, seen = [], set()
+        for event_id, timestamp, old_run, old_session, payload in rows:
+            data = json.loads(payload)
+            reply = data.get("supplier_reply", data)
+            body = reply.get("body", "")
+            sheets = [{"terms": s.get("terms", {})} for s in reply.get("term_sheets", [])]
+            signature = json.dumps([body, sheets], sort_keys=True)
+            if signature in seen:
+                continue
+            seen.add(signature)
+            previous = self.db.execute(
+                "SELECT payload FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
+                "AND supplier_id=? AND kind='sent' AND id<? ORDER BY id DESC LIMIT 1",
+                (old_run, old_session, case, supplier, event_id),
+            ).fetchone()
+            request = data.get("buyer_request") or (json.loads(previous[0]) if previous else {})
+            episodes.append({
+                "source_id": f"history:{event_id}", "timestamp": timestamp, "case_id": case,
+                "session_id": old_session, "status_then": reply.get("status"),
+                "buyer_request": request.get("body", "")[:1600],
+                "buyer_terms": [s.get("terms", {}) for s in request.get("term_sheets", [])],
+                "supplier_reply": body[:2500], "quoted_packages_then": sheets,
+                "currently_executable": False,
+            })
+        # Preserve earlier priced alternatives instead of letting repeated price-only
+        # replies push them out. Keep half the budget for the newest exchanges too.
+        special = [e for e in episodes if len(e["quoted_packages_then"]) > 1 or any(
+            word in e["supplier_reply"].lower() for word in ("rebas", "recalculat", "approval", "breakdown")
+        )]
+        selected = {e["source_id"]: e for e in special[:limit // 2] + episodes[:limit]}
+        return list(selected.values())[:limit]

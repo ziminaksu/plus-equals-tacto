@@ -17,6 +17,7 @@ from arena_kit.data import DataPackage
 from arena_kit.play import RemoteTable, hosted, play
 
 from .agent import DECISION_BUDGET_S, POLICY_VERSION, AnalyticalAgent
+from .director import standing_sheet
 from .router import Router
 from .storage import Store
 
@@ -26,12 +27,19 @@ class LoggedTable(RemoteTable):
         super().__init__(client)
         self.store, self.run, self.agent = store, run, agent
         self.case_id = None
+        self.standing_ids = {}
+
+    def remember_standing(self, supplier_id, events):
+        sheet = standing_sheet(events)
+        self.standing_ids[supplier_id] = sheet.get("term_sheet_id") if sheet else None
 
     def open(self, case_id):
         self.case_id = case_id
         result = super().open(case_id)
         self.agent.move_deadline = time.monotonic() + DECISION_BUDGET_S
         self.agent.session_id = self.session_id
+        for sid, events in result[1].items():
+            self.remember_standing(sid, events)
         self.store.status(self.run, case_id, "opened", self.session_id)
         self.store.log(self.run, "opened", {"case": result[0], "threads": result[1]}, case_id, session=self.session_id)
         return result
@@ -39,6 +47,8 @@ class LoggedTable(RemoteTable):
     def send(self, supplier_id, message):
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().send(supplier_id, message)
+        if "result" not in result:
+            self.remember_standing(supplier_id, [result])
         self.agent.move_deadline = time.monotonic() + DECISION_BUDGET_S
         self.store.log(self.run, "received", result, self.case_id, supplier_id, self.session_id)
         return result
@@ -58,11 +68,17 @@ class LoggedTable(RemoteTable):
         if action.get("type") == "accept":
             # The server validates the ID atomically on accept. A redundant read here
             # could itself exceed the move window; only received standing IDs are chosen.
-            if not action.get("term_sheet_id"):
-                raise ValueError("accept requires a received standing offer ID")
+            if not action.get("term_sheet_id") or action["term_sheet_id"] != self.standing_ids.get(supplier_id):
+                raise ValueError("accept requires the received server-confirmed standing offer ID")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
+        return result
+
+    def missed(self, supplier_id, error):
+        result = super().missed(supplier_id, error)
+        if "result" not in result:
+            self.remember_standing(supplier_id, [result])
         return result
 
 

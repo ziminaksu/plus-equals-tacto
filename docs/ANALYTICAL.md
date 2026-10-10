@@ -1,6 +1,6 @@
-# Analytical buyer agent — bayes-v5.1-quote-discovery
+# Analytical buyer agent — astra-v6-final-authority
 
-Astra proposes complete deals and a separate Astra call reviews difficult decisions. Python owns cost calculations, probability updates, permitted terms and final actions. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
+Astra proposes complete deals and a separate Astra call selects **every final action**. Python owns arithmetic, evidence lookup, recording and validation; it cannot replace a valid Astra choice with its preferred strategy. This includes confirmation, acceptance, supplier `agreed`/`final_offer` responses, the last move and wave-cap closure. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
 
 ## Run and inspect
 
@@ -12,32 +12,34 @@ uv run tacto-bayes --primary astra --reviewer astra \
 uv run python -m hollerau.analytical.report --run-id my-two-case-experiment
 ```
 
-The requested v5 experiment authorises only one new session each on P02 and P18. SQLite reserves starts before HTTP; failed or ambiguous starts still count. Do not change the run ID or database to bypass a cap. There are no automatic replacements. Saved-input replays use these same two cases without calling Arena.
+Hosted runs require their own authorized session allowance. SQLite reserves starts before HTTP; failed or ambiguous starts still count. Do not change the run ID or database to bypass a cap. There are no automatic replacements. V6 development used saved-input replays of P02/P18 without calling Arena. See [validation](evaluation/v6-final-authority.md).
 
 ## Decision loop
 
 ```mermaid
 flowchart TD
-    A[Public case and supplier evidence] --> B[Astra negotiator: quotes and complete proposals]
-    B --> C[Python validates each item and updates beliefs]
-    C --> Q{Supplier offers an unpriced indexed alternative?}
-    Q -->|Yes, once, with moves reserved| R[Request actual rebased quote without committing]
-    R --> I
-    Q -->|No| D[Compare packages including supplier indicative alternatives]
-    D --> E{Opening, stalled, uncertain or accepting?}
-    E -->|Yes| F[Separate Astra review from raw evidence and cost breakdowns]
-    F --> G[Python validates alternatives and reranks]
-    E -->|No| G
-    G --> H[Send validated offer or accept registered standing ID]
-    H --> I[Observe and update supplier estimates]
+    A[Case, supplier evidence and past exchanges] --> B[Astra proposes complete packages]
+    B --> C[Python checks terms and calculates comparable cost distributions]
+    C --> D[Actions: counter, ask, confirm, accept, walk away]
+    D --> E[Astra independently selects the final action]
+    E --> F{Selection and terms valid?}
+    F -->|Yes| G[Send that exact selection]
+    F -->|No or model unavailable| H[Stop and log failure; no substitute action]
+    G --> I[Record actual reply and update uncertain beliefs]
     I --> A
 ```
 
-Both roles use `gpt-6-astra`, with separate requests and no shared model conversation or negotiator rationale passed to the reviewer. Agreement between them is not proof of correctness. Strict, case-specific structured outputs constrain fields; Python still validates exact quotes, options, fixed terms, numerical bounds and must-haves. One unsupported item is rejected and logged without discarding independently valid proposals. A supplier welcoming our terms is not evidence that those terms are required. The explicit-requirement gate is conservative and does not prove general semantic entailment.
+Both roles use `gpt-6-astra`, with separate requests and no negotiator rationale passed to the final decision-maker. The reviewer sees the evidence, current and historical packages, direct cost, expected full cost including relationship penalties, its component breakdown, and the same weighted cost range used by the proposer. It receives no Python winner to rubber-stamp. The first call's proposals are suggestions; the final call chooses action/package IDs. Python validates IDs, the actual current standing quote, exact options and must-haves, then renders the approved terms. It does not rerank or repair the final selection silently.
 
-Both roles can now return `quote_requests` independently of numerical proposals. A source-backed `index_rebase` request asks for the missing complete quote without making a binding offer. A narrow deterministic fallback recognises explicit supplier openness or rebasing language. It is limited to one request per supplier, needs at least three remaining moves, and cannot override a final offer, fixed index terms, or an already-priced indexed alternative. It does not invent a base price, count indexation as mandatory, or train acceptance probabilities from a response to a question.
+Available information requests include payment-price comparisons, fixed/indexed rebased prices, cost walkthroughs, approval routes and revisiting old quotes. A negotiable index clause is enough to make a question available; supplier willingness is not assumed or required before asking. Cost and approval questions are grounded in supplied notes. Each question kind is limited to once per supplier, with a response and closing move reserved for standalone questions. Responses to pure information requests do not train offer-rejection probabilities.
 
-If the supplier already supplies an indicative alternative, Python compares its actual quoted package with standing quotes and fallback using estimated total cost, including index and relationship costs. A cheaper valid alternative gets a request to confirm those exact terms as the standing offer, once per package. Its indicative ID is never accepted. Counteroffer forecasts still contain assumptions; they no longer veto discovery or confirmation of these supplier-backed alternatives.
+Packages include Astra proposals, received indicative quotes, relevant historical terms, one-field sensitivities and conditional exchanges whose compensating price preserves approximate **direct** buyer cost. Full relationship uncertainty is displayed separately. Astra may select up to three alternative packages on any counter, not only the opening. There is no guessed supplier-acceptance threshold or arbitrary price-band veto. Fixed terms and buyer must-haves remain mandatory.
+
+Confirming an indicative quote is an explicit Astra choice, never a cheaper-quote shortcut. Its ID cannot be accepted. Confirmation language does not promise to conclude; the next supplier agreement returns to Astra for a fresh decision. The last move and wave-cap board contain only valid closure actions. A malformed, refused, incomplete or timed-out final call raises `FinalDecisionUnavailable` and records that no action was sent. This can leave a live session unfinished; it deliberately avoids claiming a Python fallback was Astra's decision.
+
+Verified numeric arguments are selectable by evidence ID and rendered from the facts used to compute them. There is no blanket digit ban on these arguments or structured terms. Unverified free-text numeric claims are not sent. The current message wording uses respectful templates with an Astra-selected tone and targeted question; arbitrary model-written factual claims are not part of the final action schema.
+
+SQLite retrieves bounded, source-labelled exchanges for the same supplier and case, including the buyer's request, supplier reply, terms, date and session. Earlier multi-package/rebased offers receive space alongside recent replies. Current-session history, other cases and result/benchmark records are excluded. Historical prices are unconfirmed leads, never acceptable offer IDs. Generic Live Final play also records these exchanges; memory is not limited to the bounded practice runner.
 
 ## Supplier estimates and learning
 
@@ -65,13 +67,15 @@ Conditional preferences preserve statements such as “24 months requires an ind
 
 `learned_models` stores normalised preference means and response estimates. Subsequent sessions blend 25% of an existing supplier estimate or 10% of a category estimate into new priors, preserving scenario spread. Only models with observed responses are reused. Current production costs and capacities are not copied between suppliers. Known buyer costs for quality, delivery and financing come directly from the case; they are not replaced by invented learned weights. No model weights are trained.
 
-## Offer search and closure
+## Retained legacy offer search and closure
+
+The remainder of this section documents the explicit `--primary qwen --reviewer primary` or model-free comparison path. Its Python ranking and closing rules do **not** control the default v6 Astra path above.
 
 Enumerate reference and one-field changes plus up to 600 complete packages from the starter kit. Search a price grid from 20% below to 15% above the current quote, with additional prices derived from estimated supplier value and a concession increment. Prices remain within a bounded exploration range. Premiums can buy better non-price terms. This is a bounded heuristic, not a global optimiser.
 
 Evaluate every candidate when there are at most 1,200. Above that, retain central expected-value candidates, cheap candidates, high-acceptance candidates and representatives across packages. The initial v2 pruning experiment missed useful intermediate prices; this broader selection fixed the observed local regression before hosted testing.
 
-After a counteroffer, require progress for an unchanged package; allow different packages to compete under uncertainty instead of discarding them with a 90% scenario threshold. Track unchanged supplier responses and include a small cost for another stalled round. Compare quoted packages across live suppliers, but distinguish indicative alternatives from executable standing offers. Arena can return additional sheets whose IDs cannot be accepted. Only the registered standing sheet (first in the message API) is eligible for acceptance; valid complete alternatives enter search at their quoted price and can be re-proposed for confirmation. The bounded runner confirms the standing ID with the server immediately before accepting. An ID change aborts that acceptance rather than silently choosing different terms. A closing thread does not force closure while other suppliers remain negotiable.
+After a counteroffer, require progress for an unchanged package; allow different packages to compete under uncertainty instead of discarding them with a 90% scenario threshold. Track unchanged supplier responses and include a small cost for another stalled round. Compare quoted packages across live suppliers, but distinguish indicative alternatives from executable standing offers. Arena can return additional sheets whose IDs cannot be accepted. Only the registered standing sheet (first in the message API) is eligible for acceptance; valid complete alternatives enter search at their quoted price and can be re-proposed for confirmation. The bounded runner checks the ID against the last received standing offer before accepting, without an extra network refresh. An ID mismatch aborts that acceptance rather than silently choosing different terms. A closing thread does not force closure while other suppliers remain negotiable.
 
 The objective is expected deal/counter/fallback cost plus 0.25 times the standard deviation of its difference from a common standing-offer reference. For comparisons within one supplier, shared uncertainty therefore cancels instead of discouraging negotiation by itself. Cross-supplier comparisons still use a point estimate for the other supplier and need further work. Costs use the published full-cost function, including the uncertain sustainability term. The 0.25 risk preference and round cost remain explicit assumptions. Fallback expenditure without a qualified alternative is a risk proxy, not guaranteed supply. Report the actual Arena score separately.
 
@@ -87,11 +91,11 @@ An opening can include one additional package at comparable expected buyer cost,
 
 `ANALYTICAL_PRIMARY=astra` and `STRATEGIC_REVIEWER=astra` are the defaults. `OPENAI_API_KEY` is the only key used by those calls. The Responses API uses low reasoning to reduce latency, up to 4096 reasoning/output tokens, `store=false` and a strict case-specific JSON schema. Low reasoning is supported by the [official Astra model documentation](https://developers.openai.com/api/docs/models/gpt-6-astra). See also [structured-output documentation](https://developers.openai.com/api/docs/guides/structured-outputs).
 
-The shared move budget is 35 seconds starting when `LoggedTable` receives the supplier reply, before attachment downloads. The primary and reviewer HTTP phase budgets total at most 18 and 12 seconds respectively, further capped by the remaining time minus five seconds. Attachment phase budgets total at most eight seconds and share the same clock. Slow attachments are explicitly marked unavailable. Candidate generation and ranking check the deadline; exhausted time triggers a valid standing-offer close or fallback walk-away. Acceptance relies on the server's atomic ID validation, avoiding a redundant pre-accept network request. Equal-model escalation no longer repeats ranking without new evidence.
+The shared move budget is 35 seconds starting when `LoggedTable` receives the supplier reply, before attachment downloads. V6 reserves time for final authorization: the proposal call gets at most 14 seconds of HTTP phases under its shortened deadline, and the final call at most 20, further capped by the remaining window minus three seconds. Attachment phases use at most eight seconds and share the clock. There is no large probabilistic grid search in v6. The practice runner checks the accepted ID against the last received standing ID without an extra network refresh; the server validates it atomically on submission.
 
-The Arena limit is 60 seconds. The extra margin reduces risk from transmission and processing, but phase timeouts are not a hard wall-clock guarantee under network or OS stalls. There are no retries in the analytical CLI; failures are recorded by role, error class and validation section. Two consecutive failed reviewer calls open its circuit. No extra writing call is needed. Returned token usage does not capture billing for timed-out calls.
+The Arena limit is 60 seconds. HTTP phase timeouts are not a hard wall-clock guarantee under network or OS stalls. There are no retries; failures are recorded without error bodies or credentials. A failed proposal call can still be followed by a final decision using supplied evidence and existing packages. A failed final decision cannot be replaced by Python. No extra writing call is needed. Returned token usage does not capture billing for timed-out calls.
 
-The reviewer runs on opening offers, prospective acceptance, stalled replies, interpretation failures, indicative alternatives, low predicted acceptance or costly/conditional trades. A primary Astra call no longer suppresses its separate Astra reviewer. The reviewer can propose up to three complete packages; it cannot send them or override buyer requirements.
+The final decision-maker runs on every v6 decision, independently of whether the first model succeeded. It chooses which supplier to contact, the action, up to three complete packages, a supported question, evidence and tone. Buyer constraints remain mandatory. The same decision contract applies when Qwen proposes and Astra is selected as final reviewer.
 
 To compare the prior HF route explicitly use `--primary qwen --reviewer primary`, `LLM_PROVIDER=hf` and `HF_TOKEN`. The existing model IDs and small/large ambiguity routing are retained. `--offline-llm` disables all external model calls.
 

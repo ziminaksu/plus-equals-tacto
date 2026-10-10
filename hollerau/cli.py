@@ -27,8 +27,12 @@ def make_agent_factory(writer="template", package=None, brain="llm"):
         from .analytical.router import Router
 
         openai_ready = os.environ.get("LLM_PROVIDER") == "openai" and bool(os.environ.get("LLM_API_KEY"))
-        if not (os.environ.get("HF_TOKEN") or openai_ready):
-            raise SystemExit("Configure HF_TOKEN or OpenAI credentials for the analytical brain")
+        primary = os.environ.get("ANALYTICAL_PRIMARY", "astra")
+        reviewer = os.environ.get("STRATEGIC_REVIEWER", "astra")
+        if (primary == "astra" or reviewer == "astra") and not os.environ.get("OPENAI_API_KEY"):
+            raise SystemExit("Configure OPENAI_API_KEY for Astra; no Arena session started")
+        if primary != "astra" and not (os.environ.get("HF_TOKEN") or openai_ready):
+            raise SystemExit("Configure credentials for the selected primary; no Arena session started")
         return lambda: AnalyticalAgent(package=package, router=Router(), run_id="live-analytical")
 
     from .agent import StrategicAgent
@@ -80,11 +84,11 @@ def main(argv=None):
     p = sub.add_parser("play", help="play ONE arena case (uses a practice try)")
     p.add_argument("case_id")
     p.add_argument("--writer", default="llm", choices=["template", "llm"])
-    p.add_argument("--brain", default="llm", choices=["code", "llm", "analytical"])
+    p.add_argument("--brain", default="analytical", choices=["code", "llm", "analytical"])
     r = sub.add_parser("run", help="play every case of a set (final: the wave runner)")
     r.add_argument("--set", default="practice")
     r.add_argument("--writer", default="llm", choices=["template", "llm"])
-    r.add_argument("--brain", default="llm", choices=["code", "llm", "analytical"])
+    r.add_argument("--brain", default="analytical", choices=["code", "llm", "analytical"])
     r.add_argument("--parallel", type=int, default=10)
     args = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING, format="%(asctime)s %(message)s")
