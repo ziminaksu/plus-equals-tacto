@@ -197,7 +197,12 @@ def play(table, case_id, agent, deadline=None):
                     agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
                 threads[sid].append(fetch_documents(table, reply))
                 continue
-        if "result" in reply:  # the reply ended the case, e.g. the last supplier walked away
+        if "result" in reply:  # Observe terminal behaviour before the next decide() disappears.
+            if hasattr(agent, "receive_terminal"):
+                try:
+                    agent.receive_terminal(case, threads, sid, msg, reply)
+                except Exception:
+                    log.exception("%s: terminal observation failed; preserving the Arena result", case_id)
             return finish(reply["result"])
         if hasattr(agent, "move_deadline"):
             agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)

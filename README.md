@@ -68,9 +68,11 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Analytical negotiation agent
 
-`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v7 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
+`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v8.2 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
 
 Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
+
+V8 corrects false acceptance labels, records terminal walkouts, reconstructs behavioural learning, and enables Astra-authored supplier replies with exact fixed facts. It presents next-action gains, losses and final-offer evidence before the final choice, and gates sustainability concerns by the case objective. See [the v8 implementation](docs/evaluation/v8-decision-feedback.md). The two evaluation pairs scored P02 0.000 then 0.255, and P18 0.273 twice. Neither exceeded its previous best. V8.2 subsequently adds forecast and neutral cost-driver retrieval and has **not yet been evaluated in Arena**. No local tests ran. See [all scores and the evidence-access diagnosis](docs/evaluation/v81-arena-results.md).
 
 V7 preserves original should-cost evidence, separates production-cost estimates from acceptance behaviour, and calibrates supplier economics using completed practice cost breakdowns. It includes higher-price sustainability alternatives and explicit downside comparisons. See [the implementation and assumptions](docs/evaluation/v7-supplier-economics.md). No local tests are run for this update.
 

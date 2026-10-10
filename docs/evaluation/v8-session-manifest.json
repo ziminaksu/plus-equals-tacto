@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "v8-decision-feedback-20261010",
+  "scope_start": "2026-10-10T17:16:19.591Z",
+  "records_exported": 36,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "1a8e7277ea7bedccc95431d98d662751a6a16d4eb18eb1cf754c46c7ccf040ea"
+}

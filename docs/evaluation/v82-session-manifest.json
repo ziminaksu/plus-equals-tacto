@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "v82-evidence-access-20261010",
+  "scope_start": "2026-10-10T17:16:19.591Z",
+  "records_exported": 99,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "22bceca6928fcd756587f859362d36d1de48fd97e40e8a8f23052e6ea088b6b9"
+}

@@ -156,6 +156,59 @@ class Store:
         ).fetchall()
         return {"source": "category", "models": [json.loads(r[0]) for r in rows]}
 
+    def behavior_history(self, supplier, case, current_session=None):
+        """Reconstruct same-context hosted observations; ignore legacy learned labels.
+
+        Return raw message evidence only. Terminal result/score/benchmark fields are
+        excluded. No counterfactual supplier or LLM calls occur during reconstruction.
+        """
+        from .sustainability import context_id
+
+        rows = self.db.execute(
+            "SELECT e.id,e.run_id,e.session_id,e.payload FROM events e JOIN attempts a "
+            "ON a.run_id=e.run_id AND a.case_id=e.case_id AND a.session_id=e.session_id "
+            "WHERE e.case_id=? AND e.supplier_id=? AND e.kind IN ('received','exchange') "
+            "AND a.status='completed' AND (? IS NULL OR e.session_id!=?) ORDER BY e.id",
+            (case["case_id"], supplier, current_session, current_session)).fetchall()
+        sessions, seen, observations = {}, set(), []
+        for event_id, run, session, payload in rows:
+            if session not in sessions:
+                opened = self.db.execute(
+                    "SELECT payload FROM events WHERE run_id=? AND session_id=? AND kind='opened' "
+                    "ORDER BY id LIMIT 1", (run, session)).fetchone()
+                opening = json.loads(opened[0]) if opened else {}
+                if not opening or context_id(opening["case"]) != context_id(case):
+                    sessions[session] = None
+                else:
+                    events = opening.get("threads", {}).get(supplier, [])
+                    sessions[session] = next((e for e in reversed(events) if e.get("from") != "buyer"), {})
+            previous = sessions[session]
+            if previous is None:
+                continue
+            data = json.loads(payload)
+            raw = data.get("supplier_reply", data)
+            reply = {k: raw[k] for k in ("message_id", "from", "status", "body", "term_sheets",
+                                        "standing_offer_id") if k in raw}
+            sent = self.db.execute(
+                "SELECT payload FROM events WHERE run_id=? AND session_id=? AND supplier_id=? "
+                "AND kind='sent' AND id<? ORDER BY id DESC LIMIT 1",
+                (run, session, supplier, event_id)).fetchone()
+            request = data.get("buyer_request") or (json.loads(sent[0]) if sent else {})
+            signature = (session, reply.get("message_id") or json.dumps([request, reply], sort_keys=True))
+            if not request or request.get("action") or signature in seen:
+                continue
+            seen.add(signature)
+            sheets = previous.get("term_sheets") or []
+            active = previous.get("standing_offer_id")
+            old_sheet = next((s for s in sheets if s.get("term_sheet_id") == active), {}) if active else (
+                sheets[0] if sheets else {})
+            observations.append({"event_id": f"recorded:{event_id}", "session_id": session,
+                                 "request": request, "reply": reply,
+                                 "previous": old_sheet.get("terms", {}),
+                                 "previous_status": previous.get("status")})
+            sessions[session] = reply
+        return observations
+
     def episodes(self, supplier, case, session=None, run=None, limit=10):
         """Retrieve actual exchanges, never outcomes, scores or hidden benchmark data.
 

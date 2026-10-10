@@ -1,8 +1,12 @@
-# Analytical buyer agent — astra-v7-supplier-economics
+# Analytical buyer agent — astra-v82-evidence-access
 
 Astra proposes complete deals and a separate Astra call selects **every final action**. Python owns arithmetic, evidence lookup, recording and validation; it cannot replace a valid Astra choice with its preferred strategy. This includes confirmation, acceptance, supplier `agreed`/`final_offer` responses, the last move and wave-cap closure. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
 
-V7 adds independent supplier economics, original cost evidence in both model calls, completed-practice cost calibration and higher-price sustainability packages. See [the current assumptions and evaluation scope](evaluation/v7-supplier-economics.md). The former quote-implied production-cost mixture described in the historical sections below no longer drives the Astra path. Current strategy evaluation is hosted P02/P18 only; local tests are stopped.
+V8 repairs outcome classification and terminal observation, reconstructs behavioural learning from raw same-context hosted exchanges, gives Astra an authored reply channel, and supplies action gain/loss comparisons before selection. See [the v8 design and limits](evaluation/v8-decision-feedback.md).
+
+V7 added independent supplier economics, original cost evidence in both model calls, completed-practice cost calibration and higher-price sustainability packages. See [the current assumptions and evaluation scope](evaluation/v7-supplier-economics.md). The former quote-implied production-cost mixture described in the historical sections below no longer drives the Astra path. Current strategy evaluation is hosted P02/P18 only; local tests are stopped.
+
+V8.2 adds bounded case-specific forecast and neutral cost-driver retrieval before both Astra calls. Requests for forecast or volume evidence include monthly rows; a retrieval inventory distinguishes missing records from failures. Verified evidence can accompany any supplier-facing message. The latest retrieval change is not yet Arena-evaluated; [v8.1 results and diagnosis](evaluation/v81-arena-results.md) record both tested pairs.
 
 ## Run and inspect
 
@@ -22,12 +26,13 @@ Hosted runs require their own authorized session allowance. SQLite reserves star
 flowchart TD
     A[Case, supplier evidence and past exchanges] --> B[Astra proposes complete packages]
     B --> C[Python checks terms and calculates comparable cost distributions]
-    C --> D[Actions: counter, ask, confirm, accept, walk away]
+    C --> R[Price next-action gains, losses and final-warning risk]
+    R --> D[Actions: counter, reply, ask, confirm, accept, walk away]
     D --> E[Astra independently selects the final action]
     E --> F{Selection and terms valid?}
     F -->|Yes| G[Send that exact selection]
     F -->|No or model unavailable| H[Stop and log failure; no substitute action]
-    G --> I[Record actual reply and update uncertain beliefs]
+    G --> I[Compare exact returned terms; record terminal replies too]
     I --> A
 ```
 
@@ -39,7 +44,7 @@ Packages include Astra proposals, received indicative quotes, relevant historica
 
 Confirming an indicative quote is an explicit Astra choice, never a cheaper-quote shortcut. Its ID cannot be accepted. Confirmation language does not promise to conclude; the next supplier agreement returns to Astra for a fresh decision. The last move and wave-cap board contain only valid closure actions. A malformed, refused, incomplete or timed-out final call raises `FinalDecisionUnavailable` and records that no action was sent. This can leave a live session unfinished; it deliberately avoids claiming a Python fallback was Astra's decision.
 
-Verified numeric arguments are selectable by evidence ID and rendered from the facts used to compute them. There is no blanket digit ban on these arguments or structured terms. Unverified free-text numeric claims are not sent. The current message wording uses respectful templates with an Astra-selected tone and targeted question; arbitrary model-written factual claims are not part of the final action schema.
+Verified numeric arguments are selectable by evidence ID and rendered from the facts used to compute them. There is no blanket digit ban on these arguments or structured terms. Unverified free-text numeric claims are not sent. Astra now writes `reply_text`, answering the actual supplier question. Exact fixed-fact placeholders provide numbers such as annual volume; Python appends complete packages including fixed terms and index details. Prose cannot contain literal digits, unknown placeholders, forbidden disclosures or unsupported reference IDs. Numeric-free prose is instructed to stay grounded; deterministic validation cannot prove every semantic assertion true.
 
 SQLite retrieves bounded, source-labelled exchanges for the same supplier and case, including the buyer's request, supplier reply, terms, date and session. Earlier multi-package/rebased offers receive space alongside recent replies. Current-session history, other cases and result/benchmark records are excluded. Historical prices are unconfirmed leads, never acceptable offer IDs. Generic Live Final play also records these exchanges; memory is not limited to the bounded practice runner.
 
@@ -61,13 +66,15 @@ Acceptance behaviour starts with 64 reproducible, weighted scenarios. The Astra 
 
 A source-backed preference weakly reweights scenarios, by at most a 2:1 likelihood ratio per statement, with duplicate suppression and at most two signals of each kind per session. Explicit long-commitment evidence permits a modest, assumed reduction of the capacity uplift penalty. None of this establishes a physical capacity limit or guarantees additional allocation.
 
-Actual accept/counter/walk outcomes reweight scenarios with a tempered likelihood. A regularised online update adjusts walk intercept, pressure slope, repeat slope and acceptance bias. Prediction probabilities and multiclass Brier errors are logged. These updates make assumptions responsive; a few observations do not make them statistically calibrated.
+Actual replies are classified as accepted proposal, unchanged offer, counteroffer, information only or walkout. Acceptance requires an exact complete-package match, including price, and an agreement/final-offer status; an unchanged existing offer stays unchanged. Only genuine offer observations reweight scenarios with a tempered likelihood. Question outcomes are tracked separately, including walkouts. A regularised online update adjusts walk intercept, pressure slope, repeat slope and acceptance bias. Prediction probabilities and multiclass Brier errors are logged. These updates make assumptions responsive; a few observations do not make them statistically calibrated.
 
-Numeric counteroffers also update the estimated concession rate and package preferences. A supplier's executable quote bounds its reservation value from above, not below: asking for EUR 100 does not mean EUR 100 is its minimum. Production-cost assumptions inconsistent with repeated quotes are weakly downweighted; loss-making offers remain possible. Duplicate observations are suppressed.
+Numeric counteroffers also update the estimated concession rate and package preferences. A supplier's executable quote bounds its reservation value from above, not below: asking for EUR 100 does not mean EUR 100 is its minimum. Production-cost assumptions are kept independent of these behavioural updates; loss-making offers remain possible. Duplicate observations are suppressed.
 
 Conditional preferences preserve statements such as “24 months requires an index clause” as a linked pair of terms. They reduce estimated acceptance of violating packages without becoming hard buyer constraints. They require source quotes and permitted fields/values. A small offline extractor handles explicit index-duration statements; otherwise Astra supplies the interpretation. A later supplier offer can contradict and remove an earlier condition.
 
-`learned_models` stores normalised preference means and response estimates. Subsequent sessions blend 25% of an existing supplier estimate or 10% of a category estimate into new priors, preserving scenario spread. Only models with observed responses are reused. Current production costs and capacities are not copied between suppliers. Known buyer costs for quality, delivery and financing come directly from the case; they are not replaced by invented learned weights. No model weights are trained.
+Legacy `learned_models` rows are retained for audit but no longer imported. Each start reconstructs behavioural estimates from raw received/sent messages for completed hosted sessions with the same supplier, case and context fingerprint. It includes terminal replies, excludes hidden result fields and deduplicates duplicate logs. Reconstruction is data repair, not a simulator/model evaluation. Supplier cost feedback remains separate. No cross-supplier behavioural transfer is applied.
+
+Every candidate has its possible Arena improvement versus the current package, secured improvement at risk if that offer is lost, an optimistic break-even walkout probability, and explicitly uncalibrated response estimates. Historical offer/question outcomes after final warnings are shown separately. Astra must record a subjective risk range, its reason, an information goal for questions, and a stopping condition. The cash fallback loss is separately labelled and does not substitute for Arena reward. The unknown best-cost denominator is never imported; positive opening-to-deal savings are a proxy that omits score saturation. None of these calculations overrides Astra's choice.
 
 ## Retained legacy offer search and closure
 

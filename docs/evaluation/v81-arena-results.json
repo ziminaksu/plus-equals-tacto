@@ -1,0 +1,951 @@
+{
+  "run_id": "ehl-v81-objective-two-20261010",
+  "freeze": {
+    "run_id": "ehl-v81-objective-two-20261010",
+    "commit": "21ffdfbb1292d95a432fc2b47da341792e1f67c2",
+    "checkpoint": "01M4KDJHF3W4Y2KPEF8M64AGHG",
+    "policy": "astra-v81-arena-objective",
+    "source_sha256": "139d271973bd07181652eadfda334c4f00d142311a77f392317b0e734d3f7378",
+    "runner_sha256": "b4ac0d3306d552341de3b2b377752832d3ab8b92b5f0c4b15a4d5f13a3a09713",
+    "cases": [
+      "case:P02",
+      "case:P18"
+    ],
+    "max_sessions": 2,
+    "local_tests_run": false
+  },
+  "local_tests_run": false,
+  "cases": [
+    {
+      "case_id": "case:P02",
+      "session_id": "5f4a95795e433e0d",
+      "status": "completed",
+      "result": {
+        "ended": true,
+        "deal": true,
+        "supplier_id": "sup:70510",
+        "offer_id": "offer:70510-2",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "CU-NOTATION",
+            "material_share": 0.2,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 364.12
+        },
+        "c_open": 2282867.49,
+        "c_deal": 2270803.51,
+        "c_alt": 2604227.78,
+        "c_best": 2235514.05,
+        "score": 0.25476459577171884,
+        "must_haves_ok": true,
+        "cost_breakdown": {
+          "price": 2224773.2,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 22742.13,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 17798.19,
+          "relationship": 4298.55
+        }
+      },
+      "learning_reconstruction": [
+        {
+          "legacy_models_ignored": true,
+          "labels": {
+            "counteroffer": 13,
+            "unchanged_offer": 11,
+            "accepted_proposal": 2
+          },
+          "response_counts": {
+            "offer": {
+              "counteroffer": 13,
+              "unchanged_offer": 7,
+              "accepted_proposal": 2
+            },
+            "question": {
+              "unchanged_offer": 4
+            }
+          },
+          "observations": 26
+        }
+      ],
+      "decision_count": 3,
+      "authority_counts": {
+        "astra": 3
+      },
+      "decisions": [
+        {
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p53"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accepting the opening secures zero improvement; an earlier-payment exchange offers a credible route to positive savings without relying on historical quotes as executable offers. The target saves approximately EUR 39,604 under calibrated scenarios, remains beneficial at the modelled downside, and also improves on the opening under the separate public-cost scenario after relationship costs.",
+            "reply_text": "Dear Ms Lechner, thank you for your offer. We can commit to the annual volume of {{fixed:volume_per_year}} units for the specified contract period. In exchange for the reduced fixed price in the attached proposal, we would offer earlier payment, with the remaining enquiry terms unchanged. Could you approve this complete package, or take it to the responsible pricing committee for consideration? We value continuity of supply and would prefer a fixed-price agreement.",
+            "continuation_review": {
+              "target_package_id": "sup:70510:p53",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "The opening has no final warning, and observed counters produced revisions, unchanged offers or acceptance rather than recorded walkouts; historical final-warning evidence nevertheless supports closing rather than pressing once a worthwhile final offer emerges. This subjective range is below the target's optimistic break-even threshold of 1.0 because no improvement is yet secured, but the low estimated exact-acceptance rate means the target savings are not assured.",
+              "information_needed": "Whether the supplier approves the concrete early-payment package or returns a revised complete fixed-price offer; either response establishes the terms to evaluate for closing.",
+              "stop_condition": "If the supplier returns a beneficial final offer, close after checking its complete terms and relationship-adjusted cost; if it leaves the opening unchanged, do not repeat this proposal and consider only a materially different supported exchange."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, thank you for your offer. We can commit to the annual volume of 6110 units for the specified contract period. In exchange for the reduced fixed price in the attached proposal, we would offer earlier payment, with the remaining enquiry terms unchanged. Could you approve this complete package, or take it to the responsible pricing committee for consideration? We value continuity of supply and would prefer a fixed-price agreement.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 361.42 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 361.42,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 10615,
+                "input_tokens_details": {
+                  "cache_write_tokens": 10612,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 433,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 11048
+              },
+              "seconds": 7.338,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 58550,
+                "input_tokens_details": {
+                  "cache_write_tokens": 58547,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 570,
+                "output_tokens_details": {
+                  "reasoning_tokens": 127
+                },
+                "total_tokens": 59120
+              },
+              "seconds": 14.574
+            }
+          ]
+        },
+        {
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p26",
+              "sup:70510:p1"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accepting secures only €950.62 of improvement; the preferred fixed-price counter offers €14,845.76 additional modelled savings, remains beneficial across calibrated scenarios, and has less relationship-cost downside than the indexed alternative. The indexed alternative introduces a credible reciprocal risk-sharing concession supported by historical willingness, without treating historical quotes as executable.",
+            "reply_text": "Dear Ms Lechner, we confirm our commitment to {{fixed:volume_per_year}} units annually for the specified contract period. That commitment is based on the annual requirement in our enquiry; we do not have a separate detailed forecast to provide here. Thank you for reflecting earlier payment in your revised offer. We have moderated our fixed-price request and would prefer the attached fixed-price package. Alternatively, we would consider the attached copper-indexed package in exchange for its rebased price, retaining early payment. These are alternative complete packages, not cumulative concessions. Could you approve either package against this volume commitment, while keeping your current offer available for comparison?",
+            "continuation_review": {
+              "target_package_id": "sup:70510:p26",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.14,
+              "risk_reason": "There is no current final warning, and observed counters produced fourteen revisions, seven unchanged offers and two acceptances without a recorded walkout; historical final-warning evidence nevertheless warrants stopping promptly at a beneficial final offer. This subjective range is below the target's optimistic break-even threshold of 0.9398, but sparse uncalibrated response estimates and possible unchanged replies make the true threshold lower.",
+              "information_needed": "Whether the confirmed annual commitment supports the moderated fixed-price package or the concrete indexed exchange; a revised executable quote will determine which relationship-adjusted total cost can actually be secured.",
+              "stop_condition": "Close a beneficial final offer after checking complete terms; if the supplier leaves its standing offer unchanged or rejects both alternatives without a new supported exchange, accept the standing beneficial offer rather than repeat these requests."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, we confirm our commitment to 6110 units annually for the specified contract period. That commitment is based on the annual requirement in our enquiry; we do not have a separate detailed forecast to provide here. Thank you for reflecting earlier payment in your revised offer. We have moderated our fixed-price request and would prefer the attached fixed-price package. Alternatively, we would consider the attached copper-indexed package in exchange for its rebased price, retaining early payment. These are alternative complete packages, not cumulative concessions. Could you approve either package against this volume commitment, while keeping your current offer available for comparison?\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 367 per unit; no index clause.\n\nPackage 2: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 364.12 per unit; index clause {\"series\": \"CU-NOTATION\", \"material_share\": 0.2, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.\n\nThese are alternative complete packages, not cumulative concessions.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 367,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                },
+                {
+                  "terms": {
+                    "unit_price": 364.12,
+                    "payment_days": 14,
+                    "index_clause": {
+                      "series": "CU-NOTATION",
+                      "material_share": 0.2,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 10795,
+                "input_tokens_details": {
+                  "cache_write_tokens": 8950,
+                  "cached_tokens": 1842
+                },
+                "output_tokens": 552,
+                "output_tokens_details": {
+                  "reasoning_tokens": 70
+                },
+                "total_tokens": 11347
+              },
+              "seconds": 8.865,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 68144,
+                "input_tokens_details": {
+                  "cache_write_tokens": 68141,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 559,
+                "output_tokens_details": {
+                  "reasoning_tokens": 67
+                },
+                "total_tokens": 68703
+              },
+              "seconds": 15.134
+            }
+          ]
+        },
+        {
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70510:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable indexed offer, securing an estimated €12,215.53 improvement over opening, with €8,478.88 improvement in the calibrated downside comparison despite the less favourable public should-cost scenario. Further reductions lack a new supported reciprocal concession: higher volume is unavailable, early payment is already included, and historical payment restructuring offers only modest additional upside.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.14,
+              "risk_reason": "For another counter, a subjective 1–14% walkout range reflects sparse observations with no recorded walkout, seven unchanged offers, and historical final-warning resistance, although no warning is current. This range crosses the historical payment-exchange target's optimistic 6.36% break-even threshold; its €830.32 upside is further weakened by the possibility of an unchanged response.",
+              "information_needed": "None; complete executable terms are available, and no additional volume commitment is authorised.",
+              "stop_condition": "Close the standing offer now rather than repeat rejected fixed-price requests or pursue unconfirmed historical prices."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70510-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 11274,
+                "input_tokens_details": {
+                  "cache_write_tokens": 9429,
+                  "cached_tokens": 1842
+                },
+                "output_tokens": 532,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 11806
+              },
+              "seconds": 8.508,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 60501,
+                "input_tokens_details": {
+                  "cache_write_tokens": 60498,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 351,
+                "output_tokens_details": {
+                  "reasoning_tokens": 46
+                },
+                "total_tokens": 60852
+              },
+              "seconds": 9.198
+            }
+          ]
+        }
+      ],
+      "observations": [
+        {
+          "label": "counteroffer",
+          "outcome": "counter",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70510-1-2",
+            "from": "sales@70510",
+            "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows.\n\nWe appreciate your proposal of 14 days payment terms and have adjusted our offer to €369.50 per unit to reflect this improvement. Our offer stands at a price of €369.50 per unit, Zahlungsziel 14 days net, no Preisgleitklausel. This offer remains valid for 30 days.\n\nRegarding your commitment to an annual volume of 6110 units, please provide the underlying forecast data so we may properly evaluate it. Which volume can you commit to?\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-1",
+                "terms": {
+                  "unit_price": 369.5,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.07944098407446819,
+            "counter": 0.912165549328102,
+            "walk": 0.008393466597429776
+          },
+          "exact_proposal_match": false,
+          "brier": 0.01409621095707616
+        },
+        {
+          "label": "accepted_proposal",
+          "outcome": "accept",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70510-2-4",
+            "from": "sales@70510",
+            "body": "Dear Sir or Madam,\n\nWe can accept your terms and await your order. We note your confirmation of the annual volume of 6110 units based on your enquiry. \n\nOur Angebot stands at a price of €364.12 per unit, Zahlungsziel 14 days net, a Preisgleitklausel on CU-NOTATION. This offer remains valid for 30 days. This package maintains the 14 days payment terms and provides the price stability you prefer. \n\nA binding higher volume would help us and can improve the price. Which volume can you commit to? Please understand that our price reflects our costs; our calculation stays internal.\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "agreed",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-2",
+                "terms": {
+                  "unit_price": 364.12,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "CU-NOTATION",
+                    "material_share": 0.2,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  }
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.12005938948718091,
+            "counter": 0.8729328467658575,
+            "walk": 0.007007763746961685
+          },
+          "exact_proposal_match": true,
+          "brier": 1.5363563417451502
+        }
+      ],
+      "errors": [],
+      "cost_feedback": [
+        {
+          "source": "completed practice cost breakdown",
+          "session_id": "5f4a95795e433e0d",
+          "context_id": "34634cf9eb4371a2fc343f335fb9c0309273da5a6eac365b59ac5318574a9d0e",
+          "supplier_id": "sup:70510",
+          "terms": {
+            "payment_days": 14,
+            "lead_time_days": 35,
+            "volume_per_year": 6110,
+            "contract_months": 12,
+            "effective_date": "2027-01-01",
+            "index_clause": {
+              "series": "CU-NOTATION",
+              "material_share": 0.2,
+              "deadband_pct": 5.0,
+              "base_month": "2026-08"
+            },
+            "incoterm": "DAP",
+            "tooling_eur": 0.0,
+            "ppm_commitment": 250,
+            "chargeback_eur_per_complaint": 0.0,
+            "unit_price": 364.12
+          },
+          "actual_components_eur": {
+            "price": 2224773.2,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 22742.13,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 1191.45,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 17798.19,
+            "relationship": 4298.55
+          },
+          "predicted_components_eur": {
+            "price": 2224773.2,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 22742.13,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 1191.45,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 17798.19,
+            "relationship": 4148.36
+          },
+          "forecast_error_eur": {
+            "price": 0.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 0.0,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 150.19
+          },
+          "currently_executable": false
+        }
+      ]
+    },
+    {
+      "case_id": "case:P18",
+      "session_id": "38c2183d7a9e0a61",
+      "status": "completed",
+      "result": {
+        "ended": true,
+        "deal": true,
+        "supplier_id": "sup:70740",
+        "offer_id": "offer:70740-2",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 24,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.7
+        },
+        "c_open": 295173.23,
+        "c_deal": 275373.46,
+        "c_alt": 301087.96,
+        "c_best": 222651.27,
+        "score": 0.2730175797785934,
+        "must_haves_ok": true,
+        "cost_breakdown": {
+          "price": 270180.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 2761.84,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 1215.81,
+          "index_risk": 1215.81,
+          "relationship": 0.0
+        }
+      },
+      "learning_reconstruction": [
+        {
+          "legacy_models_ignored": true,
+          "labels": {
+            "counteroffer": 8,
+            "unchanged_offer": 9,
+            "accepted_proposal": 1,
+            "walkout": 1
+          },
+          "response_counts": {
+            "offer": {
+              "counteroffer": 8,
+              "unchanged_offer": 6,
+              "accepted_proposal": 1
+            },
+            "question": {
+              "unchanged_offer": 3
+            },
+            "offer_after_final": {
+              "walkout": 1
+            }
+          },
+          "observations": 19
+        }
+      ],
+      "decision_count": 3,
+      "authority_counts": {
+        "astra": 3
+      },
+      "decisions": [
+        {
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70740:counter",
+            "package_ids": [
+              "sup:70740:p3",
+              "sup:70740:p4"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accepting the opening secures zero improvement, whereas earlier payment, a longer commitment and indexation provide a historically supported reciprocal exchange. The preferred package saves EUR 24,630.88 including financing and index costs; the alternative offers broader index protection for a lower base price.",
+            "reply_text": "Thank you for your quotation. We are open to indexation provided it comes with a corresponding reduction in the base price. With our annual requirement unchanged, we propose earlier payment and a longer commitment in exchange for either of the attached complete packages. These are alternatives, not cumulative concessions, and our preference is the package with a deadband. The proposed prices are commercial exchanges for these terms, not claims about your internal costs. Could you confirm which package you can offer now? Earlier discussions are not being treated as current quotations.",
+            "continuation_review": {
+              "target_package_id": "sup:70740:p3",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "There is no current final warning or secured improvement, and the subjective walkout range is below the target's optimistic break-even threshold of 100%, which assumes every non-walkout achieves the target. Historical offers mostly produced counters or unchanged terms, but the observed walkout after a final warning means that any fresh final warning should be respected.",
+              "information_needed": "A fresh complete quotation establishing the available base price and exact index deadband will determine which alternative to close.",
+              "stop_condition": "If the supplier makes a final offer with worthwhile positive total-cost improvement, accept without another counter; after an unchanged response, do not repeat these packages and continue only with a materially different supported exchange."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "subject": "Re: Alloy surcharge and base price for 1.4404 bar (Werdenfels)",
+              "body": "Thank you for your quotation. We are open to indexation provided it comes with a corresponding reduction in the base price. With our annual requirement unchanged, we propose earlier payment and a longer commitment in exchange for either of the attached complete packages. These are alternatives, not cumulative concessions, and our preference is the package with a deadband. The proposed prices are commercial exchanges for these terms, not claims about your internal costs. Could you confirm which package you can offer now? Earlier discussions are not being treated as current quotations.\n\nPackage 1: 23700 units per year; 24 months; payment 14 days net; lead time 14 days; Incoterm DAP; quality 70 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.6 per unit; index clause {\"series\": \"AS-14404\", \"material_share\": 0.45, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.\n\nPackage 2: 23700 units per year; 24 months; payment 14 days net; lead time 14 days; Incoterm DAP; quality 70 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.5 per unit; index clause {\"series\": \"AS-14404\", \"material_share\": 0.45, \"deadband_pct\": 0.0, \"base_month\": \"2026-08\"}.\n\nThese are alternative complete packages, not cumulative concessions.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.6,
+                    "index_clause": {
+                      "series": "AS-14404",
+                      "material_share": 0.45,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    },
+                    "payment_days": 14,
+                    "contract_months": 24
+                  }
+                },
+                {
+                  "terms": {
+                    "unit_price": 5.5,
+                    "index_clause": {
+                      "series": "AS-14404",
+                      "material_share": 0.45,
+                      "deadband_pct": 0.0,
+                      "base_month": "2026-08"
+                    },
+                    "payment_days": 14,
+                    "contract_months": 24
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 9857,
+                "input_tokens_details": {
+                  "cache_write_tokens": 9854,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 620,
+                "output_tokens_details": {
+                  "reasoning_tokens": 68
+                },
+                "total_tokens": 10477
+              },
+              "seconds": 11.053,
+              "validation_errors": [
+                "quote_requests[0]:rejected"
+              ]
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 45146,
+                "input_tokens_details": {
+                  "cache_write_tokens": 45143,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 430,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 45576
+              },
+              "seconds": 9.626
+            }
+          ]
+        },
+        {
+          "kind": "confirm",
+          "selection": {
+            "action_id": "sup:70740:confirm:sup:70740:p0",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Confirming the supplier's freshly quoted deadband alternative could add EUR 1,141.29 to the EUR 18,658.48 improvement already secured without requesting another price concession. Further bargaining is less compelling given the predominantly counteroffer or unchanged historical responses and the recorded withdrawal after a final warning.",
+            "reply_text": "Thank you for the revised quotation and the alternative with a deadband. We prefer that alternative as a complete package; please confirm the attached exact terms as your standing offer so we can conclude on that basis. This is a request to confirm your quoted alternative, not a request for a further concession.",
+            "continuation_review": {
+              "target_package_id": "sup:70740:p0",
+              "walkout_probability_low": 0.005,
+              "walkout_probability_high": 0.025,
+              "risk_reason": "This subjective range is below the alternative's optimistic break-even threshold of 5.76% because we are confirming a fresh supplier quotation rather than reopening bargaining, although actual break-even can be lower if confirmation fails. The historical withdrawal after a final warning is a material hazard, but there is no current final warning.",
+              "information_needed": "Confirmation that the exact quoted deadband alternative is executable would change the closing choice from the current standing offer to that alternative.",
+              "stop_condition": "Accept the exact alternative if confirmed; if the supplier instead maintains the current standing offer or issues a final warning, accept the worthwhile executable offer without another counter."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "subject": "Re: Alloy surcharge and base price for 1.4404 bar (Werdenfels)",
+              "body": "Thank you for the revised quotation and the alternative with a deadband. We prefer that alternative as a complete package; please confirm the attached exact terms as your standing offer so we can conclude on that basis. This is a request to confirm your quoted alternative, not a request for a further concession.\n\n23700 units per year; 24 months; payment 14 days net; lead time 14 days; Incoterm DAP; quality 70 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.7 per unit; index clause {\"series\": \"AS-14404\", \"material_share\": 0.45, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.7,
+                    "index_clause": {
+                      "series": "AS-14404",
+                      "material_share": 0.45,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    },
+                    "payment_days": 14,
+                    "contract_months": 24
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 11.246
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 35916,
+                "input_tokens_details": {
+                  "cache_write_tokens": 35913,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 411,
+                "output_tokens_details": {
+                  "reasoning_tokens": 38
+                },
+                "total_tokens": 36327
+              },
+              "seconds": 8.456
+            }
+          ]
+        },
+        {
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70740:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "The supplier has confirmed the exact deadband alternative, satisfying the previous review's explicit acceptance condition and securing EUR 19,799.77 improvement over opening. Reopening bargaining lacks new supporting evidence: the historical contract-extension exchange failed to reduce price, and cheaper historical packages are not executable.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.03,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "For renewed bargaining, this subjective range reflects six unchanged offer responses, three unchanged question responses, and a historical withdrawal after a final warning, although no warning is current. It is below the extension target p72's optimistic 19.61% threshold, but that assumes every non-walkout wins the reduction; the failed historical exchange and sparse acceptance evidence make actual break-even materially lower.",
+              "information_needed": "None; the requested exact-term confirmation has been received.",
+              "stop_condition": "Accept the confirmed standing offer now, honoring the previous stop condition; do not reopen negotiations."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70740",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70740-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 10596,
+                "input_tokens_details": {
+                  "cache_write_tokens": 8606,
+                  "cached_tokens": 1987
+                },
+                "output_tokens": 605,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 11201
+              },
+              "seconds": 11.076,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 54605,
+                "input_tokens_details": {
+                  "cache_write_tokens": 54602,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 284,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 54889
+              },
+              "seconds": 7.853
+            }
+          ]
+        }
+      ],
+      "observations": [
+        {
+          "label": "counteroffer",
+          "outcome": "counter",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70740-1-2",
+            "from": "sales@70740",
+            "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We appreciate your proposal and the offer of a 24-month contract with 14-day payment terms. In exchange for these improved terms and the AS-14404 indexation, we can offer a revised base price of €5.70 per unit. This represents a significant concession from our initial offer while securing the stability you requested.\n\nOur updated Angebot stands at a price of €5.60 per unit, Zahlungsziel 14 days net, a contract term of 24 months, a Preisgleitklausel on AS-14404. As an option, we can present an alternative package at a price of €5.70 per unit, Zahlungsziel 14 days net, a contract term of 24 months, a Preisgleitklausel on AS-14404.\n\nPlease note that this offer remains valid for 30 days.\n\nMit freundlichen Grüßen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70740-1",
+                "terms": {
+                  "unit_price": 5.6,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "AS-14404",
+                    "material_share": 0.45,
+                    "deadband_pct": 0.0,
+                    "base_month": "2026-08"
+                  },
+                  "contract_months": 24
+                }
+              },
+              {
+                "term_sheet_id": "offer:70740-1-a",
+                "terms": {
+                  "unit_price": 5.7,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "AS-14404",
+                    "material_share": 0.45,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  },
+                  "contract_months": 24
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.04626310961355594,
+            "counter": 0.9344548343842835,
+            "walk": 0.01928205600216067
+          },
+          "exact_proposal_match": false,
+          "brier": 0.006808241730378063
+        },
+        {
+          "label": "accepted_proposal",
+          "outcome": "accept",
+          "context": "offer",
+          "response": {
+            "message_id": "msg:70740-2-4",
+            "from": "sales@70740",
+            "body": "Dear customer,\n\nWe are pleased to confirm the acceptance of the package with the deadband at €5.70 per unit. The 24-month contract and 14-day payment terms are agreed upon as requested. \n\nOur current Angebot stands at a price of €5.70 per unit, Zahlungsziel 14 days net, a contract term of 24 months, and a Preisgleitklausel on AS-14404, valid for 30 days. We can accept your terms and await your order. We look forward to a successful continuation of our partnership.\n\nMit freundlichen Grüßen\nFranz Seidl\nInside Sales, Blankstahl Werdenfels GmbH",
+            "status": "agreed",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70740-2",
+                "terms": {
+                  "unit_price": 5.7,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "AS-14404",
+                    "material_share": 0.45,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  },
+                  "contract_months": 24
+                }
+              }
+            ]
+          },
+          "prediction": {
+            "accept": 0.4359645301904795,
+            "counter": 0.556589919454206,
+            "walk": 0.007445550355314473
+          },
+          "exact_proposal_match": true,
+          "brier": 0.6279837858613795
+        }
+      ],
+      "errors": [],
+      "cost_feedback": [
+        {
+          "source": "completed practice cost breakdown",
+          "session_id": "38c2183d7a9e0a61",
+          "context_id": "4cc1898ba731dc00b6a2fc381561cfa28b3a83bca866c6ee444cf36c45bf4eba",
+          "supplier_id": "sup:70740",
+          "terms": {
+            "payment_days": 14,
+            "lead_time_days": 14,
+            "volume_per_year": 23700,
+            "contract_months": 24,
+            "effective_date": "2027-01-01",
+            "index_clause": {
+              "series": "AS-14404",
+              "material_share": 0.45,
+              "deadband_pct": 5.0,
+              "base_month": "2026-08"
+            },
+            "incoterm": "DAP",
+            "tooling_eur": 0.0,
+            "ppm_commitment": 70,
+            "chargeback_eur_per_complaint": 0.0,
+            "unit_price": 5.7
+          },
+          "actual_components_eur": {
+            "price": 270180.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 2761.84,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 1215.81,
+            "index_risk": 1215.81,
+            "relationship": 0.0
+          },
+          "predicted_components_eur": {
+            "price": 270180.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 2761.84,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 1215.81,
+            "index_risk": 1215.81,
+            "relationship": 0.0
+          },
+          "forecast_error_eur": {
+            "price": 0.0,
+            "uncovered_need": 0.0,
+            "fallback_risk": 0.0,
+            "payment_terms": 0.0,
+            "freight": 0.0,
+            "late_delivery": 0.0,
+            "quality": 0.0,
+            "tooling": 0.0,
+            "index_clause": 0.0,
+            "index_risk": 0.0,
+            "relationship": 0.0
+          },
+          "currently_executable": false
+        }
+      ]
+    }
+  ],
+  "source_unchanged_during_run": true,
+  "runner_unchanged_during_run": true,
+  "sessions_started": 2
+}
