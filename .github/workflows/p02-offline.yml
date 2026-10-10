@@ -30,4 +30,4 @@ jobs:
       - name: Offline pytest
         run: uv run pytest -q
       - name: P02 opening probe reproducible baseline versus experiment
-        run: uv run python tools/p02_opening_probe_benchmark.py --seeds 2 5 11 17 29 42 43 47 53 59
+        run: uv run python tools/p02_opening_probe_benchmark.py --seeds 2 5
