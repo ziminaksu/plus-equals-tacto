@@ -220,6 +220,19 @@ continuation risk. Rationale and risk_reason should each be at most two sentence
 A timeout/invalid decision stops execution; there is no strategic fallback."""
 
 
+def strip_bare_numbers(result):
+    """Weaker chat models type digits into reply_text although every figure must come from a placeholder
+    or the appended term sheets (round 5: 'reply numbers must use verified fixed-fact placeholders').
+    Drop the sentences that carry bare digits instead of rejecting the move; nothing is invented."""
+    text = result.get("reply_text") if isinstance(result, dict) else None
+    if not isinstance(text, str) or not re.search(r"\d", re.sub(r"\{\{[^}]*\}\}", "", text)):
+        return result
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    kept = [x for x in sentences if not re.search(r"\d", re.sub(r"\{\{[^}]*\}\}", "", x))]
+    clean = " ".join(kept).strip() or "Thank you for your reply. Please consider the attached package."
+    return {**result, "reply_text": clean}
+
+
 def parse_object(text):
     text = text.strip()
     if text.startswith("```"):
@@ -656,6 +669,8 @@ The application appends the exact offer and verified arguments separately."""
         try:
             result = self.call_astra(FINAL_DIRECTOR, board, deadline, role="final_decision",
                                      schema=final_schema(board))
+            if os.environ.get("ASTRA_BASE_URL"):
+                result = strip_bare_numbers(result)
             try:
                 validate_selection(board, result)
             except (ValueError, KeyError, TypeError) as invalid:
@@ -667,8 +682,8 @@ The application appends the exact offer and verified arguments separately."""
                              previous_answer_error=f"{type(invalid).__name__}: {invalid}"[:300],
                              instruction="Your previous answer was invalid. Return a corrected JSON object with "
                                          "exactly the schema's keys, using only ids that exist on this board.")
-                result = self.call_astra(FINAL_DIRECTOR, fixed, deadline, role="final_decision",
-                                         schema=final_schema(board))
+                result = strip_bare_numbers(self.call_astra(FINAL_DIRECTOR, fixed, deadline, role="final_decision",
+                                                            schema=final_schema(board)))
                 validate_selection(board, result)
             return result
         except Exception as exc:
