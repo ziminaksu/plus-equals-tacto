@@ -159,7 +159,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                          "to, never an opening. The first offer sets the range: open with a 'data anchor' package "
                          "(our own order prices, below the ask) and concede in steps against the supplier's moves. "
                          "Suppliers answer a low but data-backed first offer with a counter, not a walk-out; repeating "
-                         "a previously accepted package forfeits everything below it.",
+                         "a previously accepted package forfeits everything below it. While the supplier's status is 'open' "
+                         "and three or more moves remain, do not accept its first counter: answer with a smaller "
+                         "step (a data anchor between your last offer and its counter, or a lever it values). In our "
+                         "practice history suppliers walked only after a push past a final offer or after a timeout, "
+                         "never after an ordinary step while 'open'.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
