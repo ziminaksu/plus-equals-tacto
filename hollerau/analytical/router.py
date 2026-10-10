@@ -44,10 +44,30 @@ def parse_object(text):
 
 class Router:
     def __init__(self, key=None, transport=None, enabled=True):
-        self.key = key or os.environ.get("HF_TOKEN", "")
+        # Explicit OpenAI mode uses the team's API credits, instead of Hugging Face.
+        # Injected keys (tests / custom transports) keep legacy HF semantics.
+        self.provider = (
+            "openai"
+            if key is None and os.environ.get("LLM_PROVIDER") == "openai" and os.environ.get("LLM_API_KEY")
+            else "hf"
+        )
+        self.key = key or os.environ.get("LLM_API_KEY" if self.provider == "openai" else "HF_TOKEN", "")
         self.enabled = enabled and bool(self.key)
-        self.small = os.environ.get("QWEN_SMALL_MODEL", SMALL)
-        self.large = os.environ.get("QWEN_LARGE_MODEL", LARGE)
+        self.base = (
+            os.environ.get("LLM_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+            if self.provider == "openai"
+            else "https://router.huggingface.co/v1"
+        )
+        self.small = (
+            os.environ.get("ANALYTICAL_SMALL_MODEL", "gpt-4.1-mini")
+            if self.provider == "openai"
+            else os.environ.get("QWEN_SMALL_MODEL", SMALL)
+        )
+        self.large = (
+            os.environ.get("ANALYTICAL_LARGE_MODEL", self.small)
+            if self.provider == "openai"
+            else os.environ.get("QWEN_LARGE_MODEL", LARGE)
+        )
         self.client = httpx.Client(transport=transport, timeout=12)
         self.calls = []
         self.cache = {}
@@ -62,7 +82,7 @@ class Router:
         start = time.monotonic()
         try:
             response = self.client.post(
-                "https://router.huggingface.co/v1/chat/completions",
+                f"{self.base}/chat/completions",
                 headers={"Authorization": "Bearer " + self.key},
                 timeout=remaining,
                 json={
@@ -72,9 +92,13 @@ class Router:
                         {"role": "user", "content": json.dumps(data, ensure_ascii=False)},
                     ],
                     "temperature": 0,
-                    **({"reasoning_effort": "low"} if model == self.large else {}),
+                    **({"reasoning_effort": "low"} if self.provider == "hf" and model == self.large else {}),
                     "max_tokens": max_tokens,
-                    **({"chat_template_kwargs": {"enable_thinking": False}} if model == self.small else {}),
+                    **(
+                        {"chat_template_kwargs": {"enable_thinking": False}}
+                        if self.provider == "hf" and model == self.small
+                        else {}
+                    ),
                     "response_format": {"type": "json_object"},
                 },
             )
@@ -142,7 +166,7 @@ class Router:
         return result
 
     def resolve(self, sources, result, reasons, deadline, negotiable_fields=None):
-        if not reasons or self.large_failures >= 2 or deadline - time.monotonic() < 5:
+        if not reasons or self.large == self.small or self.large_failures >= 2 or deadline - time.monotonic() < 5:
             return {**result, "escalation_skipped": "no material decision, circuit open, or time budget"}
         try:
             output = self.validate(

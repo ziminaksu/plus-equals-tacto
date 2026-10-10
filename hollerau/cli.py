@@ -26,8 +26,9 @@ def make_agent_factory(writer="template", package=None, brain="llm"):
         from .analytical.agent import AnalyticalAgent
         from .analytical.router import Router
 
-        if not os.environ.get("HF_TOKEN"):
-            raise SystemExit("HF_TOKEN is required for the analytical brain")
+        openai_ready = os.environ.get("LLM_PROVIDER") == "openai" and bool(os.environ.get("LLM_API_KEY"))
+        if not (os.environ.get("HF_TOKEN") or openai_ready):
+            raise SystemExit("Configure HF_TOKEN or OpenAI credentials for the analytical brain")
         return lambda: AnalyticalAgent(package=package, router=Router(), run_id="live-analytical")
 
     from .agent import StrategicAgent

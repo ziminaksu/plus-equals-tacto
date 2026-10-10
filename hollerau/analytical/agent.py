@@ -18,7 +18,7 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v2.1"
+POLICY_VERSION = "bayes-v2.2"
 
 
 class AnalyticalAgent:
@@ -52,7 +52,18 @@ class AnalyticalAgent:
             dossier = intel.build(case, sid, self.package, reference["unit_price"])
             sup = intel.estimate(case, dossier, {**reference, **std}, reference["unit_price"], Params())
             seed = int(hashlib.sha256(sid.encode()).hexdigest()[:8], 16)
-            beliefs = Beliefs(case, reference, sup, seed=seed)
+            beliefs = Beliefs(
+                case,
+                reference,
+                sup,
+                seed=seed,
+                signals={
+                    "cash_short": dossier.cash_short,
+                    "spare_capacity": dossier.spare_capacity,
+                    "approval_ladder": dossier.approval_ladder,
+                    "wants_partnership": dossier.wants_partnership,
+                },
+            )
             memory = self.store.load_learning(sid, case["buyer"].get("category_goal", "unknown"))
             beliefs.import_learning(memory)
             self.threads[sid] = SimpleNamespace(
@@ -208,7 +219,16 @@ class AnalyticalAgent:
         representatives = [min(rows, key=lambda r: r[3]) for rows in package_rows.values() if rows]
         if len(representatives) > 300:
             representatives = [representatives[round(i * (len(representatives) - 1) / 299)] for i in range(300)]
-        chosen.extend(representatives)
+
+        def coverage(row):
+            terms = closing_terms(case, row[0], th.std)
+            years = min(
+                terms["contract_months"] / 12 if terms["contract_months"] else 1, case["buyer"]["horizon_years"]
+            )
+            return min(terms["volume_per_year"], case["buyer"]["need_per_year"]) * years
+
+        chosen.extend(sorted(candidates, key=lambda r: (-coverage(r), r[1]))[:150])
+        chosen.extend(representatives[:150])
         unique = {json.dumps(r[0], sort_keys=True): r[0] for r in chosen}
         return list(unique.values())
 
@@ -315,9 +335,16 @@ class AnalyticalAgent:
             decision = {"supplier_id": live[0], "message": {"action": {"type": "walk_away"}}}
             self.log("decision", {"action": decision, "reason": "no valid acceptable standing deal"})
             return decision
-        sid = min(
-            actionable, key=lambda s: (self.threads[s].stagnation, sum(m.get("from") == "buyer" for m in threads[s]))
-        )
+
+        def supplier_priority(sid):
+            thread = self.threads[sid]
+            offer_id, sheet = standing(threads[sid])
+            valid = bool(offer_id and self.valid(case, thread, sheet))
+            cost = self.weighted(thread, self.cost_samples(case, thread, sheet)) if valid else math.inf
+            contacts = sum(m.get("from") == "buyer" for m in threads[sid])
+            return (not valid, cost, thread.stagnation, contacts)
+
+        sid = min(actionable, key=supplier_priority)
         th, events = self.threads[sid], threads[sid]
         sheets = latest(events).get("term_sheets", [])
         # Consider every offered package when choosing the reference for the next negotiation move.

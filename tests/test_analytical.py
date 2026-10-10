@@ -421,3 +421,73 @@ def test_closing_preflight_rejects_unregistered_id_before_post(tmp_path):
     table.session_id = "existing-session"
     with pytest.raises(ValueError, match="server-confirmed"):
         table.close("sup:1", {"action": {"type": "accept", "term_sheet_id": "offer:indicative"}})
+
+
+def test_supplier_signals_adjust_priors_without_overriding_score():
+    case, ref, sup = sample()
+    normal = Beliefs(case, ref, sup, seed=11)
+    signals = {"cash_short": True, "spare_capacity": True, "approval_ladder": True, "wants_partnership": True}
+    targeted = Beliefs(case, ref, sup, seed=11, signals=signals)
+    assert targeted.summary()["supplier_signals"] == signals
+    assert max(p.b_pay for p in targeted.particles) > max(p.b_pay for p in normal.particles)
+    assert max(p.b_capacity for p in targeted.particles) < max(p.b_capacity for p in normal.particles)
+    assert targeted.walk_pressure > normal.walk_pressure
+    assert targeted.walk_repeat > normal.walk_repeat
+    assert sum(p.weight for p in targeted.particles) == pytest.approx(1)
+
+
+def test_candidate_shortlist_keeps_capacity_coverage(tmp_path):
+    case, ref, _ = sample()
+    case["type"] = "capacity"
+    need = case["buyer"]["need_per_year"]
+    case["negotiable"] = ["unit_price", "volume_per_year", "contract_months"]
+    for field in case["negotiable"]:
+        case.get("fixed_terms", {}).pop(field, None)
+    case["term_options"] = {
+        "volume_per_year": [int(need * 0.7), need],
+        "contract_months": [12, 24, 36],
+    }
+    case["buyer"]["must_haves"] = [{"field": "volume_per_year", "op": ">=", "value": need}]
+    opening = {**ref, "volume_per_year": need, "contract_months": 12}
+    events = [
+        {
+            "from": "supplier",
+            "status": "open",
+            "body": "Offer",
+            "term_sheets": [{"term_sheet_id": "offer:1", "terms": opening}],
+        }
+    ]
+    agent = AnalyticalAgent(store=Store(tmp_path / "capacity.sqlite"), router=Router(enabled=False))
+    agent.start(case, {"sup:1": events})
+    candidates = agent.candidates(case, agent.threads["sup:1"], opening)
+    assert candidates
+    assert any(t["volume_per_year"] == need and t["contract_months"] >= 24 for t in candidates)
+
+
+def test_openai_router_uses_project_credentials_without_hf_specific_fields(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LLM_API_KEY", "local-test-key")
+    monkeypatch.setenv("ANALYTICAL_SMALL_MODEL", "gpt-4.1-mini")
+    requests = []
+
+    def handler(req):
+        body = json.loads(req.content)
+        requests.append((str(req.url), body))
+        assert req.headers["Authorization"] == "Bearer local-test-key"
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": '{"interpretations":[],"ambiguities":[],"question":""}'}}]},
+        )
+
+    router = Router(transport=httpx.MockTransport(handler))
+    assert router.provider == "openai"
+    assert router.enabled
+    result = router.analyse({}, [], time.monotonic() + 20)
+    assert result["interpretations"] == []
+    assert len(requests) == 1
+    url, body = requests[0]
+    assert url == "https://api.openai.com/v1/chat/completions"
+    assert body["model"] == "gpt-4.1-mini"
+    assert "chat_template_kwargs" not in body
+    assert "reasoning_effort" not in body
+    router.close()

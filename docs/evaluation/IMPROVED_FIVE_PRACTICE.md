@@ -40,7 +40,7 @@ The new version should not be described as uniformly better or production-ready.
 Usage costs exclude setup checks and may omit charges from timed-out requests. Offer-generation timing excludes acceptance-only decisions and supplier response time. Different numbers of turns and responses prevent a clean latency or calibration experiment.
 
 ## Local validation
-- Final suite: **54 passed, 1 optional hosted test skipped**. No hosted test was enabled.
+- Evaluated v2.1 suite: **54 passed, 1 optional hosted test skipped**. After integrating concurrent teammate changes, v2.2 passed **57 tests, 1 skipped**. No hosted test was enabled.
 - Nine matched local simulator games, three cases × three fixed seeds, with LLMs disabled: mean 0.582 for the previous v1.1 code and 0.690 for v2. All moves passed validation. One case type regressed, so the aggregate is not universal improvement.
 - The first v2 pruning attempt regressed in these local games; it was corrected before hosted runs. Local simulations guided implementation and are not an independent held-out evaluation.
 - A saved-opening Qwen check verified evidence-before-selection without starting an Arena session.
@@ -48,3 +48,7 @@ Usage costs exclude setup checks and may omit charges from timed-out requests. O
 Five paired case IDs with stochastic supplier replies provide limited evidence. Multiple changes shipped together; no individual feature is proven to have caused the score gain. Response probabilities remain approximate, and the P10 recovery must be considered when assessing autonomy.
 
 [Full machine-readable comparison](improved-five-practice-results.json) · [Local comparison](local-v2-comparison.json) · [Current design](../ANALYTICAL.md)
+
+## Final repository integration
+
+A teammate pushed supplier-informed priors, economic supplier prioritisation, coverage-preserving search and optional OpenAI routing to the same branch during the experiment. These changes are preserved in the merged **bayes-v2.2** implementation, along with the new pipeline and closing guard. The combined version passed the local suite but was **not tested in another hosted run**. The scores above apply to v2/v2.1, not to an unmeasured v2.2 run.

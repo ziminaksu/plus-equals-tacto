@@ -216,5 +216,12 @@
     "Multiple policy changes together; no causal attribution to a single component.",
     "P10 required same-session recovery from a rejected indicative offer ID; v2.1 closing checks were added before P11.",
     "Local regression checks and simulations are separate from the hosted evaluation."
-  ]
+  ],
+  "final_integration": {
+    "policy": "bayes-v2.2",
+    "hosted_tested": false,
+    "local_tests_passed": 57,
+    "local_tests_skipped": 1,
+    "note": "Concurrent team changes merged after the five sessions; do not attribute their scores to this integrated version."
+  }
 }

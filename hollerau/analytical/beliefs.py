@@ -25,8 +25,13 @@ class Particle:
 
 
 class Beliefs:
-    def __init__(self, case, reference, supplier, seed=7, count=64):
+    def __init__(self, case, reference, supplier, seed=7, count=64, signals=None):
         self.case, self.reference, self.supplier = case, reference, supplier
+        signals = signals or {}
+        self.signals = {
+            name: bool(signals.get(name, False))
+            for name in ("cash_short", "spare_capacity", "approval_ladder", "wants_partnership")
+        }
         self.seen = set()
         self.version = 0
         self.capacity_reference = reference.get("volume_per_year") if case.get("type") == "capacity" else None
@@ -36,21 +41,27 @@ class Beliefs:
         floor = supplier["full_cost"] / 0.94
         center = min(p * 0.97, max(p * 0.80, floor))
         self.tau = max(0.01, p * 0.025)
+        payment_max = p * (0.060 if self.signals["cash_short"] else 0.035)
+        term_min, term_max = (-p * 0.005, p * 0.040) if self.signals["wants_partnership"] else (-p * 0.020, p * 0.025)
+        capacity_min, capacity_max = (1.0, 6.0) if self.signals["spare_capacity"] else (3.0, 15.0)
         self.particles = [
             Particle(
                 rng.uniform(center * 0.94, min(p * 1.015, center * 1.06)),
-                rng.uniform(0, p * 0.035),
-                rng.uniform(-p * 0.02, p * 0.025),
+                rng.uniform(0, payment_max),
+                rng.uniform(term_min, term_max),
                 rng.uniform(0, p * 0.02),
                 supplier["full_cost"] * rng.uniform(0.90, 1.10),
-                rng.uniform(3, 15),
+                rng.uniform(capacity_min, capacity_max),
                 rng.uniform(0, p * 0.02),
                 1 / count,
             )
             for _ in range(count)
         ]
         # Pooled response assumptions, not coefficients learned from five sessions.
-        self.walk_intercept, self.walk_pressure, self.walk_repeat = -5.0, 10.0, 0.35
+        self.walk_intercept = -5.0
+        self.walk_pressure = 12.0 if self.signals["approval_ladder"] else 10.0
+        self.walk_repeat = 0.50 if self.signals["approval_ladder"] else 0.35
+        self.response_prior = (self.walk_intercept, self.walk_pressure, self.walk_repeat)
         self.evidence_seen = set()
         self.signal_counts = {}
         self.accept_bias = 0.0
@@ -108,9 +119,15 @@ class Beliefs:
         # Regularised online calibration of response assumptions; still uncertain with few observations.
         error = float(outcome == "walk") - predicted["walk"]
         gap = max(0, (quote - offers[0]["unit_price"]) / max(quote, 0.01))
-        self.walk_intercept = max(-7, min(-2, self.walk_intercept + 0.15 * error - 0.01 * (self.walk_intercept + 5)))
-        self.walk_pressure = max(2, min(18, self.walk_pressure + 0.5 * error * gap - 0.01 * (self.walk_pressure - 10)))
-        self.walk_repeat = max(0, min(2, self.walk_repeat + 0.1 * error * repeats - 0.01 * (self.walk_repeat - 0.35)))
+        self.walk_intercept = max(
+            -7, min(-2, self.walk_intercept + 0.15 * error - 0.01 * (self.walk_intercept - self.response_prior[0]))
+        )
+        self.walk_pressure = max(
+            2, min(18, self.walk_pressure + 0.5 * error * gap - 0.01 * (self.walk_pressure - self.response_prior[1]))
+        )
+        self.walk_repeat = max(
+            0, min(2, self.walk_repeat + 0.1 * error * repeats - 0.01 * (self.walk_repeat - self.response_prior[2]))
+        )
         self.accept_bias = max(-2, min(2, self.accept_bias + 0.5 * (float(outcome == "accept") - predicted["accept"])))
         self.version += 1
         self.learned_observations += 1
@@ -179,6 +196,7 @@ class Beliefs:
         out = {
             "version": self.version,
             "memory_source": self.memory_source,
+            "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
             "tau": self.tau,
             "response_coefficients": {
