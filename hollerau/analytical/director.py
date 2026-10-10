@@ -172,7 +172,14 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "while keeping the price at or barely above your previous offer, and add one or "
                                  "two UNUSED verified arguments. Keep a lever in reserve for every remaining step; "
                                  "do not give the whole lever at once. When the supplier quotes the same price for "
-                                 "different values of a lever, that lever is worth nothing to it - keep our side.",
+                                 "different values of a lever, that lever is worth nothing to it - keep our side. "
+                                 "When a real move of ours produced NO price reduction, the desk has reached its own "
+                                 "limit, not the company's: do not accept yet. Counter with a package it values that "
+                                 "is free for us (a contract longer than our horizon costs us nothing; volume/"
+                                 "commitment matters to suppliers focused on volume customers), attach the "
+                                 "approval-route question so the desk takes it to its pricing committee/boss, and "
+                                 "keep the price where it is. Accept only after the approver has answered or a "
+                                 "final offer arrives.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
