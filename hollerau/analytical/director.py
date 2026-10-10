@@ -9,7 +9,7 @@ import copy
 import json
 import time
 
-from arena_kit.cost import complete_offer, cost_breakdown
+from arena_kit.cost import complete_offer, cost_breakdown, total_cost
 from arena_kit.play import latest, live_threads, moves_left
 
 from .. import compliance
@@ -181,6 +181,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
+            "rfq_competition": "With several suppliers, competition is the lever: cite a rival's live offer "
+                               "(rival_offer evidence) to each other supplier and ask for a better complete "
+                               "package; repeat as the best offer improves. Compare complete costs, not unit "
+                               "price: payment days, lead time and quality change the total. Do not close while "
+                               "a supplier that has not yet seen the best rival offer is still open.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
@@ -221,14 +226,35 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         }
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
+        case_used = getattr(agent, "case_used", set())
         for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
-            # A re-cited ID scores 'duplicate' and buys nothing (P18 rounds 2-3): offer unused ones only.
-            if set(claim.refs) & th.used:
+            # A re-cited ID scores 'duplicate' and buys nothing (P18 rounds 2-3); an ID counts once per
+            # CASE, so one cited to another supplier is spent too (P05: index evidence 'duplicate').
+            if set(claim.refs) & (th.used | case_used):
                 continue
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
                                                    "refs": claim.refs,
                                                    "already_used": bool(set(claim.refs) & th.used)}
+
+        # RFQ: a rival's live offer is the strongest argument and counts once per supplier (P05: a
+        # supplier asked "which figures is that competing offer based on?" and got none).
+        mine = current_sheet["terms"] if current_sheet else None
+        my_cost = total_cost(case, mine, th.std) if mine and mine.get("unit_price") else None
+        for other in live_threads(threads):
+            if other == sid:
+                continue
+            rival = standing_sheet(threads[other])
+            if not rival or not rival["terms"].get("unit_price") or rival["term_sheet_id"] in th.used:
+                continue
+            r_cost = total_cost(case, rival["terms"], agent.threads[other].std)
+            if my_cost is None or r_cost < my_cost - 0.01 or rival["terms"]["unit_price"] < mine["unit_price"]:
+                board["evidence"][f"{sid}:rival:{other}"] = {
+                    "supplier_id": sid, "kind": "rival_offer", "refs": [rival["term_sheet_id"]],
+                    "text": f"We hold a competing complete offer at EUR {rival['terms']['unit_price']:.2f} per unit "
+                            f"({rival['term_sheet_id']}).",
+                    "already_used": False,
+                }
 
         keys = {}
 
@@ -455,6 +481,8 @@ def execute(agent, case, threads, board, selection):
                 question] if x)
             for claim in claims:
                 th.used.update(claim["refs"])
+                agent.case_used = getattr(agent, "case_used", set()) | {
+                    r for r in claim["refs"] if not r.startswith("offer:")}
             if qid:
                 th.asked_quotes.add(board["questions"][qid]["kind"])
             quote = (standing_sheet(events) or {}).get("terms", th.reference).get("unit_price")
@@ -474,7 +502,8 @@ def execute(agent, case, threads, board, selection):
         message = {"subject": "Re: " + case["title"], "body": body,
                    "term_sheets": [{"terms": t} for t in offers]}
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
-        if compliance.problems(case, message, facts, standard=th.std):
+        offers = {ts.get("term_sheet_id") for ev in threads.values() for m in ev for ts in m.get("term_sheets") or []}
+        if compliance.problems(case, message, facts, offers, standard=th.std):
             raise ValueError("final message violates constraints")
     th.continuation_review = selection["continuation_review"]
     decision = {"supplier_id": sid, "message": message}
