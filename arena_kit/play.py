@@ -150,12 +150,21 @@ def play(table, case_id, agent, deadline=None):
     """Play one case to its end. `deadline` (time.time(), or a function returning it): a Live Final
     wave's cap - shortly before it, `closing_move` closes the case so it does not end without a deal."""
     case, threads = table.open(case_id)
+
+    def finish(result):
+        if hasattr(agent, "finish"):
+            try:
+                agent.finish(case, result)
+            except Exception:
+                log.exception("%s: post-result learning failed; preserving the actual Arena result", case_id)
+        return result
+
     if hasattr(agent, "session_id") and hasattr(table, "session_id"):
         agent.session_id = table.session_id
     if hasattr(agent, "move_deadline"):
         agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
     if getattr(table, "done", None):  # resumed a case that had already ended
-        return table.done
+        return finish(table.done)
     for events in threads.values():
         for m in events:
             fetch_documents(table, m)
@@ -176,7 +185,7 @@ def play(table, case_id, agent, deadline=None):
         try:
             if msg.get("action"):
                 log.info("%s %s", sid, msg["action"])
-                return table.close(sid, msg)
+                return finish(table.close(sid, msg))
             reply = table.send(sid, msg)
         except ArenaError as e:
             if e.status != 409:
@@ -189,13 +198,13 @@ def play(table, case_id, agent, deadline=None):
                 threads[sid].append(fetch_documents(table, reply))
                 continue
         if "result" in reply:  # the reply ended the case, e.g. the last supplier walked away
-            return reply["result"]
+            return finish(reply["result"])
         if hasattr(agent, "move_deadline"):
             agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
         threads[sid] += [{**msg, "from": "buyer"}, fetch_documents(table, reply)]
         slowest = max(slowest, time.monotonic() - t0)
         log.info("%s %s %s", sid, reply.get("status"), standing(threads[sid])[1])
-    return table.result()
+    return finish(table.result())
 
 
 def hosted(cases):

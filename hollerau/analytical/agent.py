@@ -23,8 +23,9 @@ from .planning import counter_costs, paired_objective
 from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
+from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v6-final-authority"
+POLICY_VERSION = "astra-v7-supplier-economics"
 DECISION_BUDGET_S = 35
 
 
@@ -125,6 +126,10 @@ class AnalyticalAgent:
             cost_fact = facts.get(dossier.cost_ref, {})
             sup["cost_uncertainty_pct"] = cost_fact.get("confidence_pct", 10)
             sup["has_should_cost"] = bool(dossier.cost_ref)
+            economics = SupplierEconomics(
+                case, sup, std, dossier.full_cost, dossier.cost_ref, sup["cost_uncertainty_pct"],
+                self.store.cost_feedback(sid, case, self.session_id),
+            )
             seed = int(hashlib.sha256(sid.encode()).hexdigest()[:8], 16)
             beliefs = Beliefs(
                 case,
@@ -147,6 +152,9 @@ class AnalyticalAgent:
                 dossier=dossier,
                 sup=sup,
                 beliefs=beliefs,
+                economics=economics,
+                public_cost_fact=cost_fact,
+                sustainability_candidates=[],
                 pending=None,
                 used=set(),
                 repeats=0,
@@ -169,7 +177,19 @@ class AnalyticalAgent:
                 seen_replies=set(),
             )
             self.log("evidence", asdict(dossier), sid)
+            self.log("cost_evidence", economics.evidence(), sid)
             self.log("coefficients", beliefs.snapshot(), sid)
+
+    def finish(self, case, result):
+        """Persist only permitted completed-practice components for the next session."""
+        sid = result.get("supplier_id")
+        th = self.threads.get(sid)
+        predicted = th.economics.card(result["terms"])["expected_breakdown_eur"] if (
+            th and result.get("terms") and result.get("deal")) else None
+        observation = practice_observation(case, result, self.session_id, predicted)
+        if observation:
+            self.store.save_cost_feedback(case["case_id"], observation)
+            self.log("cost_feedback", observation, sid)
 
     def observe(self, case, threads):
         for sid, events in threads.items():
@@ -441,6 +461,13 @@ class AnalyticalAgent:
                         sources[f"attachment:{ref}:{j}"] = att["text"][:1800]
         for index, note in enumerate(th.dossier.notes[-6:]):
             sources[f"note:{index}"] = note
+        # Internal evidence must include facts that warn AGAINST a price cut too.
+        if th.dossier.cost_ref:
+            sources[th.dossier.cost_ref] = json.dumps({
+                "kind": "public should-cost estimate; uncertain; not supplier's audited books",
+                "fact": th.public_cost_fact,
+                "unit_cost_eur": th.dossier.full_cost,
+            })
         return sources
 
     def interpret(self, case, sid, events, deadline):
@@ -448,6 +475,7 @@ class AnalyticalAgent:
         sources = self.sources(sid, events)
         if self.router.enabled:
             current = standing(events)[1] or th.reference
+            th.sustainability_candidates = th.economics.frontier(complete_offer(case, current))
             analysis = self.router.analyse(
                 sources,
                 [],
@@ -464,6 +492,8 @@ class AnalyticalAgent:
                     "stagnant_replies": th.stagnation,
                     "uncertain_estimates": th.beliefs.summary(),
                     "current_cost": cost_card(self, case, th, current),
+                    "supplier_economics": th.economics.evidence(),
+                    "sustainability_packages": th.sustainability_candidates,
                     "past_exchanges": th.episodes,
                 },
             )

@@ -31,6 +31,8 @@ def quantile(values, weights, q):
 
 def cost_card(agent, case, th, terms):
     """One consistent distribution for both Astra roles and the audit log."""
+    if hasattr(th, "economics"):
+        return th.economics.card(terms)
     direct = cost_breakdown(case, terms, th.std)
     samples = [cost_breakdown(case, terms, th.std, {**th.sup, "full_cost": p.full_cost})
                for p in th.beliefs.particles]
@@ -109,6 +111,12 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
+            "sustainability": "Supplier acceptance is not evidence of profitability. Compare the original "
+                              "public should-cost, practice-calibrated interval and downside versus baselines. "
+                              "A higher price can reduce total cost. Astra selects the final action.",
+            "comparisons": "Negative cost delta means cheaper, using shared cost scenarios. Historical "
+                           "and opening packages are not executable unless freshly confirmed. "
+                           "Scenario ranges and means are modelling assumptions, not calibrated probabilities.",
         },
         "fallback_estimated_cost_eur": agent.alternatives(case),
         "suppliers": {}, "packages": {}, "actions": {}, "evidence": {}, "questions": {},
@@ -127,6 +135,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                 for e in events[-6:]],
             "beliefs": th.beliefs.summary(), "previous_buyer_terms": th.last_terms,
             "asked_questions": sorted(th.asked_quotes),
+            "supplier_economics": th.economics.evidence(),
+            "previous_practice_outcomes": th.economics.feedback[-6:],
+            "opening_comparison": {"terms": complete_offer(case, th.reference),
+                                   **cost_card(agent, case, th, th.reference),
+                                   "currently_executable": False},
         }
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
@@ -147,12 +160,27 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             pid = f"{sid}:p{len(keys)}"
             keys[key] = pid
             card = cost_card(agent, case, th, terms)
-            board["packages"][pid] = {"supplier_id": sid, "terms": terms, "origin": origin, **card}
+            card.pop("uncertainty", None)  # Shared warning above; avoid repeating it per package.
+            board["packages"][pid] = {
+                "supplier_id": sid, "terms": terms, "origin": origin, **card,
+                "versus_standing": th.economics.compare(terms, current),
+                "versus_opening": th.economics.compare(terms, th.reference),
+            }
             return pid
 
         if current_sheet and agent.valid(case, th, current):
             supplier["standing"] = {"term_sheet_id": current_sheet["term_sheet_id"], "terms": current,
-                                     **cost_card(agent, case, th, current)}
+                                     **cost_card(agent, case, th, current),
+                                     "versus_opening": th.economics.compare(current, th.reference)}
+            supplier["standing_vs_previous_practice"] = [
+                {"session_id": f["session_id"], "terms_then": f["terms"],
+                 "actual_total_then_eur": round(sum(f["actual_components_eur"].values()), 2),
+                 "current_minus_historical_actual_eur": round(
+                     supplier["standing"]["expected_total_eur"] - sum(f["actual_components_eur"].values()), 2),
+                 "paired_scenario_comparison": th.economics.compare(current, f["terms"]),
+                 "currently_executable": False}
+                for f in th.economics.feedback[-6:]
+            ]
             # Even an expensive deal is shown: cost is a decision for Astra, not a Python veto.
             board["actions"][f"{sid}:accept"] = {"supplier_id": sid, "kind": "accept",
                                                  "term_sheet_id": current_sheet["term_sheet_id"]}
@@ -185,6 +213,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             for sheet in episode["quoted_packages_then"]:
                 terms = {f: sheet["terms"][f] for f in case["negotiable"] if f in sheet["terms"]}
                 add_package(terms, "historical quote: must renegotiate/reconfirm")
+        for row in th.sustainability_candidates:
+            add_package(row["terms"], row["origin"])
         for seed in seeds:
             base_id = add_package(seed, "Astra proposal" if seed in th.analyst_candidates else "current/previous terms")
             if not base_id:

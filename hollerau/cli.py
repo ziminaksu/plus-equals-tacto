@@ -56,6 +56,15 @@ class CachingAgent:
     def __init__(self, agent):
         self.agent, self.seen = agent, False
 
+    def __getattr__(self, name):
+        return getattr(self.agent, name)
+
+    def __setattr__(self, name, value):
+        if name in {"session_id", "move_deadline"} and "agent" in self.__dict__:
+            setattr(self.agent, name, value)
+        else:
+            object.__setattr__(self, name, value)
+
     def decide(self, case, threads):
         if not self.seen:
             from .cases import cache_case

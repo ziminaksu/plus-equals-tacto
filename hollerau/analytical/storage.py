@@ -32,6 +32,9 @@ class Store:
         CREATE TABLE IF NOT EXISTS attempts (
           id INTEGER PRIMARY KEY, run_id TEXT NOT NULL, case_id TEXT NOT NULL,
           session_id TEXT, status TEXT NOT NULL, UNIQUE(run_id, case_id));
+        CREATE TABLE IF NOT EXISTS cost_feedback (
+          supplier_id TEXT, case_id TEXT, session_id TEXT, payload TEXT NOT NULL,
+          PRIMARY KEY(supplier_id,case_id,session_id));
         """)
         self.db.commit()
 
@@ -77,6 +80,55 @@ class Store:
 
     def close(self):
         self.db.close()
+
+    def save_cost_feedback(self, case, observation):
+        if not observation or not observation.get("supplier_id"):
+            return
+        self.db.execute("INSERT OR REPLACE INTO cost_feedback VALUES(?,?,?,?)",
+                        (observation["supplier_id"], case, observation["session_id"],
+                         json.dumps(clean(observation), allow_nan=False)))
+        self.db.commit()
+
+    def cost_feedback(self, supplier, case, current_session=None):
+        """Migrate completed practice observations without exposing scores/benchmarks.
+
+        Require a completed hosted attempt and its original public case. No inference
+        from messages, unfinished runs or Live Final outcomes is treated as a cost label.
+        """
+        from .sustainability import practice_observation
+
+        case_id = case["case_id"]
+        if not case_id.startswith("case:P"):
+            return []
+        rows = self.db.execute(
+            "SELECT e.run_id,e.session_id,e.payload FROM events e JOIN attempts a "
+            "ON a.run_id=e.run_id AND a.case_id=e.case_id AND a.session_id=e.session_id "
+            "WHERE e.case_id=? AND e.kind='result' AND a.status='completed' "
+            "AND (? IS NULL OR e.session_id!=?) ORDER BY e.id DESC LIMIT 100",
+            (case_id, current_session, current_session),
+        ).fetchall()
+        for run, session, payload in rows:
+            result = json.loads(payload)
+            if result.get("supplier_id") != supplier:
+                continue
+            old = self.db.execute("SELECT payload FROM events WHERE run_id=? AND case_id=? "
+                                  "AND kind='case' ORDER BY id LIMIT 1", (run, case_id)).fetchone()
+            if not old:
+                continue
+            old_case = json.loads(old[0])["case"]
+            last = self.db.execute("SELECT payload FROM events WHERE run_id=? AND case_id=? "
+                                   "AND kind='final_board' ORDER BY id DESC LIMIT 1", (run, case_id)).fetchone()
+            estimate = {}
+            if last:
+                standing = json.loads(last[0]).get("suppliers", {}).get(supplier, {}).get("standing", {})
+                if all(result.get("terms", {}).get(k) == v for k, v in standing.get("terms", {}).items()):
+                    estimate = standing.get("expected_breakdown_eur", {})
+            observation = practice_observation(old_case, result, session, estimate)
+            self.save_cost_feedback(case_id, observation)
+        return [json.loads(row[0]) for row in self.db.execute(
+            "SELECT payload FROM cost_feedback WHERE supplier_id=? AND case_id=? "
+            "AND (? IS NULL OR session_id!=?) ORDER BY rowid DESC LIMIT 30",
+            (supplier, case_id, current_session, current_session))]
 
     def save_learning(self, supplier, goal, model):
         self.db.execute(

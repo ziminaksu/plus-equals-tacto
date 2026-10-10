@@ -111,6 +111,11 @@ Propose genuinely different conditional exchanges with corresponding prices; do 
 or index protection for free. A sparse acceptance model is not a reason to discard a useful proposal.
 Should-cost and acceptance estimates are uncertain, not proven price floors. Respect supplier sustainability
 where the buyer values it. Do not expose the buyer's budget, urgency, cost model or outside-option weakness.
+Read supplier_economics, including original public cost and completed-practice calibration separately.
+An accepted price need not cover production costs. Quotes cannot prove a low production cost.
+For stabilise/secure_supply, consider supplied sustainability_packages and higher prices if they lower
+total buyer cost by protecting supplier margin. Do not keep proposing cheaper packages out of habit.
+Practice observations are past buyer feedback, not supplier admissions or current executable offers.
 Never invent facts or infer mandatory conditions from 'welcome', 'accept', or 'propose'. A condition needs
 an explicit requirement linking its when and requires predicates. Otherwise use an ambiguity/question.
 Return concise JSON matching the supplied schema, with at most 4 interpretations/signals, 3 conditions,
@@ -148,6 +153,15 @@ Python has calculated costs and checked feasible terms. YOU choose the actual ne
 No Python ranking will override a valid choice. Form your own assessment from the evidence.
 Minimise the buyer's published total cost, including relationship/supply/quality risks. Do not
 invent alternative scoring weights. Cost distributions are estimates, not known supplier floors.
+Read supplier_economics before choosing: original public should-cost and practice-calibrated effective
+cost are distinct evidence. Acceptance/rejection forecasts must not alter production-cost beliefs.
+For stabilise/secure_supply, compare higher-price sustainability packages and supplier margin ranges.
+Index protection is security, not cash that repairs the published sustainability margin.
+Before acceptance compare current cost, downside, opening and previous practice outcomes. Explain any
+forecast contradiction or worse historical comparison. Beating an expensive fallback alone is insufficient.
+When uncertainty changes which package wins, ask a targeted cost question or prefer a defensible balance;
+do not treat a favourable mean as certainty. Prior practice outcomes need fresh supplier confirmation.
+You retain final authority; the sustainability menu is advice, not a Python-imposed choice or price floor.
 Treat sparse supplier response forecasts as uncalibrated; small probability differences do not
 justify giving away large known payment or index costs. Ask for a priced exchange where uncertain.
 Compare acceptance, further counters, conditional packages, information requests and walking away.

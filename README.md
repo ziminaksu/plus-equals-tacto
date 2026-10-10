@@ -68,9 +68,11 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Analytical negotiation agent
 
-`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v6 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
+`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v7 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
 
 Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
+
+V7 preserves original should-cost evidence, separates production-cost estimates from acceptance behaviour, and calibrates supplier economics using completed practice cost breakdowns. It includes higher-price sustainability alternatives and explicit downside comparisons. See [the implementation and assumptions](docs/evaluation/v7-supplier-economics.md). No local tests are run for this update.
 
 The latest hosted P02 score is **0.097** with v6, below the previous best **0.157**: the relationship cost exceeded the estimate and outweighed the lower price. P18's last score remains **0.340** from v5.1; it has not been rerun with v6. See [the v6 P02 result and diagnosis](docs/evaluation/v6-p02-arena.md), [the v6 implementation validation](docs/evaluation/v6-final-authority.md), and [the earlier hosted evaluation](docs/evaluation/v51-arena-results.md). Per the user's latest instruction, future strategy evaluations use **P02 and P18 in Arena only**, with local tests stopped.
 

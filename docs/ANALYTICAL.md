@@ -1,6 +1,8 @@
-# Analytical buyer agent — astra-v6-final-authority
+# Analytical buyer agent — astra-v7-supplier-economics
 
 Astra proposes complete deals and a separate Astra call selects **every final action**. Python owns arithmetic, evidence lookup, recording and validation; it cannot replace a valid Astra choice with its preferred strategy. This includes confirmation, acceptance, supplier `agreed`/`final_offer` responses, the last move and wave-cap closure. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
+
+V7 adds independent supplier economics, original cost evidence in both model calls, completed-practice cost calibration and higher-price sustainability packages. See [the current assumptions and evaluation scope](evaluation/v7-supplier-economics.md). The former quote-implied production-cost mixture described in the historical sections below no longer drives the Astra path. Current strategy evaluation is hosted P02/P18 only; local tests are stopped.
 
 ## Run and inspect
 
@@ -43,7 +45,7 @@ SQLite retrieves bounded, source-labelled exchanges for the same supplier and ca
 
 ## Supplier estimates and learning
 
-Each supplier starts with 64 reproducible, weighted scenarios. Priors are modelling assumptions, not calibrated facts.
+Acceptance behaviour starts with 64 reproducible, weighted scenarios. The Astra path prices supplier sustainability using a separate nine-point cost distribution that never receives acceptance/rejection updates. Completed practice components calibrate that distribution only for the same supplier/case/context. Public should-cost and its uncertainty are shown separately; inferred effective cost is not an audited factory cost. Priors and scenario weights are modelling assumptions, not calibrated facts.
 
 | Parameter | Meaning |
 |---|---|

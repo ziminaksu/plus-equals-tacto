@@ -81,11 +81,8 @@ class Beliefs:
         self.cost_prior_conflict = bool(supplier.get("has_should_cost") and supplier["full_cost"] > p)
         for i, particle in enumerate(self.particles):
             particle.full_cost = supplier["full_cost"] * extra_rng.uniform(1 - spread, 1 + spread)
-            if self.cost_prior_conflict and i % 2 == 0:
-                # Conflicting public evidence: a plant estimate above a voluntary quote.
-                # A labelled 50/50 sensitivity mixture retains loss-making hypotheses,
-                # while admitting that the external cost estimate may not apply here.
-                particle.full_cost = p * extra_rng.uniform(0.80, 0.99)
+            # Production cost is no longer mixed with quote-implied discounts.
+            # Live costs use the independent SupplierEconomics distribution.
         # Pooled response assumptions, not coefficients learned from five sessions.
         self.walk_intercept = -5.0
         self.walk_pressure = 12.0 if self.signals["approval_ladder"] else 10.0
@@ -194,23 +191,11 @@ class Beliefs:
         return added
 
     def check_cost_consistency(self, terms):
-        """A voluntary quote is weak evidence against a very high production-cost estimate.
-
-        Keep loss-making hypotheses: quotes are not proof of profitability. Dedupe by
-        package, and limit the total number of such updates in a negotiation.
-        """
+        """A voluntary quote constrains willingness to accept, never production cost."""
         # Every new executable quote constrains reservation value, even after the limited
         # production-cost updates have been exhausted.
         for part in self.particles:
             part.r = min(part.r, self.value(terms, part))
-        key = json.dumps(terms, sort_keys=True)
-        if key in self.cost_checks or len(self.cost_checks) >= 3:
-            return
-        self.cost_checks.add(key)
-        cash = supplier_value(self.case, terms, self.supplier)
-        for part in self.particles:
-            part.weight *= (0.30 + 0.70 * sigmoid((cash - part.full_cost) / (self.tau * 1.5))) ** 0.5
-        self.normalise()
 
     def normalise(self):
         total = sum(p.weight for p in self.particles)
@@ -379,7 +364,8 @@ class Beliefs:
             "memory_source": self.memory_source,
             "cost_prior_conflict": self.cost_prior_conflict,
             "cost_prior_note": (
-                "50/50 should-cost and quote-implied sensitivity" if self.cost_prior_conflict else "standard"
+                "public estimate exceeds quote; quotes do not update production cost"
+                if self.cost_prior_conflict else "public cost evidence kept independent of acceptance"
             ),
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
@@ -398,7 +384,7 @@ class Beliefs:
                 "accept_bias": self.accept_bias,
             },
         }
-        for field in ("r", "b_pay", "b_term", "b_flex", "full_cost", "b_capacity", "b_quality", "b_index", "b_volume"):
+        for field in ("r", "b_pay", "b_term", "b_flex", "b_capacity", "b_quality", "b_index", "b_volume"):
             values = sorted((getattr(p, field), p.weight) for p in self.particles)
 
             def quantile(q, values=values):
