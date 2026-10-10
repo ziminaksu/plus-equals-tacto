@@ -61,7 +61,7 @@ def main(path):
             break
         used = [claims[k] for k in step.get("claims", []) if k in claims]
         body = "\n\n".join(
-            ["Dear Mr Seidl,", step.get("text", "Thank you for your reply.")]
+            [sc.get("salutation", "Dear colleagues,"), step.get("text", "Thank you for your reply.")]
             + [c.sentence for c in used]
             + step.get("extra", [])
             + [f"We propose: {describe(step['terms'])}.", "Kind regards, Purchasing, Hollerau Pumpenwerke"]
