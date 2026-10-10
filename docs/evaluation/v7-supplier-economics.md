@@ -21,6 +21,6 @@ The cost menu is calculated with a bounded price grid and two refinements. It is
 
 ## Evaluation
 
-Per the user's instruction, **no local tests, simulator runs or private model replays** are used for this update. Static syntax/name checks, diff review and publication checks are performed. The authorised hosted evaluation is **one P02 and one P18 run**, with no automatic replacement sessions. At this implementation checkpoint, v7 has no observed Arena score; the result report will follow the live runs.
+Per the user's instruction, **no local tests, simulator runs or private model replays** are used for this update. Static syntax/name checks, diff review and publication checks were performed. The authorised hosted evaluation completed **one P02 and one P18 run**, with no replacement sessions: P02 scored **0.254765**, while P18 scored **0** following a supplier walkout. See [the complete results and remaining closing-policy weakness](v7-arena-results.md). The code was published before these runs; this outcome paragraph was added afterwards.
 
 The implementation and its scoped development session are published using Entire before the hosted code freeze. Raw runtime logs, learning data and credentials stay ignored.
