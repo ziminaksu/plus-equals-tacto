@@ -394,7 +394,7 @@ class Router:
         try:
             response = self.client.post(
                 f"{base}/chat/completions",
-                headers={"Authorization": "Bearer " + self.review_key},
+                headers={"Authorization": "Bearer " + self.review_key, "api-key": self.review_key},  # api-key: Azure OpenAI
                 timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
                                       write=remaining / 20, read=remaining * 0.8),
                 json={
