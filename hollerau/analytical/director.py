@@ -110,6 +110,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "agreed": "Supplier agreement is an executable offer, not an obligation to accept.",
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
+            "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "Supplier acceptance is not evidence of profitability. Compare the original "
                               "public should-cost, practice-calibrated interval and downside versus baselines. "
@@ -185,7 +186,19 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             board["actions"][f"{sid}:accept"] = {"supplier_id": sid, "kind": "accept",
                                                  "term_sheet_id": current_sheet["term_sheet_id"]}
         board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
-        if closing_only or remaining <= 1:
+        if latest(events).get("status") == "final_offer":
+            standing_cost = supplier.get("standing", {}).get("expected_total_eur")
+            supplier["final_offer_decision"] = {
+                "only_closing_actions": True,
+                "standing_estimated_cost_eur": standing_cost,
+                "fallback_estimated_cost_eur": board["fallback_estimated_cost_eur"],
+                "estimated_fallback_loss_eur": (
+                    round(board["fallback_estimated_cost_eur"] - standing_cost, 2)
+                    if standing_cost is not None else None
+                ),
+                "warning": "A further counter risks losing the executable offer.",
+            }
+        if closing_only or remaining <= 1 or latest(events).get("status") == "final_offer":
             continue
         for kind, body in questions(case, source, history):
             if kind in th.asked_quotes:
@@ -289,6 +302,8 @@ def execute(agent, case, threads, board, selection):
     action = validate_selection(board, selection)
     sid, kind = action["supplier_id"], action["kind"]
     th, events = agent.threads[sid], threads[sid]
+    if latest(events).get("status") == "final_offer" and kind not in ("accept", "walk_away"):
+        raise ValueError("cannot negotiate after supplier final_offer")
     if kind == "accept":
         live_sheet = standing_sheet(events)
         if not live_sheet or live_sheet["term_sheet_id"] != action["term_sheet_id"]:
@@ -357,7 +372,9 @@ def decide(agent, case, threads, deadline, closing_only=False):
         history[sid] = agent.threads[sid].episodes
     # One negotiator call per turn. The final reviewer sees all suppliers and chooses
     # independently. Reserve time for it instead of spending the window on grid search.
-    viable = [sid for sid in live_threads(threads) if moves_left(case, threads[sid]) > 1]
+    viable = [sid for sid in live_threads(threads)
+              if moves_left(case, threads[sid]) > 1
+              and latest(threads[sid]).get("status") != "final_offer"]
     if viable and not closing_only:
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
         agent.interpret(case, sid, threads[sid], min(deadline - 14, time.monotonic() + 17))
