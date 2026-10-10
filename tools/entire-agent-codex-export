@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""Entire external-agent adapter for an authentic scoped Codex transcript export.
+No synthetic session is run. tools/export_codex_session.py supplies the actual records.
+This adapter supports import only; it does not claim that Codex hooks fired.
+"""
+import base64
+import json
+import os
+from pathlib import Path
+import sys
+
+args=sys.argv[1:]
+command=args[0]
+def opt(name):
+    return args[args.index(name)+1]
+def emit(obj):
+    print(json.dumps(obj))
+root=Path(os.environ.get('ENTIRE_REPO_ROOT',os.getcwd()))
+sessions=root/'.entire/tmp/scoped-sessions'
+if command=='info':
+    emit({'protocol_version':1,'name':'codex-export','type':'Codex (scoped transcript export)',
+          'description':'Imports real Codex messages/tool calls from the authorised implementation turn',
+          'protected_dirs':[],'hook_names':[], 'capabilities':{'transcript_analyzer':True}})
+elif command=='detect': emit({'present':sessions.is_dir()})
+elif command=='get-session-dir': emit({'session_dir':str(sessions)})
+elif command=='resolve-session-file':
+    sid=opt('--session-id')
+    if '/' in sid or '..' in sid: raise ValueError('invalid session id')
+    emit({'session_file':str(Path(opt('--session-dir'))/(sid+'.jsonl'))})
+elif command=='read-transcript': sys.stdout.buffer.write(Path(opt('--session-ref')).read_bytes())
+elif command=='get-transcript-position': emit({'position':len(Path(opt('--path')).read_text().splitlines())})
+elif command=='extract-prompts':
+    rows=[json.loads(x) for x in Path(opt('--session-ref')).read_text().splitlines()]
+    emit({'prompts':[r['message']['content'] for r in rows[int(opt('--offset')):] if r.get('type')=='user' and isinstance(r.get('message',{}).get('content'),str)]})
+elif command=='extract-modified-files':
+    # File ownership comes from Git; never invent modifications from transcript heuristics.
+    emit({'files':[],'current_position':len(Path(opt('--path')).read_text().splitlines())})
+elif command=='chunk-transcript':
+    data=sys.stdin.buffer.read();maximum=int(opt('--max-size'));chunks=[];chunk=b''
+    for line in data.splitlines(keepends=True):
+        if chunk and len(chunk)+len(line)>maximum:chunks.append(chunk);chunk=b''
+        chunk+=line
+    if chunk:chunks.append(chunk)
+    emit({'chunks':[base64.b64encode(x).decode() for x in chunks]})
+elif command=='reassemble-transcript':
+    sys.stdout.buffer.write(b''.join(base64.b64decode(x) for x in json.load(sys.stdin)['chunks']))
+elif command=='format-resume-command': emit({'command':'codex resume '+opt('--session-id')})
+elif command=='get-session-id': emit({'session_id':json.load(sys.stdin).get('session_id','')})
+elif command=='write-session': raise SystemExit('Read-only transcript import adapter')
+else: raise SystemExit('Unsupported import operation: '+command)

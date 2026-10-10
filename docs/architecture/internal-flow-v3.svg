@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1110" viewBox="0 0 1500 1110"><rect width="100%" height="100%" fill="#F7FAF7"/>
+<text x="55" y="46.0" fill="#536F6A" font-family="Arial,sans-serif" font-size="20" font-weight="700">+= / TACTO / INTERNAL DESIGN v3</text>
+<text x="55" y="101.2" fill="#173B39" font-family="Arial,sans-serif" font-size="38" font-weight="700">Learn trade-offs. Choose pressure. Measure results.</text>
+<text x="55" y="141.8" fill="#536F6A" font-family="Arial,sans-serif" font-size="22" font-weight="400">Proposed architecture • numerical starting assumptions are tested, not treated as supplier facts.</text>
+<rect x="55" y="172" width="1390" height="92" rx="18" fill="#173B39"/>
+<text x="78" y="201.3" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="17" font-weight="700">FIXED BUYER RULES + SOURCE EVIDENCE</text>
+<text x="78" y="238.7" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="23" font-weight="400">Case constraints / cost rates / fallback + supplier quotes / history / contracts / replies</text>
+<rect x="55" y="325" width="430" height="230" rx="18" fill="#E3EEF7"/>
+<text x="77" y="359.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">01   QWEN 27B → 2.4T IF AMBIGUOUS</text>
+<text x="77" y="404.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Extract decision evidence</text>
+<text x="77" y="448.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Terms + source IDs + alternatives</text>
+<text x="77" y="480.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Flag contradictions and missing facts</text>
+<text x="77" y="512.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: validated structured evidence</text>
+<rect x="535" y="325" width="430" height="230" rx="18" fill="#DDF2CD"/>
+<text x="557" y="359.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">02   PYTHON / WEIGHTED SCENARIOS</text>
+<text x="557" y="404.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Update coefficients</text>
+<text x="557" y="448.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">r: floor; b_pay / b_term / b_flex</text>
+<text x="557" y="480.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Each has a range + evidence history</text>
+<text x="557" y="512.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: plausible supplier scenarios</text>
+<rect x="1015" y="325" width="430" height="230" rx="18" fill="#DDF2CD"/>
+<text x="1037" y="359.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">03   PYTHON / CANDIDATE SEARCH</text>
+<text x="1037" y="404.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Compare complete offers</text>
+<text x="1037" y="448.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Predict accept / counter / walk-away</text>
+<text x="1037" y="480.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Total cost + continuation + downside</text>
+<text x="1037" y="512.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: selected terms and pressure</text>
+<rect x="1015" y="665" width="430" height="230" rx="18" fill="#E3EEF7"/>
+<text x="1037" y="699.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">04   QWEN 27B + PYTHON CHECKS</text>
+<text x="1037" y="744.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Write and send</text>
+<text x="1037" y="788.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Writer preserves selected terms</text>
+<text x="1037" y="820.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Validate facts, constraints, offer IDs</text>
+<text x="1037" y="852.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: Arena action + prediction log</text>
+<rect x="535" y="665" width="430" height="230" rx="18" fill="#FFFFFF"/>
+<text x="557" y="699.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">05   ARENA → QWEN → PYTHON</text>
+<text x="557" y="744.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Read actual response</text>
+<text x="557" y="788.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Extract choices, counters and claims</text>
+<text x="557" y="820.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Separate terminal from open states</text>
+<text x="557" y="852.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: observation with source text</text>
+<rect x="55" y="665" width="430" height="230" rx="18" fill="#FCE9CE"/>
+<text x="77" y="699.3" fill="#536F6A" font-family="Arial,sans-serif" font-size="17" font-weight="700">06   PYTHON / CAUTIOUS UPDATE</text>
+<text x="77" y="744.1" fill="#173B39" font-family="Arial,sans-serif" font-size="29" font-weight="700">Learn from the difference</text>
+<text x="77" y="788.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Reweight scenarios from observations</text>
+<text x="77" y="820.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">Track errors; avoid duplicate evidence</text>
+<text x="77" y="852.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="400">OUT: next version of coefficients</text>
+<polyline points="270,267 270,322" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="270,322 264.24689353674955,311.4690092573155 275.75310646325045,311.4690092573155" fill="#173B39"/>
+<polyline points="488,440 532,440" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="532,440 521.4690092573155,445.75310646325045 521.4690092573155,434.24689353674955" fill="#173B39"/>
+<polyline points="968,440 1012,440" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="1012,440 1001.4690092573155,445.75310646325045 1001.4690092573155,434.24689353674955" fill="#173B39"/>
+<polyline points="1230,558 1230,662" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="1230,662 1224.2468935367497,651.4690092573155 1235.7531064632503,651.4690092573155" fill="#173B39"/>
+<text x="1248" y="611.1" fill="#536F6A" font-family="Arial,sans-serif" font-size="19" font-weight="400">Policy + terms</text>
+<polyline points="1012,780 968,780" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="968,780 978.5309907426845,774.2468935367496 978.5309907426845,785.7531064632504" fill="#173B39"/>
+<polyline points="532,780 488,780" fill="none" stroke="#173B39" stroke-width="3" stroke-linejoin="round"/><polygon points="488,780 498.5309907426845,774.2468935367496 498.5309907426845,785.7531064632504" fill="#173B39"/>
+<polyline points="270,662 270,612 750,612 750,558" fill="none" stroke="#AE6925" stroke-width="3" stroke-linejoin="round"/><polygon points="750,558 755.7531064632504,568.5309907426845 744.2468935367496,568.5309907426845" fill="#AE6925"/>
+<text x="310" y="595.8" fill="#915820" font-family="Arial,sans-serif" font-size="22" font-weight="700">Updated beliefs → next decision</text>
+<rect x="55" y="934" width="1390" height="77" rx="18" fill="#173B39"/>
+<text x="78" y="962.3" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="17" font-weight="700">SQLITE / REPRODUCIBLE ROUND LOG</text>
+<text x="78" y="995.8" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="22" font-weight="400">Sources • coefficients + ranges • candidates • predicted outcomes • chosen action • reply • cost</text>
+<text x="55" y="1055.7" fill="#173B39" font-family="Arial,sans-serif" font-size="23" font-weight="700">Accepted / walked away → save outcome → compare policies on held-out practice runs.</text>
+<text x="55" y="1090.1" fill="#536F6A" font-family="Arial,sans-serif" font-size="19" font-weight="400">No live trial here. No push. Entire must capture the actual development session before submission.</text>
+</svg>

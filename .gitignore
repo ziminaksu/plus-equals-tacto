@@ -10,3 +10,8 @@ __pycache__/
 data/
 hollerau/logs/
 *.log
+
+TOKEN.txt
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

@@ -3,6 +3,22 @@
 An AI buyer agent for Hollerau Pumpenwerke that negotiates with the arena's supplier bots by e-mail.
 **A configurable OpenAI API model chooses negotiation moves; code calculates total cost and enforces the rules.**
 
+## New: Bayesian Qwen agent
+
+The new implementation is available alongside the original agent. It learns supplier preference
+ranges during negotiation, lets Python select complete deals, uses Qwen3.8-27B for routine
+interpretation and Qwen3.8-2.4T-A95B for ambiguity, and records the reasoning in SQLite.
+
+```bash
+uv sync --all-extras --locked
+# Set HF_TOKEN, ARENA_API_KEY and ARENA_DATA in .env
+uv run tacto-bayes --run-id my-five-case-experiment --max-sessions 5 \
+  --cases case:P01 case:P04 case:P05 case:P10 case:P11
+```
+
+[Architecture, coefficients, limitations and audit viewer](docs/ANALYTICAL.md).
+The five-session cap applies to `tacto-bayes`; legacy commands below retain their original behaviour.
+
 ## How it works
 1. **Prepare** (`hollerau/intel.py`): reads the case file and the data package - should-cost, cost
    drivers and index series, the trigger letter vs. the contract's notice, scorecards, rival quotes,
