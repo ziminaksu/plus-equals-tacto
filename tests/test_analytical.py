@@ -491,3 +491,30 @@ def test_openai_router_uses_project_credentials_without_hf_specific_fields(monke
     assert "chat_template_kwargs" not in body
     assert "reasoning_effort" not in body
     router.close()
+
+
+def test_supplier_note_signal_classification_requires_positive_evidence():
+    from hollerau.intel import supplier_signals_from_note
+
+    assert supplier_signals_from_note("Our capacity is fully booked; we cannot accept additional volume.") == {
+        "cash_short": False, "spare_capacity": False,
+    }
+    assert supplier_signals_from_note("We have no cash flow issues and stable liquidity.") == {
+        "cash_short": False, "spare_capacity": False,
+    }
+    assert supplier_signals_from_note("We have spare capacity on a second shift.")["spare_capacity"]
+    assert supplier_signals_from_note("We face a cash shortage and need earlier payment.")["cash_short"]
+    assert not supplier_signals_from_note(
+        "Spare capacity was discussed, but we have no spare capacity."
+    )["spare_capacity"]
+
+
+def test_quality_first_prior_reduces_unproven_supplier_quality_resistance():
+    case, ref, sup = sample()
+    case["buyer"]["category_goal"] = "quality_first"
+    quality = Beliefs(case, ref, sup, seed=9)
+    routine_case = {**case, "buyer": {**case["buyer"], "category_goal": "routine"}}
+    routine = Beliefs(routine_case, ref, sup, seed=9)
+    assert quality.quality_cost_max < routine.quality_cost_max
+    assert max(p.b_quality for p in quality.particles) < max(p.b_quality for p in routine.particles)
+    assert quality.summary()["quality_prior_max_eur_per_1000ppm"] > 0
