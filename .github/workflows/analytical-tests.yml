@@ -34,10 +34,9 @@ jobs:
         run: uv sync --locked --group dev
       - name: Run offline tests (no Arena or paid model calls)
         run: uv run pytest -q
-      - name: Reproducible offline benchmark (isolated memory)
+      - name: Matched-seed offline benchmark (RFQ selective)
         run: |
-          uv run python tools/offline_benchmark.py --seeds 2 5 11
-          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0.05
           uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0
-          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0 --continuation-credit 0.01
-          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0 --continuation-credit 0.03
+          uv run python tools/offline_benchmark.py --seeds 2 5 11 --risk-aversion 0 --continuation-credit 0.03 --rfq-only-credit
+          uv run python tools/offline_benchmark.py --seeds 17 29 42 --risk-aversion 0
+          uv run python tools/offline_benchmark.py --seeds 17 29 42 --risk-aversion 0 --continuation-credit 0.03 --rfq-only-credit
