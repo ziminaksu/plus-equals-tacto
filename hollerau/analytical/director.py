@@ -116,7 +116,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                          "fixed_terms", "buyer")},
         "instructions": {
             "response_forecasts": "UNCALIBRATED estimates from sparse observations; never ground truth.",
-            "history": "Past same-supplier/same-case exchanges; quotes need fresh confirmation.",
+            "history": "Past same-supplier/same-case exchanges; quotes need fresh confirmation. "
+                       "historical_moves links preceding buyer proposals to observed replies. "
+                       "A returned concession is not the opening that produced it. Compare stage "
+                       "and prior terms; an observed response is not proof of causality or repeatability.",
             "agreed": "Supplier agreement is an executable offer, not an obligation to accept.",
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
@@ -261,11 +264,29 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         seeds = th.analyst_candidates[:3] + [feasible_seed(case, current)]
         if th.last_terms:
             seeds.append(th.last_terms)
-        # Include history as explicitly unconfirmed proposals, not executable sheet IDs.
+        # Expose the buyer move alongside its response, without declaring it a winner.
+        # Package IDs are fresh and validated against this case; old offer IDs never execute.
+        supplier["historical_moves"] = []
         for episode in history:
+            buyer_ids, response_ids = [], []
+            for old_terms in episode.get("buyer_terms", []):
+                terms = {f: old_terms[f] for f in case["negotiable"] if f in old_terms}
+                pid = add_package(terms, "historical buyer proposal: observed response in historical_moves")
+                if pid and pid not in buyer_ids:
+                    buyer_ids.append(pid)
             for sheet in episode["quoted_packages_then"]:
                 terms = {f: sheet["terms"][f] for f in case["negotiable"] if f in sheet["terms"]}
-                add_package(terms, "historical quote: must renegotiate/reconfirm")
+                pid = add_package(terms, "historical quote: must renegotiate/reconfirm")
+                if pid and pid not in response_ids:
+                    response_ids.append(pid)
+            if buyer_ids or response_ids:
+                supplier["historical_moves"].append({
+                    "source_id": episode["source_id"],
+                    "context_before": episode.get("context_before", {"stage": "unknown"}),
+                    "buyer_package_ids": buyer_ids, "response_package_ids": response_ids,
+                    "response_status": episode.get("status_then"),
+                    "currently_executable": False,
+                })
         for row in th.sustainability_candidates:
             add_package(row["terms"], row["origin"])
         for seed in seeds:

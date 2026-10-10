@@ -6,11 +6,13 @@ The agent negotiates with suppliers by e-mail to minimise **total cost**, not ju
 
 ## Strategy
 
-- Read the case, supplier data, quotes, history and evidence (`hollerau/intel.py`).
-- Calculate total costs, alternatives and viable term sheets (`hollerau/agent.py`, `hollerau/levers.py`).
-- Select a negotiating move and draft a concise e-mail (`hollerau/brain.py`).
-- Validate must-haves, numeric claims, evidence IDs, offer limits and acceptance decisions (`hollerau/compliance.py`).
-- Accept a suitable deal or walk away when the alternative is better.
+- Gather the case, current supplier messages, public evidence and earlier exchanges (`hollerau/analytical/agent.py`, `retrieval.py`, `storage.py`).
+- Ask a proposer Astra call for interpretations and up to three complete offers (`router.py`).
+- Validate and price offers, historical proposals and term variants (`director.py`, `sustainability.py`, `arena_kit/cost.py`).
+- Ask a separate Astra call to choose the final action and write the supplier reply (`director.py`, `router.py`).
+- Validate that selection and send exactly the authorized action; log the response and update estimates (`communication.py`, `feedback.py`, `storage.py`).
+
+See [the current architecture and its limitations](docs/CURRENT_ARCHITECTURE.md). The older `hollerau/agent.py` and `brain.py` paths remain explicit legacy comparisons; they are not the default analytical controller.
 
 ## Setup
 
@@ -68,11 +70,17 @@ Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 
 ## Analytical negotiation agent
 
-`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v8.2 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
+The current policy is **v9: category playbooks**, integrating Ksu's negotiation strategy with the action/response memory on main. It tailors commercial concessions to strategic supply, capacity, quality and competitive RFQs; repairs jointly invalid opening terms before proposing alternatives; and reserves more time for final authorization. See [implementation and evaluation scope](docs/evaluation/v9-category-playbooks.md). Seven other cases with best scores below 0.7 are selected for one Arena session each; no improvement is claimed before those results exist. The earlier version notes below describe their historical evaluations.
+
+`hollerau.analytical` uses `gpt-6-astra` for a negotiator and a separately prompted final decision-maker. The v8.3 controller gives Astra the last word on counters, questions, confirmation, acceptance and walking away, including after supplier agreement and near wave deadlines. Python cannot override that selection with its uncertain acceptance model.
 
 Both roles receive consistent cost estimates, including relationship uncertainty. Astra can choose conditional payment/index/commitment packages, ask for cost walkthroughs and approval routes, and retrieve earlier same-supplier/case exchanges from SQLite. Historical quotes must be reconfirmed. Numeric evidence is rendered from verified facts. Qwen and model-free modes remain explicit comparisons. These mechanisms do not guarantee higher Arena scores.
 
-V8 corrects false acceptance labels, records terminal walkouts, reconstructs behavioural learning, and enables Astra-authored supplier replies with exact fixed facts. It presents next-action gains, losses and final-offer evidence before the final choice, and gates sustainability concerns by the case objective. See [the v8 implementation](docs/evaluation/v8-decision-feedback.md). The two evaluation pairs scored P02 0.000 then 0.255, and P18 0.273 twice. Neither exceeded its previous best. V8.2 subsequently adds forecast and neutral cost-driver retrieval and has **not yet been evaluated in Arena**. No local tests ran. See [all scores and the evidence-access diagnosis](docs/evaluation/v81-arena-results.md).
+V8.3 implements the independent audit's first structural intervention: historical buyer proposals become selectable alongside the supplier replies they preceded. Memory records the prior terms, supplier status and negotiation stage, so an old closing concession is not confused with the opening that produced it. Astra chooses whether that earlier move fits the current situation. Cost calculations, timeout settings and stopping rules are unchanged. Two Arena runs scored **P02 0.255 and P18 0.273, both unchanged**. The earlier P18 opening was available but not selected, and all three P18 proposer calls timed out. No local tests ran. See [the implementation](docs/evaluation/v83-action-response-memory.md) and [actual results](docs/evaluation/v83-arena-results.md).
+
+V8 corrects false acceptance labels, records terminal walkouts, reconstructs behavioural learning, and enables Astra-authored supplier replies with exact fixed facts. It presents next-action gains, losses and final-offer evidence before the final choice, and gates sustainability concerns by the case objective. See [the v8 implementation](docs/evaluation/v8-decision-feedback.md). The two evaluation pairs scored P02 0.000 then 0.255, and P18 0.273 twice. Neither exceeded its previous best. V8.2 adds forecast and neutral cost-driver retrieval; it was included in the V8.3 pair but has not been evaluated separately. No local tests ran. See [all scores and the evidence-access diagnosis](docs/evaluation/v81-arena-results.md).
+
+A subsequent authorized DeepSeek V4 Pro review identified prompt-size and timing concerns, but its proposed code failed source-level review: among other defects, its schema and validator disagreed on closing actions. No proposed runtime edits were applied. See [the external review and rejected changes](docs/evaluation/v83-deepseek-review.md).
 
 V7 preserves original should-cost evidence, separates production-cost estimates from acceptance behaviour, and calibrates supplier economics using completed practice cost breakdowns. It includes higher-price sustainability alternatives and explicit downside comparisons. See [the implementation and assumptions](docs/evaluation/v7-supplier-economics.md). No local tests are run for this update.
 

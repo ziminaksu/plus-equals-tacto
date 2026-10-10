@@ -4,6 +4,10 @@ Policy: `astra-v9-category-playbooks`. Teammate baseline: `0479452`, including
 Ksu's latest escalation/share-of-business change. Her branch records a P18
 score of 0.563345; this update targets other cases.
 
+The implementation also merges current main's v8.3 buyer-action/response memory
+and published evaluation history. Its historical move links remain available;
+this integration does not discard them when adopting the teammate strategy.
+
 ## Scope and observed problems
 
 Read-only Arena inspection selected P01, P02, P05, P07, P08, P10 and P11 because
