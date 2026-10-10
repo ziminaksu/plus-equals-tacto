@@ -1,0 +1,258 @@
+{
+  "recorded_at": "2026-10-10T15:32:54.124513+00:00",
+  "policy": "bayes-v4-integrated",
+  "evaluated_commit": "1b73db108efa6abda0ed2f9f80ed53d2d80e3afc",
+  "selection": "latest completed practice score strictly below 0.60",
+  "new_sessions": 8,
+  "quota_before": {
+    "used": 20,
+    "left": 180,
+    "limit": 200,
+    "resets_at": "2026-10-11T11:20:31.834221+00:00"
+  },
+  "quota_after": {
+    "used": 28,
+    "left": 172,
+    "limit": 200,
+    "resets_at": "2026-10-11T11:20:31.834221+00:00"
+  },
+  "validation": {
+    "local_passed": 97,
+    "local_skipped": 1,
+    "lint": "passed"
+  },
+  "aggregate": {
+    "prior_latest_mean": 0.3768447388622406,
+    "new_mean": 0.509273330477636,
+    "improved": 7,
+    "tied": 0,
+    "regressed": 1,
+    "deals": 8
+  },
+  "models": {
+    "Qwen/Qwen3.8-27B:deepinfra": {
+      "attempts": 39,
+      "statuses": {
+        "ok": 38,
+        "ReadTimeout": 1
+      },
+      "input_tokens": 69934,
+      "output_tokens": 19270,
+      "seconds": 285.24399999999997
+    },
+    "gpt-6-astra": {
+      "attempts": 2,
+      "statuses": {
+        "ok": 1,
+        "ReadTimeout": 1
+      },
+      "input_tokens": 2898,
+      "output_tokens": 1006,
+      "seconds": 39.851
+    }
+  },
+  "cases": [
+    {
+      "case_id": "case:P02",
+      "previous_session_id": "98e7e555d136db76",
+      "previous_latest_score": 0.0,
+      "previous_best_score": 0.0,
+      "session_id": "e5afa6ac10625d51",
+      "run_id": "ehl-v4-low-20261010-a",
+      "status": "completed",
+      "score": 0.15698901705979842,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 5,
+      "replay": "https://arena.tacto.ai/replay/e5afa6ac10625d51",
+      "delta_vs_previous_latest": 0.15698901705979842,
+      "decision_seconds": [
+        9.366015583043918,
+        8.872674959013239,
+        6.994560417020693,
+        8.811614791979082
+      ],
+      "review_outcomes": []
+    },
+    {
+      "case_id": "case:P03",
+      "previous_session_id": "a692b47057e303d1",
+      "previous_latest_score": 0.5612041500642857,
+      "previous_best_score": 0.5612041500642857,
+      "session_id": "e4f7a33f302e9129",
+      "run_id": "ehl-v4-low-20261010-a",
+      "status": "completed",
+      "score": 0.8511402939808748,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 7,
+      "replay": "https://arena.tacto.ai/replay/e4f7a33f302e9129",
+      "delta_vs_previous_latest": 0.28993614391658906,
+      "decision_seconds": [
+        8.968963958090171,
+        12.353294958011247,
+        14.143616333953105,
+        9.088012457941659,
+        8.973437000066042,
+        8.835808916017413
+      ],
+      "review_outcomes": []
+    },
+    {
+      "case_id": "case:P05",
+      "previous_session_id": "25533c1796f6c26b",
+      "previous_latest_score": 0.4325706072725315,
+      "previous_best_score": 0.4325706072725315,
+      "session_id": "71813595bf534217",
+      "run_id": "ehl-v4-low-20261010-a",
+      "status": "completed",
+      "score": 0.3831949254263143,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 12,
+      "replay": "https://arena.tacto.ai/replay/71813595bf534217",
+      "delta_vs_previous_latest": -0.04937568184621721,
+      "decision_seconds": [
+        7.602221125038341,
+        34.12989062489942,
+        8.222502249991521,
+        11.831950124935247,
+        7.802660166984424,
+        8.416585250059143
+      ],
+      "review_outcomes": [
+        {
+          "failed": true,
+          "reviewer": "gpt-6-astra",
+          "approved_candidates": 0,
+          "applied_conditions": 0
+        }
+      ]
+    },
+    {
+      "case_id": "case:P07",
+      "previous_session_id": "b04751a35ebebff4",
+      "previous_latest_score": 0.5683886557315823,
+      "previous_best_score": 0.5683886557315823,
+      "session_id": "e68df559ba8e9ca4",
+      "run_id": "ehl-v4-low-20261010-a",
+      "status": "completed",
+      "score": 0.6476339342280315,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 5,
+      "replay": "https://arena.tacto.ai/replay/e68df559ba8e9ca4",
+      "delta_vs_previous_latest": 0.07924527849644925,
+      "decision_seconds": [
+        8.140771874925122,
+        13.403127917088568,
+        8.981372875045054,
+        6.461239750031382
+      ],
+      "review_outcomes": []
+    },
+    {
+      "case_id": "case:P08",
+      "previous_session_id": "2a7cd398780284d6",
+      "previous_latest_score": 0.304876324162573,
+      "previous_best_score": 0.304876324162573,
+      "session_id": "82a821f172254c66",
+      "run_id": "ehl-v4-low-20261010-a",
+      "status": "completed",
+      "score": 0.382992340439104,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 6,
+      "replay": "https://arena.tacto.ai/replay/82a821f172254c66",
+      "delta_vs_previous_latest": 0.07811601627653103,
+      "decision_seconds": [
+        10.492436500033364,
+        14.028086583013646,
+        12.462022749939933,
+        10.432148916996084,
+        11.349724458996207
+      ],
+      "review_outcomes": []
+    },
+    {
+      "case_id": "case:P10",
+      "previous_session_id": "c02cc68ac9aaf974",
+      "previous_latest_score": 0.5780733017301243,
+      "previous_best_score": 0.5780733017301243,
+      "session_id": "820e1b85c83734f4",
+      "run_id": "ehl-v4-low-20261010-b",
+      "status": "completed",
+      "score": 0.6863220713040008,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 3,
+      "replay": "https://arena.tacto.ai/replay/820e1b85c83734f4",
+      "delta_vs_previous_latest": 0.10824876957387652,
+      "decision_seconds": [
+        10.716424541082233,
+        10.432673375005834
+      ],
+      "review_outcomes": []
+    },
+    {
+      "case_id": "case:P11",
+      "previous_session_id": "d21041720fa74cfd",
+      "previous_latest_score": 0.38045086780345994,
+      "previous_best_score": 0.38045086780345994,
+      "session_id": "cd3e7320baca25a9",
+      "run_id": "ehl-v4-low-20261010-b",
+      "status": "completed",
+      "score": 0.6262806593072341,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 8,
+      "replay": "https://arena.tacto.ai/replay/cd3e7320baca25a9",
+      "delta_vs_previous_latest": 0.24582979150377415,
+      "decision_seconds": [
+        26.480084542068653,
+        8.366544916993007,
+        7.946346958982758,
+        10.143879749928601,
+        6.1842089999699965,
+        7.292485332931392,
+        7.4692330420948565
+      ],
+      "review_outcomes": [
+        {
+          "failed": true,
+          "reviewer": "gpt-6-astra",
+          "approved_candidates": 0,
+          "applied_conditions": 0
+        }
+      ]
+    },
+    {
+      "case_id": "case:P18",
+      "previous_session_id": "278575e640be63da",
+      "previous_latest_score": 0.18919400413336834,
+      "previous_best_score": 0.18919400413336834,
+      "session_id": "7014f3de09900f25",
+      "run_id": "ehl-v4-low-20261010-b",
+      "status": "completed",
+      "score": 0.33963340207573,
+      "deal": true,
+      "end_reason": "accepted",
+      "rounds": 5,
+      "replay": "https://arena.tacto.ai/replay/7014f3de09900f25",
+      "delta_vs_previous_latest": 0.15043939794236166,
+      "decision_seconds": [
+        10.265359750017524,
+        10.82480854098685,
+        9.57611150003504,
+        11.34977158298716
+      ],
+      "review_outcomes": []
+    }
+  ],
+  "limitations": [
+    "One new stochastic session per preselected low-scoring case, not a controlled paired-seed comparison.",
+    "Multiple policy changes and accumulated learning; individual component effects cannot be isolated.",
+    "No final sessions, good-case reruns or replacement attempts were authorized or started.",
+    "Earlier frozen local scores belong to pre-merge private v4, not the evaluated merged commit."
+  ]
+}

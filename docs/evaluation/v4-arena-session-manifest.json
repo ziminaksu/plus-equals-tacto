@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559-v4-arena-eight",
+  "scope_start": "2026-10-10T15:05:50.353Z",
+  "records_exported": 176,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "772614d8486cb308ba5319a7fe52211ea43e6134a7b08fffaba2c33ca8774e89"
+}
