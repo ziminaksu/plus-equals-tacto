@@ -22,14 +22,15 @@ from .discovery import REBASE_QUESTION, discover_quote_requests, validate_quote_
 from .feedback import event_key, learn_reply
 from .offers import equivalent_alternative
 from .planning import counter_costs, paired_objective
+from .playbook import feasible_seed
 from .preferences import extract_explicit_conditions, violated
 from .retrieval import retrieve
 from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v82-evidence-access"
-DECISION_BUDGET_S = 35
+POLICY_VERSION = "astra-v9-category-playbooks"
+DECISION_BUDGET_S = 45
 
 
 class DecisionBudgetExpired(Exception):
@@ -486,7 +487,7 @@ class AnalyticalAgent:
         sources = self.sources(sid, events)
         if self.router.enabled:
             current = standing(events)[1] or th.reference
-            th.sustainability_candidates = th.economics.frontier(complete_offer(case, current))
+            th.sustainability_candidates = th.economics.frontier(feasible_seed(case, current))
             analysis = self.router.analyse(
                 sources,
                 [],

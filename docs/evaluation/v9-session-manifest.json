@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "v9-category-playbooks-20261010",
+  "scope_start": "2026-10-10T18:30:17.609Z",
+  "records_exported": 27,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "78a96a5fdd0a5273b7a122568ddd753f68f3ac17c4aac3f4bf39a3afdbae0b2c"
+}

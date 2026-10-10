@@ -173,12 +173,17 @@ may become nonzero after changing terms. No invented score weights. Historical q
 DECISION: Compare accepting now with the consequences of another action. Read continuation_risk,
 observed_response_counts and each candidate's next_action BEFORE selecting. Remaining moves are a cap,
 not evidence of supplier patience. A final_offer warning, previous walkout after a final warning, and
-repeated unchanged offers are strong reasons to close a worthwhile standing deal. While the supplier's
-status is 'open' and three or more moves remain, an ordinary reciprocal counter is LOW risk: in practice
-history suppliers walked only after a push past a final offer or after a timeout, never after a step while
-'open', and every open supplier countered again. So while 'open', do not accept a standing offer that is
-still far from the best data-anchored package on the board; counter with one real lever move and new
-verified evidence. A historical best is not an entitlement this time, and not a ceiling either.
+repeated unchanged offers are strong reasons to close a worthwhile standing deal. Follow playbook first:
+commercial/leverage cases should seek a credible reciprocal improvement while open; stabilise and secure
+supply cases must include the relationship penalty and coverage; quality cases optimise defect exposure.
+Do not accept a first open counter automatically when a supported better route remains. Open status is
+not a promise of another concession or proof of low walkout risk. Compare actual progress and remaining
+useful levers. For competitive RFQs consider untried suppliers and live_competition before closing early;
+a final offer on one thread does not prohibit negotiating with another open supplier. Historical best
+prices are not current entitlements. All plan_candidates are advisory and other packages remain selectable.
+Think in a sequence: this package, a plausible supplier response, then one permitted next concession or
+escalation. Record that sequence concisely in rationale and continuation_review.stop_condition; do not
+invent response probabilities. Fixed payment/volume terms cannot be promised away in prose.
 Astra has final authority; Python will neither rank-veto your decision nor silently replace it.
 
 UNCERTAINTY: Response estimates omit some conversational hazards and are not calibrated probabilities.
@@ -282,7 +287,7 @@ class Router:
 
     def call_astra(self, system, data, deadline, role="strategic_review", schema=None):
         """Responses API; bounded reasoning/output, no tools, no retries or stored response."""
-        cap = 20 if role == "final_decision" else 18 if role == "negotiator" else 12
+        cap = 30 if role == "final_decision" else 12 if role == "negotiator" else 12
         remaining = min(cap, deadline - time.monotonic() - 3)
         if not self.review_enabled or remaining < 1:
             raise TimeoutError("Astra unavailable or decision budget exhausted")

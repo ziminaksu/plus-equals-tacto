@@ -15,6 +15,7 @@ from arena_kit.play import latest, live_threads, moves_left
 from .. import compliance
 from .communication import describe_complete, render_reply, reply_facts
 from .deliberation import add_action_consequences, economics_context, objective_scope
+from .playbook import add_playbooks, anchor_packages, feasible_seed
 
 
 class FinalDecisionUnavailable(RuntimeError):
@@ -105,49 +106,13 @@ def questions(case, sources, history):
 
 
 def data_anchors(case, th, current):
-    """Packages below the supplier's ask, priced from our own data, on the levers that cost us least.
-    Without them the board only held prices near the supplier's numbers (P18: nothing below 5.70,
-    while the supplier later accepted 5.50 and the arena's best package was ~4.73)."""
-    quote = (current or th.reference).get("unit_price")
-    if not quote:
-        return []
-    prices = {round(quote * m, 2) for m in (0.80, 0.85, 0.90, 0.94)}
-    refs = dict(getattr(th.dossier, "reference_prices", {}) or {})
-    if case["buyer"].get("current_unit_price"):
-        refs["current_price"] = case["buyer"]["current_unit_price"]
-    prices |= {round(p, 2) for p in refs.values() if p and p < quote}
-    fields, opts = case["negotiable"], case.get("term_options", {})
-    base = complete_offer(case, current or th.reference)
-    best = dict(base)
-    pay = [d for d in opts.get("payment_days", []) if d >= case["buyer"]["reference_payment_days"]]
-    if "payment_days" in fields and pay:
-        best["payment_days"] = max(pay)  # never pay earlier than our reference for free
-    months = 12 * case["buyer"]["horizon_years"]
-    if "contract_months" in fields and months in opts.get("contract_months", []):
-        best["contract_months"] = months  # cover the horizon, no more
-    variants = [best]
-    if "index_clause" in fields:
-        clauses = opts.get("index_clause", [])
-        if None in clauses:
-            variants.append({**best, "index_clause": None})
-        banded = [c for c in clauses if c]
-        if banded:
-            variants.append({**best, "index_clause": max(banded, key=lambda c: c.get("deadband_pct") or 0)})
-    out, seen = [], set()
-    for v in variants:
-        for price in sorted(prices):
-            terms = {**v, "unit_price": price}
-            key = json.dumps(terms, sort_keys=True)
-            if key not in seen:
-                seen.add(key)
-                out.append((terms, "data anchor: below the ask, from our order history and current price"))
-    return out[:24]
+    return anchor_packages(case, th, current)
 
 
 def build_board(agent, case, threads, source_map, history_map, closing_only=False):
     """Expose feasible actions, not a Python-selected winner. No guessed probability pruning."""
     board = {
-        "case": {k: case.get(k) for k in ("case_id", "title", "briefing", "negotiable", "term_options",
+        "case": {k: case.get(k) for k in ("case_id", "type", "suppliers", "title", "briefing", "negotiable", "term_options",
                                          "fixed_terms", "buyer")},
         "instructions": {
             "response_forecasts": "UNCALIBRATED estimates from sparse observations; never ground truth.",
@@ -155,32 +120,20 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "agreed": "Supplier agreement is an executable offer, not an obligation to accept.",
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
-            "anchoring": "A package a supplier agreed to at once was too generous: it is a ceiling to fall back "
-                         "to, never an opening. The first offer sets the range: open with a 'data anchor' package "
-                         "(our own order prices, below the ask) and concede in steps against the supplier's moves. "
-                         "Suppliers answer a low but data-backed first offer with a counter, not a walk-out; repeating "
-                         "a previously accepted package forfeits everything below it. While the supplier's status is 'open' "
-                         "and three or more moves remain, do not accept its first counter: answer with a smaller "
-                         "step (a data anchor between your last offer and its counter, or a lever it values). In our "
-                         "practice history suppliers walked only after a push past a final offer or after a timeout, "
-                         "never after an ordinary step while 'open'.",
-            "concession_ladder": "Suppliers give nothing without a move from us and send a final offer soon after "
-                                 "we stop moving (P18: every final came one or two messages after a repeated or "
-                                 "near-repeated offer). Plan the remaining moves as a ladder: in EACH counter make "
-                                 "exactly one real move toward the supplier on a lever (payment 90 -> 60 -> 45 -> "
-                                 "30 days, a longer contract, an index clause with a wide then narrower deadband) "
-                                 "while keeping the price at or barely above your previous offer, and add one or "
-                                 "two UNUSED verified arguments. Keep a lever in reserve for every remaining step; "
-                                 "do not give the whole lever at once. When the supplier quotes the same price for "
-                                 "different values of a lever, that lever is worth nothing to it - keep our side. "
-                                 "When a real move of ours produced NO price reduction, the desk has reached its own "
-                                 "limit, not the company's: do not accept yet. Counter with a package it values that "
-                                 "is free for us (a contract longer than our horizon costs us nothing; volume/"
-                                 "commitment matters to suppliers focused on volume customers), add the share-of-business argument "
-                                 "if it is on the board, attach the "
-                                 "approval-route question so the desk takes it to its pricing committee/boss, and "
-                                 "keep the price where it is. Accept only after the approver has answered or a "
-                                 "final offer arrives.",
+            "anchoring": "Follow the case playbook. Keep a credible ambitious opening and do not automatically "
+                         "repeat a historical accepted price. Distinguish actual reference prices from exploratory "
+                         "percentage anchors. Immediately accepted terms may indicate room, but do not prove it. "
+                         "While open, consider a supported reciprocal counter rather than automatically accepting "
+                         "the first response. Compare total cost, including active relationship/quality/supply costs.",
+            "concession_ladder": "Plan staged reciprocal exchanges on NEGOTIABLE terms only. Move one meaningful "
+                                 "lever at a time for a requested improvement; preserve other levers. Keep binding "
+                                 "fixed terms and hard constraints. Use unused verified arguments. If a real move "
+                                 "buys nothing, consider the approval-route question with a supported commercial "
+                                 "prospect instead of repeating the same package. Escalation does not guarantee "
+                                 "a concession. A longer commitment may be cost-neutral beyond this case's scoring "
+                                 "horizon, but only when permitted; inspect the cost card. In supply/quality cases, "
+                                 "a useful improvement need not be a lower unit price. Open status never guarantees "
+                                 "no walkout; final_offer allows only closing with that supplier.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
@@ -204,6 +157,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         remaining = moves_left(case, events)
         supplier = {
             "status": latest(events).get("status"), "remaining_moves": remaining,
+            "buyer_messages_sent": sum(e.get("from") == "buyer" for e in events),
             "sources": source, "past_exchanges": history,
             "recent_exchange": [{k: e.get(k) for k in ("from", "body", "term_sheets", "status")}
                                 for e in events[-6:]],
@@ -304,7 +258,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     "supplier_id": sid, "kind": "confirm", "package_id": pid,
                     "source_sheet_id": sheet["term_sheet_id"],
                 }
-        seeds = th.analyst_candidates[:3] + [complete_offer(case, current)]
+        seeds = th.analyst_candidates[:3] + [feasible_seed(case, current)]
         if th.last_terms:
             seeds.append(th.last_terms)
         # Include history as explicitly unconfirmed proposals, not executable sheet IDs.
@@ -315,7 +269,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         for row in th.sustainability_candidates:
             add_package(row["terms"], row["origin"])
         for seed in seeds:
-            base_id = add_package(seed, "Astra proposal" if seed in th.analyst_candidates else "current/previous terms")
+            base_id = add_package(seed, "Astra proposal" if seed in th.analyst_candidates else "feasible current/previous term variant")
             if not base_id:
                 continue
             target = board["packages"][base_id]["direct_cost_eur"]
@@ -348,6 +302,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
     add_action_consequences(agent, board)
+    add_playbooks(board)
     return board
 
 
@@ -479,6 +434,8 @@ def execute(agent, case, threads, board, selection):
             body += "\n\n" + "\n\n".join(claim["text"] for claim in claims)
             for claim in claims:
                 th.used.update(claim["refs"])
+                if not claim["refs"]:
+                    th.used_kinds = getattr(th, "used_kinds", set()) | {claim.get("kind")}
         if any(not valid_offer(agent, case, th, t) for t in offers):
             raise ValueError("final offer violates constraints")
         message = {"subject": "Re: " + case["title"], "body": body,
@@ -506,7 +463,7 @@ def decide(agent, case, threads, deadline, closing_only=False):
               and latest(threads[sid]).get("status") != "final_offer"]
     if viable and not closing_only:
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
-        agent.interpret(case, sid, threads[sid], min(deadline - 14, time.monotonic() + 17))
+        agent.interpret(case, sid, threads[sid], min(deadline - 28, time.monotonic() + 12))
     board = build_board(agent, case, threads, sources, history, closing_only)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")

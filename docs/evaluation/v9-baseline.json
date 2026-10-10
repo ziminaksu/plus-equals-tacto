@@ -1,0 +1,55 @@
+{
+  "selection": "best completed practice score < 0.7, excluding teammate P18 work",
+  "teammate_base": "0479452",
+  "max_new_sessions": 7,
+  "practice_before": {
+    "used": 54,
+    "left": 396,
+    "limit": 450,
+    "resets_at": "2026-10-11T11:20:31.834221+00:00"
+  },
+  "cases": [
+    {
+      "case_id": "case:P01",
+      "previous_best_score": 0.6185848034441437,
+      "previous_latest_score": 0.6185848034441437,
+      "previous_latest_session": "8ce21019f5d5a281"
+    },
+    {
+      "case_id": "case:P02",
+      "previous_best_score": 0.25476459577171884,
+      "previous_latest_score": 0.25476459577171884,
+      "previous_latest_session": "bf51092df64ae6f8"
+    },
+    {
+      "case_id": "case:P05",
+      "previous_best_score": 0.4325706072725315,
+      "previous_latest_score": 0.3831949254263143,
+      "previous_latest_session": "71813595bf534217"
+    },
+    {
+      "case_id": "case:P07",
+      "previous_best_score": 0.6476339342280315,
+      "previous_latest_score": 0.6476339342280315,
+      "previous_latest_session": "e68df559ba8e9ca4"
+    },
+    {
+      "case_id": "case:P08",
+      "previous_best_score": 0.382992340439104,
+      "previous_latest_score": 0.382992340439104,
+      "previous_latest_session": "82a821f172254c66"
+    },
+    {
+      "case_id": "case:P10",
+      "previous_best_score": 0.6863220713040008,
+      "previous_latest_score": 0.6863220713040008,
+      "previous_latest_session": "820e1b85c83734f4"
+    },
+    {
+      "case_id": "case:P11",
+      "previous_best_score": 0.6262806593072341,
+      "previous_latest_score": 0.6262806593072341,
+      "previous_latest_session": "cd3e7320baca25a9"
+    }
+  ]
+}
