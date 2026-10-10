@@ -559,3 +559,25 @@ def test_quality_cost_requires_explicit_cost_evidence():
     }
     result = Router.validate(analysis, sources, ["ppm_commitment"])
     assert [x["source_id"] for x in result["signals"]] == ["note"]
+
+
+def test_price_pressure_reward_only_for_cheaper_unit_price():
+    case, ref, _ = sample()
+    quote = ref["unit_price"]
+    base = AnalyticalAgent(router=Router(enabled=False), price_pressure=0.0)
+    moderate = AnalyticalAgent(router=Router(enabled=False), price_pressure=0.1)
+    assert base.price_pressure_bonus(case, {**ref, "unit_price": quote - 1}, quote) == 0
+    cheaper = {**ref, "unit_price": quote - 1}
+    full = closing_terms(case, cheaper)
+    years = min(full["contract_months"] / 12 if full["contract_months"] else 1, case["buyer"]["horizon_years"])
+    assert moderate.price_pressure_bonus(case, cheaper, quote) == pytest.approx(
+        0.1 * full["volume_per_year"] * years
+    )
+    assert moderate.price_pressure_bonus(case, {**ref, "unit_price": quote + 1}, quote) == 0
+    assert moderate.price_pressure_bonus(case, {**ref, "unit_price": quote}, quote) == 0
+
+
+def test_price_pressure_bounds_reject_invalid_settings():
+    for v in (-0.01, 0.41, math.nan, math.inf):
+        with pytest.raises(ValueError, match="price_pressure"):
+            AnalyticalAgent(router=Router(enabled=False), price_pressure=v)
