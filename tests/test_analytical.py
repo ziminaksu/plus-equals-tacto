@@ -693,3 +693,13 @@ def test_index_cost_still_uses_official_buyer_function():
     assert with_index["index_clause"] > 0
     assert with_index["index_risk"] > 0
     assert with_index["price"] == without["price"]
+
+
+def test_continuation_credit_experimental_boundaries(tmp_path):
+    agent = AnalyticalAgent(store=Store(tmp_path / "forward.sqlite"), continuation_credit=0.02)
+    assert agent.continuation_credit == 0.02
+    assert agent.price_pressure == 0.0
+    for value in (-0.01, 0.06, float("inf"), float("nan")):
+        with pytest.raises(ValueError, match="continuation_credit"):
+            AnalyticalAgent(store=agent.store, continuation_credit=value)
+    agent.store.close()
