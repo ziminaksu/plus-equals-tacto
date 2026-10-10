@@ -1,0 +1,36 @@
+name: Analytical agent offline regression
+
+on:
+  push:
+    branches: [codex/bayesian-qwen-agent]
+  pull_request:
+    paths:
+      - "hollerau/**"
+      - "arena_kit/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/analytical-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      LLM_PROVIDER: ""
+      LLM_API_KEY: ""
+      HF_TOKEN: ""
+      ARENA_API_KEY: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - name: Sync locked dependencies
+        run: uv sync --locked --group dev
+      - name: Run offline tests (no Arena or paid model calls)
+        run: uv run pytest -q
