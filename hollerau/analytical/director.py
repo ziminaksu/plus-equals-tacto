@@ -5,7 +5,6 @@ acceptance on this path. Supplier response estimates are advisory, uncalibrated
 evidence. Only current, received standing IDs can be accepted.
 """
 
-import copy
 import json
 import time
 
@@ -13,7 +12,9 @@ from arena_kit.cost import complete_offer, cost_breakdown
 from arena_kit.play import latest, live_threads, moves_left
 
 from .. import compliance
+from .budget import TurnBudget
 from .communication import describe_complete, render_reply, reply_facts
+from .decision_record import phase, record_decision, validate_plan
 from .deliberation import add_action_consequences, economics_context, objective_scope
 from .playbook import add_playbooks, anchor_packages, feasible_seed
 
@@ -150,6 +151,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         "reply_facts": reply_facts(case),
         "fallback_estimated_cost_eur": agent.alternatives(case),
         "suppliers": {}, "packages": {}, "actions": {}, "evidence": {}, "questions": {},
+        "protocol_checks": ["Accept only the current received offer ID; validate supplier/action ownership."],
+        "buyer_constraints": {"fixed_terms": case.get("fixed_terms", {}),
+                              "must_haves": case["buyer"].get("must_haves", [])},
+        "policy_rules": ["Close after final_offer; this is a strategy guard, not a buyer constraint.",
+                         "At most one standalone question per supplier; additional questions accompany a counter.",
+                         "Anchor grids and the 24-anchor limit are heuristics; the offer menu is not exhaustive.",
+                         "Response probabilities and economic scenarios are estimates, not verified supplier facts."],
+        "candidate_generation": {"attempted": 0, "duplicates": 0, "rejected": [],
+                                 "anchor_cap_per_supplier": 24, "exhaustive": False},
     }
     for sid in live_threads(threads):
         th, events = agent.threads[sid], threads[sid]
@@ -169,6 +179,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "supplier_economics": economics_context(case, th),
             "stagnant_replies": th.stagnation,
             "previous_continuation_review": th.continuation_review,
+            "previous_plan": getattr(th, "previous_plan", None),
+            "last_plan_outcome": getattr(th, "last_plan_outcome", None),
             "observed_response_counts": th.response_counts,
             "evidence_inventory": th.retrieval_inventory,
             "previous_practice_outcomes": th.economics.feedback[-6:],
@@ -176,6 +188,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                    **cost_card(agent, case, th, th.reference),
                                    "currently_executable": False},
         }
+        supplier["phase"] = phase(supplier)
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
         for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
@@ -190,17 +203,26 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         keys = {}
 
         def add_package(terms, origin, th=th, sid=sid, keys=keys):
+            agent.check_budget()
+            generation = board["candidate_generation"]
+            generation["attempted"] += 1
             if not valid_offer(agent, case, th, terms):
+                generation["rejected"].append({"supplier_id": sid, "origin": origin, "terms": terms,
+                                               "reason": "failed complete-offer, allowed-option or buyer-constraint validation"})
                 return None
             key = json.dumps(terms, sort_keys=True)
             if key in keys:
+                generation["duplicates"] += 1
+                origins = board["packages"][keys[key]]["origins"]
+                if origin not in origins:
+                    origins.append(origin)
                 return keys[key]
             pid = f"{sid}:p{len(keys)}"
             keys[key] = pid
             card = cost_card(agent, case, th, terms)
             card.pop("uncertainty", None)  # Shared warning above; avoid repeating it per package.
             board["packages"][pid] = {
-                "supplier_id": sid, "terms": terms, "origin": origin, **card,
+                "supplier_id": sid, "terms": terms, "origin": origin, "origins": [origin], **card,
                 "versus_standing": th.economics.compare(terms, current),
                 "versus_opening": th.economics.compare(terms, th.reference),
             }
@@ -322,6 +344,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
+    board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
     add_playbooks(board)
     return board
@@ -330,7 +353,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
 def validate_selection(board, selection):
     if not isinstance(selection, dict) or set(selection) != {
         "action_id", "package_ids", "question_id", "evidence_ids", "tone", "rationale",
-        "reply_text", "continuation_review",
+        "reply_text", "continuation_review", "plan",
     }:
         raise ValueError("invalid final decision shape")
     action = board["actions"].get(selection["action_id"])
@@ -380,6 +403,7 @@ def validate_selection(board, selection):
         raise ValueError("risk reason and stopping condition are required")
     if action["kind"] in ("ask", "reply") and not review["information_needed"].strip():
         raise ValueError("a question needs an explicit decision-relevant information goal")
+    validate_plan(board, action, selection)
     if action["kind"] not in ("accept", "walk_away"):
         render_reply(selection["reply_text"], board["reply_facts"])
     return action
@@ -468,33 +492,60 @@ def execute(agent, case, threads, board, selection):
     decision = {"supplier_id": sid, "message": message}
     agent.log("decision", {"authority": "astra", "kind": kind, "selection": selection,
                            "action": decision, "llm_calls": agent.router.calls}, sid)
-    agent.router.calls = []
     return decision
 
 
 def decide(agent, case, threads, deadline, closing_only=False):
+    started = time.monotonic()
+    budget = TurnBudget(deadline)
     sources, history = {}, {}
     for sid in live_threads(threads):
         sources[sid] = agent.sources(sid, threads[sid])
         history[sid] = agent.threads[sid].episodes
-    # One negotiator call per turn. The final reviewer sees all suppliers and chooses
-    # independently. Reserve time for it instead of spending the window on grid search.
+    timings = {"at_start": budget.snapshot(), "source_seconds": round(time.monotonic() - started, 3)}
+    availability = {sid: {"status": "not_called_this_turn"} for sid in live_threads(threads)}
     viable = [sid for sid in live_threads(threads)
               if moves_left(case, threads[sid]) > 1
               and latest(threads[sid]).get("status") != "final_offer"]
     if viable and not closing_only:
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
-        agent.interpret(case, sid, threads[sid], min(deadline - 28, time.monotonic() + 12))
+        if budget.can_propose():
+            before = time.monotonic()
+            analysis, _ = agent.interpret(case, sid, threads[sid], budget.proposer_deadline())
+            availability[sid] = {"status": "unavailable" if analysis.get("fallback") else
+                                  "partial" if analysis.get("validation_errors") else "ok",
+                                 "failure_type": analysis.get("failure_type"),
+                                 "accepted_proposals": len(agent.threads[sid].analyst_candidates),
+                                 "cache_hit": bool(analysis.get("cache_hit"))}
+            timings["proposer_stage_seconds"] = round(time.monotonic() - before, 3)
+        else:
+            # Do not carry stale model proposals across a changed reply when skipped.
+            agent.threads[sid].analyst_candidates = []
+            availability[sid] = {"status": "skipped_insufficient_budget", "budget": budget.snapshot()}
+    else:
+        availability = {sid: {"status": "not_needed_closing"} for sid in availability}
+    before = time.monotonic()
     board = build_board(agent, case, threads, sources, history, closing_only)
+    board["model_availability"] = availability
+    board["timing"] = {**timings, "board_seconds": round(time.monotonic() - before, 3),
+                       "before_final": budget.snapshot()}
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")
-    agent.log("final_board", board)
+    board_event_id = agent.log("final_board", board)
     try:
-        choice = agent.router.final_decision(copy.deepcopy(board), deadline)
-        # Validate twice: schema membership and actual current state at execution.
+        choice = agent.router.final_decision(board, budget.final_deadline())
         validate_selection(board, choice)
-        return execute(agent, case, threads, board, choice)
+        if time.monotonic() >= deadline:
+            raise TimeoutError("decision arrived after execution deadline")
+        decision = execute(agent, case, threads, board, choice)
+        timings = {**board["timing"], "total_decision_seconds": round(time.monotonic() - started, 3),
+                   "remaining_before_send_seconds": round(max(0, deadline - time.monotonic()), 3)}
+        record_decision(agent, case, board, choice, decision, board_event_id, started, timings)
+        agent.router.calls = []
+        return decision
     except (ValueError, KeyError, TypeError, ArithmeticError, TimeoutError, FinalDecisionUnavailable) as exc:
         agent.log("final_decision_failed", {"error_type": type(exc).__name__, "sent": False,
+                                            "board_event_id": board_event_id,
+                                            "model_availability": availability, "budget": budget.snapshot(),
                                             "llm_calls": agent.router.calls})
         raise FinalDecisionUnavailable("Astra did not authorize a valid action; no substitute was sent") from None

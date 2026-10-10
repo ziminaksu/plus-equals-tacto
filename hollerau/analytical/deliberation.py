@@ -60,7 +60,9 @@ def action_consequences(th, terms, current, current_cost, candidate_cost, openin
             "optimistic_break_even_walkout_probability": round(max(0, gain) / denominator, 4)
             if denominator else None,
             "response_estimates_uncalibrated": {k: round(v, 4) for k, v in probabilities.items()},
-            "optimistic_model_expected_improvement_gain_eur": round(expected_gain, 2),
+            "partial_accept_walk_value_eur": round(expected_gain, 2),
+            "counteroffer_future_value": "not numerically estimated; Astra must plan this branch explicitly",
+            "not_total_expected_value": True,
             "cash_cost_if_offer_lost_eur": round(exit_cost - current_cost, 2),
             "final_offer_warning": status == "final_offer"}
 

@@ -8,7 +8,7 @@ def obj(properties):
 def enum_values(values):
     # Object enums are represented as strict objects whose scalar fields are enums.
     # Python subsequently validates the exact allowed combination, not just each field.
-    variants = []
+    variants, scalars = [], {}
     for value in values:
         if isinstance(value, dict):
             variants.append(obj({k: enum_values([v]) for k, v in value.items()}))
@@ -16,7 +16,8 @@ def enum_values(values):
             kind = "null" if value is None else "boolean" if isinstance(value, bool) else (
                 "number" if isinstance(value, (int, float)) else "string"
             )
-            variants.append({"type": kind, "enum": [value]})
+            scalars.setdefault(kind, []).append(value)
+    variants.extend({"type": kind, "enum": list(dict.fromkeys(items))} for kind, items in scalars.items())
     return variants[0] if len(variants) == 1 else {"anyOf": variants}
 
 
@@ -79,6 +80,17 @@ def final_schema(board):
         "tone": enum_values(["warm", "cooperative", "firm"]),
         "rationale": {"type": "string"},
         "reply_text": {"type": "string"},
+        "plan": obj({
+            "expected_response": enum_values([
+                "accepted_proposal", "counteroffer", "unchanged_offer", "information_only", "walkout", "closed"
+            ]),
+            "expected_price_low": {"type": ["number", "null"]},
+            "expected_price_high": {"type": ["number", "null"]},
+            "basis_source_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 3},
+            **{k: {"type": "string"} for k in ("basis", "if_counteroffer", "if_unchanged", "if_accepted",
+                                               "if_walkout", "why_not_alternative", "revision_from_previous")},
+            "rejected_alternative_id": enum_values([""] + list(board["actions"]) + list(board["packages"])),
+        }),
         "continuation_review": obj({
             "target_package_id": enum_values([""] + list(board["packages"])),
             "walkout_probability_low": {"type": "number", "minimum": 0, "maximum": 1},

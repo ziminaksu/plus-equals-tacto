@@ -11,7 +11,7 @@ applicable relationship costs all matter.
 | What you need | Read |
 |---|---|
 | What the system actually does, and who decides | [Current architecture](docs/CURRENT_ARCHITECTURE.md) |
-| A clear contract for the next structural improvement | [Decision contract — proposed](docs/DECISION_CONTRACT.md) |
+| A clear contract for the next structural improvement | [Decision contract](docs/DECISION_CONTRACT.md) |
 | Actual latest results, including regressions and timeouts | [V9 Arena report](docs/evaluation/v9-arena-results.md) |
 | Setup, bounded runs and inspection | [Operating guide](docs/ANALYTICAL.md) |
 | Original challenge and starter kit | [Brief](brief/README.md), [starter-kit guide](README-kit.md) |
@@ -19,17 +19,16 @@ applicable relationship costs all matter.
 
 ## Current state
 
-Policy **`astra-v9-category-playbooks`**, evaluated at commit `b7c1dbc`, combines
-Ksu's negotiation changes with action/response memory and category-specific
-packages. Astra proposes options and a separate Astra call selects the final move.
-Python generates additional options, calculates costs, applies constraints and
-sends the validated selection. SQLite retains exchanges and learning evidence.
+Policy **`astra-v10-traceable-plans`** keeps Ksu's bargaining improvements and
+adds one shared deadline, lossless prompt compaction, mandatory conditional plans,
+linked reply-error records and reproducible experiment metadata. Python prices
+and validates; Astra makes the final strategic choice; SQLite retains the evidence.
 
-Experiments are stopped for architecture review. Six v9 cases completed: three
-improved over their previous best, one tied and two declined. P08 did not start.
-16 of 19 proposer calls timed out; all 20 final calls succeeded. These results do
-not isolate the effect of each simultaneous change. The new decision contract is
-a proposed structure, not an implemented strategy or a promise of better scores.
+The v9 baseline had 16/19 proposer timeouts. V10 removes its approximately
+7.2-second effective read limit and allocates up to 20 seconds within a shared
+55-second turn budget. No timeout-free or score claim is made before evaluation.
+The user authorized exactly one P02 verification run. See the
+[v10 implementation and scope](docs/evaluation/v10-traceable-plans.md).
 
 ## Setup
 
@@ -44,7 +43,7 @@ uv run arena data
 Configure `ARENA_API_KEY`, `ARENA_DATA` and `OPENAI_API_KEY` in ignored `.env`.
 Never commit credentials. `play` and `run` default to the analytical Astra agent;
 legacy modes remain explicit comparisons. See the operating guide before starting
-practice sessions. This review starts no new runs or local tests.
+practice sessions. Only the separately authorized P02 verification run is in scope; local tests remain stopped.
 
 ## Repository map
 

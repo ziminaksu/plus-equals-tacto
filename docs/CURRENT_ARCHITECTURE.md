@@ -1,9 +1,10 @@
 # How the negotiation system works
 
-**Current runtime:** `astra-v9-category-playbooks`, evaluated at `b7c1dbc`.
-**Current activity:** experiments stopped; architecture and evidence review.
-This describes the running code. The [decision contract](DECISION_CONTRACT.md)
-separately identifies proposed changes that are not implemented.
+**Current runtime:** `astra-v10-traceable-plans`.
+**Current validation scope:** one authorized P02 Arena session; no P18 or local tests.
+The v9 baseline remains evaluated at `b7c1dbc`. V10 implements the timing and
+linked-plan structure described here. See [the implementation record](evaluation/v10-traceable-plans.md)
+and [the decision contract](DECISION_CONTRACT.md).
 
 ## The objective
 
@@ -43,9 +44,9 @@ flowchart TD
 | Arena connection | Case/messages → exchange; authorized action → Arena | `arena_kit/client.py`, `play.py`; practice logging in `hollerau/analytical/cli.py`. |
 | Evidence and state | Public records + messages + memory → facts, current offers, estimates | `agent.py`, `retrieval.py`, `storage.py`, `hollerau/intel.py`. |
 | Offers and economics | State → packages, validity, cost breakdowns and uncertainty | Astra proposer through `router.py`; Python `director.py`, `playbook.py`, `sustainability.py`, `arena_kit/cost.py`. |
-| Strategic decision | Decision board → supplier, action, package IDs, rationale and reply | Final Astra call in `router.py`; schema in `contracts.py`. |
+| Strategic decision | Decision board → supplier, action, package IDs, conditional plan and reply | Final Astra call in `router.py`; schema in `contracts.py`; validation and linked outcomes in `decision_record.py`. |
 | Execution | Selection → checked message or explicit failure | `director.py`, `communication.py`, `hollerau/compliance.py`. |
-| Observation and audit | Actual reply/result → evidence and revised estimates | `feedback.py`, `beliefs.py`, `preferences.py`, `storage.py`; reports read logs. |
+| Observation and audit | Actual reply/result → prediction error, evidence and revised estimates | `feedback.py`, `decision_record.py`, `beliefs.py`, `storage.py`; `report.py` displays plans beside outcomes. |
 
 Unqualified filenames are under `hollerau/analytical/`. These are responsibility
 boundaries, not newly created services. `director.py` currently spans offer
@@ -93,7 +94,7 @@ not buyer contractual constraints or universal facts about suppliers.
 | Supplier economics | Production cost EUR/unit, financing assumptions, sustainable margin | Evidence plus permitted practice cost feedback. Display uncertainty; acceptance does not prove profitability. |
 | Supplier response | Reservation estimate `r`; payment, duration, lead, quality, capacity, index and volume sensitivities | Heuristic priors updated from exchanges; advisory supplier preferences, not buyer weights. |
 | Strategy choices | Anchor percentages, concession sequence, final-offer rule | Developer/Astra policy assumptions to evaluate. |
-| Engineering limits | 45-second internal budget; proposer allocation up to 12 seconds; final request cap 30 seconds; 24 anchor packages | Limits affecting which information/options reach the decision-maker. |
+| Engineering limits | 55-second shared internal budget; proposer up to 20 seconds; final request cap 30 seconds; 24 anchor packages | Limits affecting which information/options reach the decision-maker. |
 
 There is no validated universal pressure index. Behavior currently uses 64 weighted
 scenarios; supplier economics uses a separate distribution. Astra's neural weights
@@ -137,15 +138,22 @@ individual changes cannot be separated from different histories or model/supplie
 variation. Comparing one new run with the best of several old runs also favors
 the historical best. Report this comparison without claiming causation.
 
-## The structural gap
+## Implemented structure and remaining limits
 
-We store detailed packages and prose rationales. We do not require a structured
-chain of **move → predicted supplier reply → conditional next move → observed
-prediction error**. Current continuation arithmetic includes exact acceptance and
-walkout consequences, but no explicit additional future improvement from a
-counteroffer. Astra infers the sequence from the board and prose.
+V10 requires a structured **move → predicted reply → conditional next move →
+observed prediction error** chain. `decision_record.py` validates plans, links them
+to full boards and records response/price mismatches. The next decision receives
+that mismatch and must explain its revision. Conditional actions are plans, never
+automatically executed promises.
 
-The [decision contract](DECISION_CONTRACT.md) specifies the next design. First
-make decisions traceable; then change one diagnosed behavior at a time. This
-architecture review changes documentation and reporting, not negotiation policy.
-No additional runs are queued.
+The old acceptance/walkout subtotal is explicitly labeled as a partial value;
+it is not a full expected value that silently assigns no improvement to counters.
+Astra must plan the counteroffer branch. There is still no calibrated multi-turn
+optimizer, learned buyer weights or guarantee that a valid plan is strategically good.
+
+`budget.py` owns deadline allocation. `prompt_context.py` losslessly tabulates and
+deduplicates prompt data, verifies reconstruction before sending, and preserves all
+offers, source values and IDs. `experiment.py` fingerprints code, public data and
+initial memory. The practice runner supports stopping after the current session
+without changing its allowance. [The decision contract](DECISION_CONTRACT.md)
+identifies remaining limits.

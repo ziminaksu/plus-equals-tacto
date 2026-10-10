@@ -1,14 +1,14 @@
 # Analytical agent — operating guide
 
-Current policy: `astra-v9-category-playbooks`. Start with
+Current policy: `astra-v10-traceable-plans`. Start with
 [the current architecture](CURRENT_ARCHITECTURE.md) for responsibilities and
-[the proposed decision contract](DECISION_CONTRACT.md) for the next design.
+[the decision contract](DECISION_CONTRACT.md) for the implemented planning structure.
 Earlier version descriptions and experiments are preserved in
 [historical notes](history/ANALYTICAL-through-v82.md).
 
 ## Current authorization and status
 
-Architecture review is in progress. No new Arena sessions are queued. Local tests,
+The user authorized one P02 session after the v10 fixes. No P18 session is authorized for this batch. Local tests,
 simulations and LLM replays remain stopped under the user's instruction. The
 examples below explain operation; they are not instructions to launch a batch.
 
@@ -26,7 +26,8 @@ Example of one explicitly authorized session:
 
 ```sh
 uv run tacto-bayes --primary astra --reviewer astra \
-  --run-id experiment-name --max-sessions 1 --cases case:P02
+  --run-id experiment-name --max-sessions 1 --cases case:P02 \
+  --hypothesis "Verify proposer availability and linked plan outcomes"
 uv run python -m hollerau.analytical.report --run-id experiment-name
 ```
 
@@ -35,11 +36,14 @@ HTTP. Failed or ambiguous starts still count; no automatic replacements. Reuse
 the same run ID on inspection/recovery and do not change run IDs or databases to
 bypass a cap. An interrupted process does not prove the remote session never opened.
 
-There is currently no clean stop-after-current command. In the v9 review, the
-remaining P08 start was blocked by lowering the existing local allowance to the
-number of already reserved attempts. This triggered a cap-mismatch exception
-before the next reservation. P07 completed and P08 never opened. That intervention
-is recorded in the evaluation; it is not a normal quota-reset procedure.
+To stop after the active session, create `hollerau/logs/stop-<run-id>` or use
+`--stop-file PATH` and create that file. The runner checks it before each new
+reservation and exits normally. It does not reset or mutate the allowance. V9's
+manual allowance intervention remains documented in its historical report.
+
+Every experiment records a hypothesis, source hashes, commit, public-data
+fingerprint, initial memory fingerprint and model settings before opening a session.
+These fingerprints identify differences; they do not by themselves control them.
 
 ## Inspect one decision
 
@@ -50,7 +54,8 @@ The SQLite `events` table links records by run, case, session and supplier:
 | `experiment`, `case`, `opened` | Which configuration and public context were active? |
 | `evidence`, `cost_evidence`, `coefficients` | Which facts and estimates were available? |
 | `final_board` | Which packages, costs, actions and restrictions did Astra see? |
-| `decision` | What did Astra select and why? Which model calls actually succeeded? |
+| `decision_record`, `decision` | What did Astra select and why? Which calls succeeded? What did it expect and plan to do next? |
+| `plan_outcome`, `decision_dispatch` | Was the action attempted? How did the actual reply differ from the forecast? |
 | `sent`, `received`, `exchange` | What was transmitted and what did the supplier return? |
 | `observation`, `cost_feedback` | What was updated from that evidence? |
 | `result`, `completed`, `error`, `final_decision_failed` | How did the session or action end? |
@@ -65,8 +70,8 @@ for the current measured batch.
 Use the file map in [CURRENT_ARCHITECTURE.md](CURRENT_ARCHITECTURE.md), not old
 version descriptions, to find the default execution path. `director.py` builds
 options, invokes final selection and validates execution. `router.py` owns model
-calls; `contracts.py` owns the current structured-output schemas. The proposed
-contract does not yet replace these schemas.
+calls; `contracts.py` owns the current structured-output schemas. The current schema requires a conditional plan, and final validation checks its IDs
+and prediction types before sending.
 
 ## Publish a change
 

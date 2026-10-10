@@ -1,5 +1,6 @@
 """Bounded interpretation calls with an independently configured strategic reviewer."""
 
+import asyncio
 import copy
 import hashlib
 import json
@@ -12,6 +13,7 @@ import httpx
 from .contracts import decision_schema, decode_conditions, final_schema
 from .discovery import validate_quote_request
 from .preferences import validate_conditions
+from .prompt_context import compact_context
 
 SMALL = "Qwen/Qwen3.8-27B:deepinfra"
 LARGE = "Qwen/Qwen3.8-2.4T-A95B:deepinfra"
@@ -233,7 +235,24 @@ for accept/walk_away. Risk review numbers are INTERNAL and are never sent to the
 
 With closing_only or one move left, choose accept or walk_away. For other turns choose freely but justify
 continuation risk. Rationale and risk_reason should each be at most two sentences. Return the exact schema.
-A timeout/invalid decision stops execution; there is no strategic fallback."""
+A timeout/invalid decision stops execution; there is no strategic fallback.
+
+STRUCTURED PLAN: Return plan for the selected action. expected_response is one of accepted_proposal,
+counteroffer, unchanged_offer, information_only, walkout, closed (closed ONLY for accept/walk_away).
+Forecast an optional expected_price_low/high interval for a non-closing reply; otherwise both are null.
+These are subjective forecasts, never facts or commitments. basis_source_ids cites this supplier's
+supplied sources, history or verified evidence IDs; use [] and explicitly label an assumption if none.
+Write one short sentence each for if_counteroffer, if_unchanged, if_accepted, if_walkout. These are
+conditional next steps, NOT pre-authorized future actions. If a branch cannot occur after closure, say so.
+Compare a distinct available rejected_alternative_id (package or action) and explain why_not_alternative;
+use an empty ID only if no meaningful alternative exists. In revision_from_previous, address the actual
+last_plan_outcome, previous plan and stop condition. If the forecast failed, revise the assumption rather
+than repeating it as fact. Respond to the actual supplier statement, not a generic pressure index.
+Inspect model_availability: a missing proposer is missing advice, not evidence that no better offer exists.
+All costs, terms and IDs in lossless tables are the same as ordinary records; columns label every row.
+Keep the entire plan concise. Evaluate the strategic value of obtaining a counteroffer explicitly:
+the partial accept/walk estimate does not value that branch and must not be read as total expected value.
+"""
 
 
 def parse_object(text):
@@ -272,6 +291,7 @@ class Router:
             if self.provider == "openai"
             else os.environ.get("QWEN_LARGE_MODEL", LARGE)
         )
+        self.transport = transport
         self.client = httpx.Client(transport=transport, timeout=12)
         self.calls = []
         self.cache = {}
@@ -296,36 +316,49 @@ class Router:
         self.review_failures = 0
         self.final_authority = bool(enabled and (self.primary == "astra" or self.reviewer == "astra"))
 
+    async def _astra_request(self, payload, deadline):
+        # A real total deadline, not separate fractions of the same budget.
+        # Cancellation closes the async request; no background retry keeps running.
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("request deadline exhausted before dispatch")
+        async with asyncio.timeout(remaining):
+            async with httpx.AsyncClient(transport=self.transport, timeout=httpx.Timeout(
+                remaining, connect=min(4, remaining), pool=min(1, remaining)
+            )) as client:
+                return await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={"Authorization": "Bearer " + self.review_key}, json=payload,
+                )
+
     def call_astra(self, system, data, deadline, role="strategic_review", schema=None):
-        """Responses API; bounded reasoning/output, no tools, no retries or stored response."""
-        cap = 30 if role == "final_decision" else 12 if role == "negotiator" else 12
-        remaining = min(cap, deadline - time.monotonic() - 3)
-        if not self.review_enabled or remaining < 1:
-            raise TimeoutError("Astra unavailable or decision budget exhausted")
-        record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started"}
-        self.calls.append(record)
+        """Responses API with one wall-clock deadline, no retries or stored response."""
+        cap = 30 if role == "final_decision" else 20 if role == "negotiator" else 12
         start = time.monotonic()
+        request_deadline = min(deadline, start + cap)
+        record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started",
+                  "allocated_seconds": round(max(0, request_deadline - start), 3)}
+        self.calls.append(record)
         try:
-            response = self.client.post(
-                "https://api.openai.com/v1/responses",
-                headers={"Authorization": "Bearer " + self.review_key},
-                timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
-                                      write=remaining / 20, read=remaining * 0.8),
-                json={
-                    "model": ASTRA,
-                    "instructions": system,
-                    # Responses JSON mode checks input as well as the instructions field.
-                    "input": "Review the following evidence and return one JSON object.\n"
-                    + json.dumps(data, ensure_ascii=False),
-                    "reasoning": {"effort": "low"},
-                    "text": {"format": (
-                        {"type": "json_schema", "name": role, "strict": True, "schema": schema}
-                        if schema else {"type": "json_object"}
-                    )},
-                    "max_output_tokens": 4096,
-                    "store": False,
-                },
-            )
+            if not self.review_enabled or request_deadline - start < 1:
+                raise TimeoutError("Astra unavailable or decision budget exhausted")
+            text, metadata = compact_context(data)
+            record.update(metadata)
+            payload = {
+                "model": ASTRA, "instructions": system,
+                "input": "Read the supplied data and return one JSON object.\n" + text,
+                "reasoning": {"effort": "low"},
+                "text": {"format": (
+                    {"type": "json_schema", "name": role, "strict": True, "schema": schema}
+                    if schema else {"type": "json_object"}
+                )},
+                "max_output_tokens": 4096,
+                "store": False,
+            }
+            record["schema_chars"] = len(json.dumps(schema, separators=(",", ":")))
+            record["preparation_seconds"] = round(time.monotonic() - start, 3)
+            record["network_budget_seconds"] = round(max(0, request_deadline - time.monotonic()), 3)
+            response = asyncio.run(self._astra_request(payload, request_deadline))
             record["http_status"] = response.status_code
             if response.is_error:
                 try:

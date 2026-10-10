@@ -1,9 +1,9 @@
 # Decision contract and controlled improvement
 
-**Status: proposed next structure, not implemented runtime schemas.**
-The [current architecture](CURRENT_ARCHITECTURE.md) maps existing files and behavior.
-This is the contract for organizing future changes. Do not create more models,
-change supplier behavior or claim a score gain merely by adopting these names.
+**Status: core contract implemented in v10; evaluation pending.**
+`contracts.py` requires a plan; `decision_record.py` validates it and records linked
+outcomes. [The current architecture](CURRENT_ARCHITECTURE.md) maps the execution
+path. More records do not prove better decisions or a score gain.
 
 ## One shared decision record
 
@@ -22,10 +22,13 @@ The contract makes **deal** and **move** distinct. A deal is a complete package
 we could buy. A move is a request, question, acceptance or other action intended
 to change the negotiation. The cheapest proposed deal may be a poor next move.
 
-Current logs contain much of Case, State, Options and Outcome in separate events.
-They contain rationales, uncertainty and stop conditions too. What is missing is
-one linked record, explicit conditional reply branches and a required comparison
-of forecast with response. Documentation does not make those gaps implemented.
+Each `decision_record` now links the full board event, current state, evidence
+provenance, generation counts/rejections, selected packages, model availability,
+timing and validated plan. `plan_outcome` compares response class and an optional
+forecast price interval with the actual reply. The next board contains the prior
+plan and its observed errors. Raw observations still drive supplier estimates;
+Astra forecasts do not become learning labels. Evidence quotations are validated
+where supported by existing checks; semantic truth of all prose is not guaranteed.
 
 ## Decision authority
 
@@ -78,8 +81,10 @@ Use the same phases across suppliers, driven by events rather than case IDs:
 | Close | Accept a live offer or take another allowed closing action? | Current IDs, feasibility, costs, status and deadline. |
 | Learn | Which prediction was wrong and what is now supported? | The linked move/reply and permitted result components. |
 
-The running code has statuses, history and closing guards, but not this explicit
-end-to-end phase contract. Do not confuse a diagram with a completed refactor.
+V10 records open/exchange/close phases from current state and action, then learn
+on the linked outcome. Understanding is the evidence preparation stage, not an
+extra model call. A missing terminal reply is recorded as unobserved rather than
+inventing a rejection or walkout.
 
 ## Improvement order
 
@@ -90,10 +95,10 @@ end-to-end phase contract. Do not confuse a diagram with a completed refactor.
 | 3. Make planning explicit | Conditional next moves and reply-error comparison | The record distinguishes a bad prediction from a missing option, invalid action or deliberate closing decision. |
 | 4. Improve one behavior | One targeted change supported by the trace | The intended action changes under the stated conditions; economics and regressions are reported. |
 
-The first engineering hypothesis to investigate is proposer availability, because
-16/19 calls timed out. Measure prompt construction, request time and the actual
-allocated deadline before choosing a timing, prompt-size or call-count change.
-Do not assume increasing a timeout alone fixes the architecture.
+V10 corrects the proposer deadline, adds cancellable request deadlines and
+lossless prompt compaction. Calls log allocated time, preparation time, actual
+request time, schema size, input size and usage. A timeout or budget skip is visible
+to the final decision; it cannot masquerade as successful proposer advice.
 
 ## Experiment discipline
 
@@ -115,14 +120,15 @@ Historical best and historical latest are useful context but are not matched con
 Preserve no-deals, timeouts and unfavorable outcomes. Do not select only successful
 runs or change memory during a comparison without recording it. No minimum score
 is guaranteed. Local simulator tests remain stopped under the current instruction;
-this plan does not authorize new Arena runs either.
+the user has separately authorized one P02 run for v10.
 
-## File boundaries for a later refactor
+## File boundaries
 
 Keep `arena_kit/` for the protocol and published economics. Within
 `hollerau/analytical/`, separate coordination, evidence/state, option generation,
 economics, final decision, execution and observation. Existing files are mapped in
-[the architecture](CURRENT_ARCHITECTURE.md); split the large `director.py` only
-when these contracts are explicit and behavior-preserving verification is agreed.
+[the architecture](CURRENT_ARCHITECTURE.md); split the large `director.py` in a later
+behavior-preserving refactor. New budget, prompt, decision-record and experiment
+responsibilities already have separate modules.
 Retain SQLite and the current entry points. Keep legacy agents clearly marked as
 comparisons, outside the explanation of the default path.

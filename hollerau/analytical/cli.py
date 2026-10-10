@@ -18,6 +18,7 @@ from arena_kit.play import RemoteTable, hosted, play
 
 from .agent import DECISION_BUDGET_S, POLICY_VERSION, AnalyticalAgent
 from .director import standing_sheet
+from .experiment import fingerprint
 from .router import Router
 from .storage import Store
 
@@ -45,6 +46,10 @@ class LoggedTable(RemoteTable):
         return result
 
     def send(self, supplier_id, message):
+        active = getattr(self.agent.threads.get(supplier_id), "active_plan", None)
+        if active:
+            self.agent.log("decision_dispatch", {"decision_id": active["decision_id"],
+                                                 "status": "dispatch_attempt", "message": message}, supplier_id)
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().send(supplier_id, message)
         if "result" not in result:
@@ -70,6 +75,10 @@ class LoggedTable(RemoteTable):
             # could itself exceed the move window; only received standing IDs are chosen.
             if not action.get("term_sheet_id") or action["term_sheet_id"] != self.standing_ids.get(supplier_id):
                 raise ValueError("accept requires the received server-confirmed standing offer ID")
+        active = getattr(self.agent.threads.get(supplier_id), "active_plan", None)
+        if active:
+            self.agent.log("decision_dispatch", {"decision_id": active["decision_id"],
+                                                 "status": "dispatch_attempt", "message": message}, supplier_id)
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
@@ -89,6 +98,8 @@ def main(argv=None):
     ap.add_argument("--max-sessions", type=int, default=5)
     ap.add_argument("--run-id", required=True, help="reuse the same ID on restart; reserved attempts count")
     ap.add_argument("--db", default="hollerau/logs/analytical.sqlite")
+    ap.add_argument("--stop-file", type=Path, help="finish the current session, then stop if this file exists")
+    ap.add_argument("--hypothesis", default="unspecified; exploratory run")
     ap.add_argument("--offline-llm", action="store_true", help="explicit template-only test mode")
     ap.add_argument("--primary", choices=["astra", "qwen"], default=os.environ.get("ANALYTICAL_PRIMARY", "astra"))
     ap.add_argument("--reviewer", choices=["astra", "primary"], default=os.environ.get("STRATEGIC_REVIEWER", "astra"))
@@ -116,11 +127,16 @@ def main(argv=None):
     package.lookup("")
     store = Store(args.db)
     code_hash = hashlib.sha256(b"".join(p.read_bytes() for p in sorted(Path(__file__).parent.glob("*.py")))).hexdigest()
+    reproducibility = fingerprint(package, store)
+    stop_file = args.stop_file or Path(f"hollerau/logs/stop-{args.run_id}")
     store.log(
         args.run_id,
         "experiment",
         {
             "policy": POLICY_VERSION,
+            "hypothesis": args.hypothesis,
+            "reproducibility": reproducibility,
+            "stop_file": str(stop_file),
             "code_sha256": code_hash,
             "cases": args.cases,
             "max_sessions": args.max_sessions,
@@ -136,6 +152,11 @@ def main(argv=None):
         ap.error("one or more cases are not hosted practice cases")
     rows = []
     for case_id in args.cases:
+        if stop_file.exists():
+            store.log(args.run_id, "batch_stopped", {"before_case": case_id,
+                                                    "reason": "stop file present; no new reservation"})
+            print("STOP requested; no further session starts.", flush=True)
+            break
         # Persist BEFORE the HTTP request; an unknown outcome still consumes this allowance.
         store.reserve(args.run_id, case_id, args.max_sessions)
         # A transient failure in one supplier session must not disable the reviewer

@@ -15,6 +15,8 @@ from .. import compliance, intel, levers
 from ..agent import _opening_standard, describe
 from ..params import Params
 from .beliefs import Beliefs
+from .budget import TURN_SECONDS
+from .decision_record import finish_plan, observe_plan
 from .deliberation import economics_context, objective_scope
 from .director import FinalDecisionUnavailable, cost_card
 from .director import decide as astra_decide
@@ -29,8 +31,8 @@ from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v9-category-playbooks"
-DECISION_BUDGET_S = 45
+POLICY_VERSION = "astra-v10-traceable-plans"
+DECISION_BUDGET_S = TURN_SECONDS
 
 
 class DecisionBudgetExpired(Exception):
@@ -72,7 +74,7 @@ class AnalyticalAgent:
             raise DecisionBudgetExpired
 
     def log(self, kind, payload, sid=None):
-        self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
+        return self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
 
     def risk_for_case(self, case):
         """Conservative default except for quality-first cases where tail risk can overprice quality.
@@ -213,6 +215,7 @@ class AnalyticalAgent:
 
     def finish(self, case, result):
         """Persist only permitted completed-practice components for the next session."""
+        finish_plan(self, case, result)
         sid = result.get("supplier_id")
         th = self.threads.get(sid)
         predicted = th.economics.card(result["terms"])["expected_breakdown_eur"] if (
@@ -250,6 +253,7 @@ class AnalyticalAgent:
             if learned:
                 self.log("observation", learned, sid)
                 self.log("coefficients", th.beliefs.snapshot(), sid)
+            observe_plan(self, case, sid, safe_reply, learned)
             th.pending = None
 
     def receive_terminal(self, case, threads, sid, request, reply):

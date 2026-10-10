@@ -39,7 +39,7 @@ class Store:
         self.db.commit()
 
     def log(self, run, kind, payload, case=None, supplier=None, session=None):
-        self.db.execute(
+        cursor = self.db.execute(
             "INSERT INTO events VALUES(NULL,?,?,?,?,?,?,?)",
             (
                 time.time(),
@@ -52,6 +52,7 @@ class Store:
             ),
         )
         self.db.commit()
+        return cursor.lastrowid
 
     def reserve(self, run, case, cap):
         if not 1 <= cap <= 5:
