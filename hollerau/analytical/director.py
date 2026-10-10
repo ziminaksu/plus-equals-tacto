@@ -454,11 +454,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             ahead = {sid for sid in live if contacts[sid] > floor + 1}
             board["actions"] = {k: v for k, v in board["actions"].items()
                                 if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
-            if floor == 0:  # someone has not heard from us yet: no early accept of an ordinary open offer
-                board["actions"] = {
-                    k: v for k, v in board["actions"].items()
-                    if not (v["kind"] == "accept"
-                            and latest(threads[v["supplier_id"]]).get("status") not in ("final_offer", "agreed"))}
+
     add_action_consequences(agent, board)
     return board
 
