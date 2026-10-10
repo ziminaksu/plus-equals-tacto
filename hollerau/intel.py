@@ -165,7 +165,7 @@ def build(case, supplier_id, package=None, asked_price=None):
     asked = d.asked_pct if d.asked_pct is not None else 0.0
     for s, e, l_, pct, w in sorted(index_claims, key=lambda x: x[3]):
         # only data that argues for us: a falling index, or one far below the asked increase
-        if pct <= 0 or (asked >= 3 and pct < 0.4 * asked):
+        if pct <= 0:  # a rise, however small, argues for the supplier
             sentence = f"The index {s} moved {pct:+.1f}% over the last twelve months ({e} to {l_})."
             d.claims.append(Claim("index", [e, l_], sentence, 0.5 + 0.5 * (w or 0.3) + 0.02 * (asked - pct), pct))
 
@@ -244,11 +244,11 @@ def build(case, supplier_id, package=None, asked_price=None):
             before = [(k, v) for k, v in mine if v["unit_price"] < last["unit_price"] * 0.97]
             d.reference_prices["current_orders"] = last["unit_price"]
             if before and asked_price > last["unit_price"]:
-                b_id, b = before[-1]
-                d.reference_prices["before_raise"] = b["unit_price"]
+                b_id, prev = before[-1]  # not `b`: that is the buyer block, used below
+                d.reference_prices["before_raise"] = prev["unit_price"]
                 d.claims.append(Claim(
                     "price_already_raised", [b_id, last_id],
-                    f"Our orders show your price already rose this year from EUR {b['unit_price']:.2f} ({b_id}) "
+                    f"Our orders show your price already rose this year from EUR {prev['unit_price']:.2f} ({b_id}) "
                     f"to EUR {last['unit_price']:.2f} ({last_id}).",
                     1.25, last["unit_price"]))
     # share of our business: a supplier that serves only part of a split-sourced part wants more of it
@@ -285,6 +285,39 @@ def build(case, supplier_id, package=None, asked_price=None):
                  if most else "We have another approved source for this part")
                 + ", so we can shift volume between our approved sources.",
                 1.2, None))
+
+    # the supplier's own words against its increase (P08: "nickel and alloys covered at fixed prices until
+    # March 2027"; its own quote at 5.45 three weeks ago). True data that disarms, cited by its ID.
+    hedge = re.compile(r"(?:requirement|material)[^.]{0,60}covered at fixed prices until ([A-Z][a-z]+ \d{4})", re.I)
+    for row in _query(package, "SELECT id, date FROM documents WHERE supplier_id = ? AND kind IN "
+                               "('letter', 'email') ORDER BY date DESC", (supplier_id,)):
+        if row["id"] not in facts:
+            continue
+        try:
+            text = package.document(row["id"])
+        except Exception:
+            continue
+        m = hedge.search(text)
+        if m:
+            d.claims.append(Claim(
+                "cost_hedged", [row["id"]],
+                f"Your letter of {row['date']} ({row['id']}) states that your material requirement is covered at "
+                f"fixed prices until {m.group(1)}, so market movements do not reach your costs before then.",
+                1.45, None))
+            break
+    if asked_price and part:
+        own = sorted(
+            ((k, v) for k, v in facts.items()
+             if k.startswith("quote:") and v.get("supplier") == supplier_id and v.get("part") == part
+             and v.get("unit_price") and v.get("date", "") >= "2026-06-30"),
+            key=lambda kv: kv[1]["date"])
+        cheaper = [(k, v) for k, v in own if v["unit_price"] < asked_price * 0.98]
+        if cheaper:
+            k, v = cheaper[-1]
+            d.claims.append(Claim(
+                "own_quote", [k],
+                f"Your own quote of {v['date']} offered EUR {v['unit_price']:.2f} per unit for this part ({k}).",
+                1.4, v["unit_price"]))
 
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
