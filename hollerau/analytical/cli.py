@@ -56,10 +56,14 @@ class LoggedTable(RemoteTable):
     def close(self, supplier_id, message):
         action = message.get("action", {})
         if action.get("type") == "accept":
-            # The server validates the ID atomically on accept. A redundant read here
-            # could itself exceed the move window; only received standing IDs are chosen.
-            if not action.get("term_sheet_id"):
+            offer_id = action.get("term_sheet_id")
+            if not offer_id:
                 raise ValueError("accept requires a received standing offer ID")
+            # Reject indicative alternatives before sending an irreversible accept.
+            # Never convert a mismatch into acceptance of a different offer.
+            current = self.client.thread(self.session_id, supplier_id)
+            if current.get("offer_id") != offer_id:
+                raise ValueError("server-confirmed standing offer ID differs; abort acceptance")
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         result = super().close(supplier_id, message)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
