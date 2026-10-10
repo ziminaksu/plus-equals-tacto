@@ -1,4 +1,4 @@
-"""Deterministic, in-process negotiation benchmark. Never calls Arena or a model.
+"""Deterministic, in-process negotiation benchmark for CI comparison. Never calls Arena or a model.
 
 Use identical generated cases, supplier RNG seeds and new isolated memory for every
 agent. This is an engineering regression gate, not an Arena-score prediction.
