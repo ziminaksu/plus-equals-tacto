@@ -7,6 +7,7 @@ evidence. Only current, received standing IDs can be accepted.
 
 import copy
 import json
+import os
 import time
 
 from arena_kit.cost import complete_offer, cost_breakdown, total_cost
@@ -580,6 +581,46 @@ def execute(agent, case, threads, board, selection):
     return decision
 
 
+def compact_board(board, keep=24):
+    """A smaller board for chat providers / free tiers (ASTRA_BASE_URL or ASTRA_COMPACT=1): the full one
+    ran ~36 k tokens, 68 % of it 70+ package cards. Keeps the cheapest packages plus data anchors, steps
+    and current terms, trims history and sources; the counter action lists only kept packages."""
+    pk = board["packages"]
+
+    def total(pid):
+        v = pk[pid].get("expected_total_eur")
+        return v if isinstance(v, (int, float)) else float("inf")
+
+    chosen = []
+    for marker, limit in (("next step", 6), ("ladder", 4), ("data anchor", 6), ("current/previous", 3),
+                          ("Astra proposal", 3), ("indicative", 2)):
+        group = sorted((pid for pid in pk if marker in (pk[pid].get("origin") or "")), key=total)[:limit]
+        chosen += [pid for pid in group if pid not in chosen]
+    for pid in sorted(pk, key=total):
+        if len(chosen) >= keep:
+            break
+        if pid not in chosen:
+            chosen.append(pid)
+    chosen = chosen[:keep]
+    small = copy.deepcopy(board)
+    small["packages"] = {pid: {k: v for k, v in pk[pid].items()
+                               if k not in ("versus_opening", "public_cost_scenario")} for pid in chosen}
+    for action in small["actions"].values():
+        if action.get("kind") == "counter":
+            action["package_ids"] = [pid for pid in action["package_ids"] if pid in small["packages"]]
+        if action.get("kind") == "confirm" and action.get("package_id") not in small["packages"]:
+            action["_drop"] = True
+    small["actions"] = {k: v for k, v in small["actions"].items()
+                        if not v.get("_drop") and not (v.get("kind") == "counter" and not v["package_ids"])}
+    for sup in small["suppliers"].values():
+        for key in ("past_exchanges", "previous_practice_outcomes", "standing_vs_previous_practice"):
+            if isinstance(sup.get(key), list):
+                sup[key] = sup[key][-2:]
+        if isinstance(sup.get("sources"), dict):
+            sup["sources"] = {k: (v[:800] if isinstance(v, str) else v) for k, v in sup["sources"].items()}
+    return small
+
+
 def decide(agent, case, threads, deadline, closing_only=False):
     sources, history = {}, {}
     for sid in live_threads(threads):
@@ -594,6 +635,8 @@ def decide(agent, case, threads, deadline, closing_only=False):
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
         agent.interpret(case, sid, threads[sid], min(deadline - 14, time.monotonic() + 17))
     board = build_board(agent, case, threads, sources, history, closing_only)
+    if os.environ.get("ASTRA_BASE_URL") or os.environ.get("ASTRA_COMPACT"):
+        board = compact_board(board)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")
     agent.log("final_board", board)
