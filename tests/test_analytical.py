@@ -644,8 +644,8 @@ def test_index_supplier_value_activates_only_after_quoted_evidence():
     existing.apply_evidence([
         {"kind": "index_protection", "quote": "We require an indexation clause for long-term supply."}
     ])
-    assert existing.value(indexed_ref, existing.particles[0]) == pytest.approx(
-        existing.value({**indexed_ref}, existing.particles[0])
+    assert existing.value(indexed_ref, existing.particles[0]) > (
+        existing.value({**indexed_ref, "index_clause": None}, existing.particles[0])
     )
 
 
