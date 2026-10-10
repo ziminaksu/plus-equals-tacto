@@ -536,7 +536,7 @@ def test_quality_first_risk_coefficient_replays_p11_audit_ordering():
     assert agent.risk_for_case(case) == pytest.approx(0.05)
     assert lower < higher
     other_case = {**case, "buyer": {**case["buyer"], "category_goal": "routine"}}
-    assert agent.risk_for_case(other_case) == pytest.approx(0.25)
+    assert agent.risk_for_case(other_case) == pytest.approx(0.05)  # v2.6 calibrated routine risk
     # Overrides remain available for matched offline sensitivity experiments.
     conservative = AnalyticalAgent(router=Router(enabled=False), risk_aversion=0.25)
     assert conservative.objective(case, 816023.3833769511, 28040.13183758494) > (
