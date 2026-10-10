@@ -167,9 +167,12 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "concession_ladder": "Suppliers give nothing without a move from us and send a final offer soon after "
                                  "we stop moving (P18: every final came one or two messages after a repeated or "
                                  "near-repeated offer). Plan the remaining moves as a ladder: in EACH counter make "
-                                 "exactly one real move toward the supplier on a lever (payment 90 -> 60 -> 45 -> "
-                                 "30 days, a longer contract, an index clause with a wide then narrower deadband) "
-                                 "while keeping the price at or barely above your previous offer, and add one or "
+                                 "one real move: EITHER a lever toward the supplier (payment 90 -> 60 -> 45 -> 30 days, a "
+                                 "longer contract, an index clause with a wide then narrower deadband) while keeping "
+                                 "the price, OR a small price step while keeping the levers - choose the lever only "
+                                 "when the supplier values it more than it costs us (see payment_days_value and the "
+                                 "cost cards; P02: it priced 30 payment days at 1.35/unit, they cost us 2.47, so "
+                                 "giving payment steps lost money). Add one or "
                                  "two UNUSED verified arguments. Keep a lever in reserve for every remaining step; "
                                  "do not give the whole lever at once. When the supplier quotes the same price for "
                                  "different values of a lever, that lever is worth nothing to it - keep our side. "
@@ -252,6 +255,28 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             supplier["closeness"] = {
                 "gap_to_our_last_offer_pct": round((current["unit_price"] / th.last_terms["unit_price"] - 1) * 100, 2),
                 "its_last_step_pct": round((prices[-1] / prices[-2] - 1) * 100, 2) if len(prices) >= 2 else None,
+            }
+        # What is a payment day worth to THIS supplier? Two of its sheets that differ only in payment days
+        # price it (P02: 369.50 @30 vs 370.85 @60 = 1.35/unit per 30 days, while 30 days are worth 2.47/unit
+        # to us at 8 %). Then keep long payment and concede on price; trade payment only if it values it more.
+        sheets = [ts["terms"] for m in events if m.get("from") != "buyer" for ts in m.get("term_sheets") or []
+                  if ts["terms"].get("unit_price") and ts["terms"].get("payment_days") is not None]
+        rates = []
+        for i, a in enumerate(sheets):
+            for b2 in sheets[i + 1:]:
+                if a["payment_days"] != b2["payment_days"] and all(
+                        a.get(k) == b2.get(k) for k in a if k not in ("unit_price", "payment_days")):
+                    lo, hi = sorted((a, b2), key=lambda t: t["payment_days"])
+                    days = hi["payment_days"] - lo["payment_days"]
+                    rates.append((hi["unit_price"] - lo["unit_price"]) * 30 / days)
+        if rates and current.get("unit_price"):
+            theirs = sum(rates) / len(rates)
+            ours = current["unit_price"] * case["buyer"]["interest_rate"] * 30 / 360
+            supplier["payment_days_value"] = {
+                "supplier_eur_per_unit_per_30_days": round(theirs, 2),
+                "ours_eur_per_unit_per_30_days": round(ours, 2),
+                "verdict": ("keep long payment on our side and concede on price instead" if theirs < ours
+                            else "shortening payment is a good trade: it values cash more than we do"),
             }
         # RFQ: a rival's live offer is the strongest argument and counts once per supplier (P05: a
         # supplier asked "which figures is that competing offer based on?" and got none).
