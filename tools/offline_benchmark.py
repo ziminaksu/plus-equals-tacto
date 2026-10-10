@@ -39,8 +39,10 @@ def main():
     p.add_argument("--continuation-credit", type=float, default=0.0)
     args = p.parse_args()
     if args.full_suite:
+        from arena_kit.cli import load_env
         from arena_kit.data import DataPackage
 
+        load_env()
         package = DataPackage(os.environ.get("ARENA_DATA", "data/package"))
         package.lookup("")
         cases = suite(package, seed=99, n_random=args.random_cases)
