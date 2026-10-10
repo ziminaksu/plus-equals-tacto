@@ -30,6 +30,8 @@ from .sustainability import SupplierEconomics, practice_observation
 
 POLICY_VERSION = "astra-v82-evidence-access"
 DECISION_BUDGET_S = 35
+INFRA_ERRORS = {"HTTPStatusError", "ConnectError", "ConnectTimeout", "ReadTimeout", "RemoteProtocolError",
+                "ReadError", "WriteError", "PoolTimeout"}
 
 
 class DecisionBudgetExpired(Exception):
@@ -768,6 +770,20 @@ class AnalyticalAgent:
             if self.final_authority:
                 return astra_decide(self, case, threads, deadline, self.closing_only)
             return self._decide(case, threads, started, deadline)
+        except FinalDecisionUnavailable:
+            # Only when Astra could not be REACHED (out of credits, HTTP 429/5xx, no connection): an
+            # unanswered case scores 0 (round 1: P04/P05/P07 crashed on 429 credit_balance_exhausted).
+            # An invalid Astra answer or an expired move budget still sends nothing (team rule).
+            last = (self.router.calls or [{}])[-1]
+            infra = last.get("status") in INFRA_ERRORS and (
+                last.get("http_status") in (None, 408, 429) or (last.get("http_status") or 0) >= 500)
+            if not infra:
+                raise
+            decision = closing_move(case, threads)
+            self.log("decision", {"action": decision, "reason": "Astra unreachable; closing_move fallback",
+                                  "llm_calls": self.router.calls})
+            self.router.calls = []
+            return decision
         except DecisionBudgetExpired:
             if self.final_authority:
                 self.log("final_decision_failed", {"reason": "move budget exhausted", "sent": False})
