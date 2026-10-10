@@ -52,7 +52,15 @@ class AnalyticalAgent:
             dossier = intel.build(case, sid, self.package, reference["unit_price"])
             sup = intel.estimate(case, dossier, {**reference, **std}, reference["unit_price"], Params())
             seed = int(hashlib.sha256(sid.encode()).hexdigest()[:8], 16)
-            beliefs = Beliefs(case, reference, sup, seed=seed)
+            beliefs = Beliefs(
+                case, reference, sup, seed=seed,
+                signals={
+                    "cash_short": dossier.cash_short,
+                    "spare_capacity": dossier.spare_capacity,
+                    "approval_ladder": dossier.approval_ladder,
+                    "wants_partnership": dossier.wants_partnership,
+                },
+            )
             self.threads[sid] = SimpleNamespace(
                 std=std,
                 reference=reference,
@@ -168,7 +176,33 @@ class AnalyticalAgent:
                 candidates.append(terms)
         # Cap scenario evaluations using the central full-deal cost, retaining trade diversity.
         candidates.sort(key=lambda t: total_cost(case, t, th.std, th.sup))
-        return candidates[:64]
+        # Pure lowest-cost truncation discards supplier-feasible trades and full coverage.
+        # Retain a diverse Pareto-like shortlist: buyer cost, supplier value and
+        # sufficiently covered long-term contracts.
+        by_supplier = sorted(
+            candidates,
+            key=lambda t: -self.weighted(
+                th, [th.beliefs.value(t, p) for p in th.beliefs.particles]
+            ),
+        )
+        need = case["buyer"]["need_per_year"] * case["buyer"]["horizon_years"]
+        def coverage(t):
+            closed = closing_terms(case, t, th.std)
+            years = min(
+                closed["contract_months"] / 12 if closed["contract_months"] else 1,
+                case["buyer"]["horizon_years"],
+            )
+            return min(closed["volume_per_year"], case["buyer"]["need_per_year"]) * years
+        by_coverage = sorted(candidates, key=lambda t: (-coverage(t), total_cost(case, t, th.std, th.sup)))
+        shortlist = []
+        seen_shortlist = set()
+        for group, limit in ((candidates, 32), (by_supplier, 16), (by_coverage, 16)):
+            for candidate in group[:limit]:
+                key = json.dumps(candidate, sort_keys=True)
+                if key not in seen_shortlist:
+                    seen_shortlist.add(key)
+                    shortlist.append(candidate)
+        return shortlist[:64]
 
     def rank(self, case, th, current, continuation, fallback):
         quote = current.get("unit_price") or th.reference["unit_price"]
@@ -222,8 +256,19 @@ class AnalyticalAgent:
                 if c <= min(opening, fallback) + 0.01:
                     available.append((c, sid, offer_id, terms))
         best = min(available, key=lambda x: x[0]) if available else None
-        # Visit the least-contacted live supplier while other threads remain open.
-        sid = min(live, key=lambda s: sum(m.get("from") == "buyer" for m in threads[s]))
+        # Prefer economically viable, compliant suppliers; contact count is only a tie-break.
+        # The buyer's standards outrank the raw number of contacted suppliers.
+        def supplier_priority(s):
+            thread = self.threads[s]
+            offer_id, sheet = standing(threads[s])
+            valid = bool(offer_id and self.valid(case, thread, sheet))
+            cost = (
+                self.weighted(thread, self.cost_samples(case, thread, sheet))
+                if valid else math.inf
+            )
+            contacts = sum(m.get("from") == "buyer" for m in threads[s])
+            return (not valid, cost, contacts)
+        sid = min(live, key=supplier_priority)
         th = self.threads[sid]
         events = threads[sid]
         current = standing(events)[1]
@@ -233,10 +278,18 @@ class AnalyticalAgent:
         if terminal and best:
             return self.accept(best, "closing status or remaining-round limit")
         if terminal:
-            # Closing walk-away ends the entire case: first inspect all rival standing sheets above.
-            decision = {"supplier_id": sid, "message": {"action": {"type": "walk_away"}}}
-            self.log("decision", {"action": decision, "reason": "no valid acceptable standing deal"}, sid)
-            return decision
+            # One thread reaching its limit must not end a multi-supplier RFQ while
+            # another thread can still negotiate. Switch to an eligible rival.
+            remaining = [s for s in live if s != sid and moves_left(case, threads[s]) > 1
+                         and latest(threads[s]).get("status") not in ("agreed", "final_offer")]
+            if remaining:
+                sid = min(remaining, key=supplier_priority)
+                th, events = self.threads[sid], threads[sid]
+                current = standing(events)[1]
+            else:
+                decision = {"supplier_id": sid, "message": {"action": {"type": "walk_away"}}}
+                self.log("decision", {"action": decision, "reason": "no valid acceptable standing deal"}, sid)
+                return decision
         continuation = min(best[0] if best else fallback, fallback)
         ranked = self.rank(case, th, current, continuation, fallback)
         if not ranked:
