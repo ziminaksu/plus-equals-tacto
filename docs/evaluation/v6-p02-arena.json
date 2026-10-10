@@ -1,0 +1,682 @@
+{
+  "run_id": "ehl-v6-p02-20261010",
+  "policy": "astra-v6-final-authority",
+  "source_freeze": {
+    "run_id": "ehl-v6-p02-20261010",
+    "cases": [
+      "case:P02"
+    ],
+    "max_sessions": 1,
+    "commit": "024aa256ec2e4e3d8bb0a821e252e8a5b0d50bc8",
+    "checkpoint": "01M4KAWSMM3E8PFTZS3TCP2Y94",
+    "policy": "astra-v6-final-authority",
+    "source_sha256": "1990a540579049c80503e9cce4f98686c54fb131d4d4f82662be0d51569b5978"
+  },
+  "sessions_started": 1,
+  "cases": [
+    {
+      "case_id": "case:P02",
+      "session_id": "a2abf8f6e60c1d21",
+      "result": {
+        "ended": true,
+        "deal": true,
+        "supplier_id": "sup:70510",
+        "offer_id": "offer:70510-5",
+        "terms": {
+          "payment_days": 30,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "CU-NOTATION",
+            "material_share": 0.2,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 346.95
+        },
+        "c_open": 2282867.49,
+        "c_deal": 2278290.87,
+        "c_alt": 2604227.78,
+        "c_best": 2235514.05,
+        "score": 0.09664809990573171,
+        "must_haves_ok": true,
+        "cost_breakdown": {
+          "price": 2119864.5,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 14132.43,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 16958.92,
+          "relationship": 126143.57
+        }
+      }
+    }
+  ],
+  "previous_p02_score": 0.15698901705979842,
+  "score_delta": -0.06034091715406671,
+  "cost_delta": 2857.35,
+  "cost_component_deltas": {
+    "price": -131365.0,
+    "uncovered_need": 0.0,
+    "fallback_risk": 0.0,
+    "payment_terms": -8880.14,
+    "freight": 0.0,
+    "late_delivery": 0.0,
+    "quality": 0.0,
+    "tooling": 0.0,
+    "index_clause": 0.0,
+    "index_risk": 16958.92,
+    "relationship": 126143.57
+  },
+  "final_standing_estimate": {
+    "term_sheet_id": "offer:70510-5",
+    "terms": {
+      "unit_price": 346.95,
+      "payment_days": 30,
+      "index_clause": {
+        "series": "CU-NOTATION",
+        "material_share": 0.2,
+        "deadband_pct": 5.0,
+        "base_month": "2026-08"
+      }
+    },
+    "direct_cost_eur": 2152147.3,
+    "expected_total_eur": 2206402.29,
+    "expected_breakdown_eur": {
+      "price": 2119864.5,
+      "uncovered_need": 0.0,
+      "fallback_risk": 0.0,
+      "payment_terms": 14132.43,
+      "freight": 0.0,
+      "late_delivery": 0.0,
+      "quality": 1191.45,
+      "tooling": 0.0,
+      "index_clause": 0.0,
+      "index_risk": 16958.92,
+      "relationship": 54255.0
+    },
+    "total_p10_p90_eur": [
+      2152147.3,
+      2370656.83
+    ],
+    "uncertainty": "Published buyer formula; relationship cost uses uncertain supplier-cost estimates. Expected cost is not a supplier quote or a predicted Arena score."
+  },
+  "final_belief_summary": {
+    "version": 3,
+    "memory_source": "supplier",
+    "cost_prior_conflict": true,
+    "cost_prior_note": "50/50 should-cost and quote-implied sensitivity",
+    "supplier_signals": {
+      "cash_short": false,
+      "spare_capacity": false,
+      "approval_ladder": true,
+      "wants_partnership": true
+    },
+    "signals_applied": {
+      "price_resistance": 1
+    },
+    "quality_prior_max_eur_per_1000ppm": 7.4192,
+    "index_prior_max_eur_per_unit": 18.548,
+    "index_protection_active": false,
+    "tau": 9.274,
+    "conditions": [],
+    "concession_rate": 0.13932839815180711,
+    "numeric_observations": 3,
+    "response_coefficients": {
+      "w0": -5.006203030695806,
+      "w_d": 11.99780623326849,
+      "w_repeat": 0.4983626862103236,
+      "status": "regularised online estimates; not statistically calibrated",
+      "accept_bias": 0.1663057829123315
+    },
+    "r": {
+      "mean": 332.0991,
+      "p10": 309.1048,
+      "p90": 346.95
+    },
+    "b_pay": {
+      "mean": 3.1755,
+      "p10": 0.8956,
+      "p90": 5.351
+    },
+    "b_term": {
+      "mean": 7.7401,
+      "p10": 0.9651,
+      "p90": 13.8606
+    },
+    "b_flex": {
+      "mean": 4.3354,
+      "p10": 1.733,
+      "p90": 7.1257
+    },
+    "full_cost": {
+      "mean": 337.9835,
+      "p10": 302.0453,
+      "p90": 377.6396
+    },
+    "b_capacity": {
+      "mean": 9.4165,
+      "p10": 5.0859,
+      "p90": 14.3605
+    },
+    "b_quality": {
+      "mean": 3.8951,
+      "p10": 0.6497,
+      "p90": 6.5423
+    },
+    "b_index": {
+      "mean": 10.0662,
+      "p10": 2.2094,
+      "p90": 16.4242
+    },
+    "b_volume": {
+      "mean": 1.8758,
+      "p10": 0.3091,
+      "p90": 3.3481
+    },
+    "effective_scenarios": 46.05
+  },
+  "decisions": [
+    {
+      "authority": "astra",
+      "kind": "ask",
+      "selection": {
+        "action_id": "sup:70510:revisit_history",
+        "package_ids": [],
+        "question_id": "",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "The historical rebased copper-index package suggests approximately \u20ac51,610 lower expected total cost than the standing offer, including payment, index and relationship costs, but requires fresh confirmation. Retrieving updated complete alternatives targets a demonstrated material lever before accepting or making another speculative fixed-price counter; walking away is substantially more expensive."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Could you confirm which pricing structures discussed previously are available now, and provide updated complete quotes for comparison? Earlier discussions are not being treated as current offers or acceptance.",
+          "term_sheets": []
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 7567,
+            "input_tokens_details": {
+              "cache_write_tokens": 5909,
+              "cached_tokens": 1655
+            },
+            "output_tokens": 530,
+            "output_tokens_details": {
+              "reasoning_tokens": 61
+            },
+            "total_tokens": 8097
+          },
+          "seconds": 10.485,
+          "validation_errors": [
+            "interpretations[2]:rejected"
+          ]
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 22945,
+            "input_tokens_details": {
+              "cache_write_tokens": 22942,
+              "cached_tokens": 0
+            },
+            "output_tokens": 144,
+            "output_tokens_details": {
+              "reasoning_tokens": 37
+            },
+            "total_tokens": 23089
+          },
+          "seconds": 5.109
+        }
+      ]
+    },
+    {
+      "authority": "astra",
+      "kind": "counter",
+      "selection": {
+        "action_id": "sup:70510:counter",
+        "package_ids": [
+          "sup:70510:p2",
+          "sup:70510:p6",
+          "sup:70510:p8"
+        ],
+        "question_id": "sup:70510:index_rebase",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "Reopen the historical indexed package for fresh confirmation alongside fixed-price alternatives that make earlier payment conditional on a compensating discount; their estimated total costs improve on the standing offer even after relationship and index risks. Concrete terms and a rebasing request answer the supplier\u2019s request for parameters, avoiding another generic inquiry or premature acceptance while preserving negotiation rather than taking the more expensive fallback."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "We would like to agree on a workable exchange of price and terms.\n\nPackage 1: EUR 346.35 per unit, payment 14 days net, with an index clause.\n\nPackage 2: EUR 362.00 per unit, payment 30 days net.\n\nPackage 3: EUR 360.73 per unit, payment 14 days net.\n\nThese are alternative complete packages, not cumulative concessions.\n\nPlease quote a fixed-price package and an indexed alternative with its corresponding rebased unit price, removing raw-material increases already covered by the clause. State the series, base month, material share and deadband. This inquiry accepts neither indexation nor a price. Please confirm whether the existing offer remains available.",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 346.35,
+                "payment_days": 14,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5.0,
+                  "base_month": "2026-08"
+                }
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 362,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 360.73,
+                "payment_days": 14,
+                "index_clause": null
+              }
+            }
+          ]
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 7719,
+            "input_tokens_details": {
+              "cache_write_tokens": 6061,
+              "cached_tokens": 1655
+            },
+            "output_tokens": 434,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 8153
+          },
+          "seconds": 8.744,
+          "validation_errors": [
+            "quote_requests[0]:rejected"
+          ]
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 23219,
+            "input_tokens_details": {
+              "cache_write_tokens": 23216,
+              "cached_tokens": 0
+            },
+            "output_tokens": 174,
+            "output_tokens_details": {
+              "reasoning_tokens": 29
+            },
+            "total_tokens": 23393
+          },
+          "seconds": 5.468
+        }
+      ]
+    },
+    {
+      "authority": "astra",
+      "kind": "ask",
+      "selection": {
+        "action_id": "sup:70510:payment_quotes",
+        "package_ids": [],
+        "question_id": "",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "The indexed offer improves on fixed-price alternatives, but its 14-day payment term adds \u20ac21,669.73 in financing cost; comparable payment quotes will test savings without assuming supplier valuations or sacrificing the 5% deadband. With eight moves remaining and internal costing withheld, this targeted priced exchange is preferable to accepting now, repeating cost requests, or taking the substantially more expensive fallback."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "Please quote comparable complete packages with payment at 14, 30, 45, 60, 90 days, keeping the other terms unchanged. What exact price reduction would earlier payment buy?",
+          "term_sheets": []
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ReadTimeout",
+          "seconds": 11.245
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 19802,
+            "input_tokens_details": {
+              "cache_write_tokens": 19799,
+              "cached_tokens": 0
+            },
+            "output_tokens": 145,
+            "output_tokens_details": {
+              "reasoning_tokens": 24
+            },
+            "total_tokens": 19947
+          },
+          "seconds": 4.102
+        }
+      ]
+    },
+    {
+      "authority": "astra",
+      "kind": "counter",
+      "selection": {
+        "action_id": "sup:70510:counter",
+        "package_ids": [
+          "sup:70510:p21",
+          "sup:70510:p23",
+          "sup:70510:p31"
+        ],
+        "question_id": "sup:70510:approval_route",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "These alternatives price early payment explicitly and offer a higher fixed price only in exchange for removing index exposure; their estimated total costs, including relationship risk, are below the standing offer. With seven moves remaining, concrete packages and the documented approval route are preferable to accepting now, repeating the unanswered payment inquiry, or taking the substantially costlier fallback."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "We would like to agree on a workable exchange of price and terms.\n\nPackage 1: EUR 346.95 per unit, payment 30 days net, with an index clause.\n\nPackage 2: EUR 345.74 per unit, payment 14 days net, with an index clause.\n\nPackage 3: EUR 349.71 per unit, payment 30 days net.\n\nThese are alternative complete packages, not cumulative concessions.\n\nWhat evidence and package would support approval of a larger reduction? Could you take the proposal to the responsible decision-maker and explain the approval steps?",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 346.95,
+                "payment_days": 30,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5,
+                  "base_month": "2026-08"
+                }
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 345.74,
+                "payment_days": 14,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5,
+                  "base_month": "2026-08"
+                }
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 349.71,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ]
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 8104,
+            "input_tokens_details": {
+              "cache_write_tokens": 6446,
+              "cached_tokens": 1655
+            },
+            "output_tokens": 625,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 8729
+          },
+          "seconds": 10.664,
+          "validation_errors": []
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 33671,
+            "input_tokens_details": {
+              "cache_write_tokens": 33668,
+              "cached_tokens": 0
+            },
+            "output_tokens": 190,
+            "output_tokens_details": {
+              "reasoning_tokens": 51
+            },
+            "total_tokens": 33861
+          },
+          "seconds": 5.453
+        }
+      ]
+    },
+    {
+      "authority": "astra",
+      "kind": "counter",
+      "selection": {
+        "action_id": "sup:70510:counter",
+        "package_ids": [
+          "sup:70510:p6",
+          "sup:70510:p8",
+          "sup:70510:p16"
+        ],
+        "question_id": "sup:70510:trade_priority",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "These conditional indexed, early-payment and fixed-price alternatives reduce published expected total cost by approximately \u20ac20,200\u2013\u20ac30,300 versus acceptance, including relationship risk, without giving away payment or index concessions for free. With six moves remaining, requesting a quantified complete exchange preserves the standing offer and tests further approval-backed savings rather than repeating internal-cost questions or taking the substantially costlier fallback."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+          "body": "We would like to agree on a workable exchange of price and terms.\n\nPackage 1: EUR 339.50 per unit, payment 30 days net, with an index clause.\n\nPackage 2: EUR 338.31 per unit, payment 14 days net, with an index clause.\n\nPackage 3: EUR 342.20 per unit, payment 30 days net.\n\nThese are alternative complete packages, not cumulative concessions.\n\nWhich permitted term change would allow the largest price improvement? Please quantify the exchange in a complete alternative quote while keeping the existing offer available for comparison.",
+          "term_sheets": [
+            {
+              "terms": {
+                "unit_price": 339.5,
+                "payment_days": 30,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5,
+                  "base_month": "2026-08"
+                }
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 338.31,
+                "payment_days": 14,
+                "index_clause": {
+                  "series": "CU-NOTATION",
+                  "material_share": 0.2,
+                  "deadband_pct": 5,
+                  "base_month": "2026-08"
+                }
+              }
+            },
+            {
+              "terms": {
+                "unit_price": 342.2,
+                "payment_days": 30,
+                "index_clause": null
+              }
+            }
+          ]
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 8226,
+            "input_tokens_details": {
+              "cache_write_tokens": 6568,
+              "cached_tokens": 1655
+            },
+            "output_tokens": 580,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 8806
+          },
+          "seconds": 10.09,
+          "validation_errors": []
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 32359,
+            "input_tokens_details": {
+              "cache_write_tokens": 32356,
+              "cached_tokens": 0
+            },
+            "output_tokens": 255,
+            "output_tokens_details": {
+              "reasoning_tokens": 106
+            },
+            "total_tokens": 32614
+          },
+          "seconds": 7.711
+        }
+      ]
+    },
+    {
+      "authority": "astra",
+      "kind": "accept",
+      "selection": {
+        "action_id": "sup:70510:accept",
+        "package_ids": [],
+        "question_id": "",
+        "evidence_ids": [],
+        "tone": "cooperative",
+        "rationale": "The standing offer's estimated total cost of \u20ac2,206,402 is about \u20ac397,825 below fallback and slightly below the historical indexed alternative after financing and relationship costs. Payment, index rebasing, historical alternatives and management approval have already been explored; the supplier rejected the latest conditional reductions and repeatedly declined cost disclosure, so another counter or walkthrough would risk aimless repetition."
+      },
+      "action": {
+        "supplier_id": "sup:70510",
+        "message": {
+          "action": {
+            "type": "accept",
+            "term_sheet_id": "offer:70510-5"
+          }
+        }
+      },
+      "llm_calls": [
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 8411,
+            "input_tokens_details": {
+              "cache_write_tokens": 6753,
+              "cached_tokens": 1655
+            },
+            "output_tokens": 561,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 8972
+          },
+          "seconds": 9.792,
+          "validation_errors": []
+        },
+        {
+          "model": "gpt-6-astra",
+          "provider": "openai",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "usage": {
+            "input_tokens": 29760,
+            "input_tokens_details": {
+              "cache_write_tokens": 29757,
+              "cached_tokens": 0
+            },
+            "output_tokens": 158,
+            "output_tokens_details": {
+              "reasoning_tokens": 40
+            },
+            "total_tokens": 29918
+          },
+          "seconds": 4.68
+        }
+      ]
+    }
+  ],
+  "successful_call_usage": {
+    "input_tokens": 201783,
+    "output_tokens": 3796,
+    "total_tokens": 205579
+  },
+  "timed_out_call_usage": "unknown",
+  "evaluation_policy": {
+    "local_tests": "stopped by user; none after instruction",
+    "future_strategy_cases": [
+      "case:P02",
+      "case:P18"
+    ],
+    "additional_sessions_this_run": 0
+  },
+  "limitations": [
+    "One stochastic live session; retained prior learning state.",
+    "P18 not rerun on v6.",
+    "Actual cost and hidden benchmark available only after completion; not fed back into the live policy."
+  ]
+}

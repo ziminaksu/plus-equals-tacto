@@ -1,6 +1,6 @@
 # V6: Astra has final decision authority
 
-This change addresses the P02 payment concession and P18 premature closure found in the v5.1 audit. It has **no new hosted Arena score**. The last observed Arena scores remain P02 0.156989 and P18 0.339633.
+This change addresses the P02 payment concession and P18 premature closure found in the v5.1 audit. At implementation time it had no hosted Arena score. The subsequent [single P02 Arena run](v6-p02-arena.md) scored **0.096648**, below the previous **0.156989**. P18 has not been rerun with v6; its last observed score remains **0.339633**. The user subsequently stopped local testing and restricted future strategy evaluations to P02/P18 in Arena.
 
 ## Changes
 
