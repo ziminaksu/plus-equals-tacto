@@ -72,6 +72,10 @@ def final_schema(board):
     def ids(values, maximum):
         return {"type": "array", "items": enum_values(list(values) or [""]), "maxItems": maximum}
 
+    plan_sources = set(board["evidence"])
+    for supplier in board["suppliers"].values():
+        plan_sources.update(supplier["sources"])
+        plan_sources.update(h["source_id"] for h in supplier["past_exchanges"])
     return obj({
         "action_id": enum_values(list(board["actions"])),
         "package_ids": ids(board["packages"], 3),
@@ -79,15 +83,15 @@ def final_schema(board):
         "evidence_ids": ids(board["evidence"], 3),
         "tone": enum_values(["warm", "cooperative", "firm"]),
         "rationale": {"type": "string"},
-        "reply_text": {"type": "string"},
+        "reply_text": {"type": "string", "pattern": "^[^0-9]*$", "maxLength": 3000},
         "plan": obj({
             "expected_response": enum_values([
                 "accepted_proposal", "counteroffer", "unchanged_offer", "information_only", "walkout", "closed"
             ]),
             "expected_price_low": {"type": ["number", "null"]},
             "expected_price_high": {"type": ["number", "null"]},
-            "basis_source_ids": {"type": "array", "items": {"type": "string"}, "maxItems": 3},
-            **{k: {"type": "string"} for k in ("basis", "if_counteroffer", "if_unchanged", "if_accepted",
+            "basis_source_ids": ids(sorted(plan_sources), 3),
+            **{k: {"type": "string", "minLength": 1, "maxLength": 900} for k in ("basis", "if_counteroffer", "if_unchanged", "if_accepted",
                                                "if_walkout", "why_not_alternative", "revision_from_previous")},
             "rejected_alternative_id": enum_values([""] + list(board["actions"]) + list(board["packages"])),
         }),

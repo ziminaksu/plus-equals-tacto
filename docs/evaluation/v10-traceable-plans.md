@@ -50,3 +50,20 @@ The API design follows the official guidance on
 and [structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses).
 Those guides support reducing repeated input and handling incomplete output;
 observed improvements must come from our run, not from documentation claims.
+
+## Intervention during the one P02 session
+
+The first proposer completed in 9.450 seconds and the first final call in 18.721
+seconds. Final validation then rejected the action; no supplier message was sent.
+The older error path retained only `ValueError`, so the exact rejected choice and
+reason cannot be recovered for that call. This is a failed action, not a completed
+evaluation or a successful negotiation.
+
+Before continuing the same session, final responses and application validation
+reasons are now retained. Available plan source IDs, nonempty plan strings and
+numeric-free reply prose are constrained in the output schema. If a syntactically
+valid response fails application validation and at least ten seconds remain, Astra
+may correct it once using explicit feedback within the original deadline. This
+is one output-correction call, not an HTTP retry or a Python-selected fallback.
+Every attempt is logged. The run is therefore an intervened diagnostic run, not
+an uninterrupted frozen-policy comparison. No replacement session is authorized.

@@ -626,18 +626,38 @@ The application appends the exact offer and verified arguments separately."""
         return self.call(self.small, system, context, deadline, max_tokens=300)
 
     def final_decision(self, board, deadline):
-        """One bounded final authority call. Failure cannot turn into Python acceptance."""
+        """Final authority; one bounded correction of invalid output, never an HTTP retry."""
         from .director import FinalDecisionUnavailable, validate_selection
 
-        try:
-            result = self.call_astra(FINAL_DIRECTOR, board, deadline, role="final_decision",
-                                     schema=final_schema(board))
-            validate_selection(board, result)
-            return result
-        except Exception as exc:
-            if self.calls and self.calls[-1].get("role") == "final_decision":
-                self.calls[-1]["final_validation"] = type(exc).__name__
-            raise FinalDecisionUnavailable("Final Astra decision unavailable; no action authorized") from None
+        data = board
+        for attempt in range(2):
+            try:
+                result = self.call_astra(FINAL_DIRECTOR, data, deadline, role="final_decision",
+                                         schema=final_schema(board))
+            except Exception:
+                # A network failure or refusal is not retried and never authorizes a substitute.
+                raise FinalDecisionUnavailable("Final Astra request unavailable; no action authorized") from None
+            record = self.calls[-1]
+            record["returned_decision"] = copy.deepcopy(result)
+            record["validation_attempt"] = attempt + 1
+            try:
+                validate_selection(board, result)
+                record["final_validation"] = "ok"
+                return result
+            except (ValueError, KeyError, TypeError) as exc:
+                # These validators emit application-authored messages, not HTTP bodies.
+                reason = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+                record["final_validation"] = type(exc).__name__
+                record["validation_reason"] = reason
+                if attempt == 0 and deadline - time.monotonic() >= 10:
+                    data = {**board, "validation_feedback": {
+                        "invalid_decision": result, "reason": reason,
+                        "instruction": "Correct this validation error and return a complete valid decision. "
+                                       "No action has been sent. Keep all buyer constraints and evidence rules.",
+                    }}
+                    continue
+                raise FinalDecisionUnavailable("Final Astra decision invalid; no action authorized") from None
+        raise FinalDecisionUnavailable("Final validation exhausted; no action authorized")
 
     def close(self):
         self.client.close()
