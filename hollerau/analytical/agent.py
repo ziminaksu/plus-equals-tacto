@@ -28,7 +28,7 @@ from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v82-evidence-access"
+POLICY_VERSION = "astra-v83-action-response-memory"
 DECISION_BUDGET_S = 35
 
 

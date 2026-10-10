@@ -209,12 +209,49 @@ class Store:
             sessions[session] = reply
         return observations
 
+    def _episode_context(self, run, session, case, supplier, sent_id):
+        """State before the historical request, never its eventual private outcome."""
+        if sent_id is None:
+            return {"stage": "unknown", "buyer_message_number": None,
+                    "supplier_status_before": None, "standing_terms_before": {}}
+        previous = self.db.execute(
+            "SELECT payload FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
+            "AND supplier_id=? AND kind IN ('received','exchange') AND id<? ORDER BY id DESC LIMIT 1",
+            (run, session, case, supplier, sent_id),
+        ).fetchone()
+        opened = self.db.execute(
+            "SELECT payload FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
+            "AND kind='opened' AND id<? ORDER BY id LIMIT 1", (run, session, case, sent_id),
+        ).fetchone()
+        opening = json.loads(opened[0]) if opened else {}
+        if previous:
+            data = json.loads(previous[0])
+            reply = data.get("supplier_reply", data)
+        else:
+            reply = next((e for e in reversed(opening.get("threads", {}).get(supplier, []))
+                          if e.get("from") != "buyer"), {})
+        number = self.db.execute(
+            "SELECT COUNT(*) FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
+            "AND supplier_id=? AND kind='sent' AND id<=?", (run, session, case, supplier, sent_id),
+        ).fetchone()[0] if opened else None
+        status = reply.get("status")
+        stage = ("after_final_warning" if status == "final_offer" else "opening" if number == 1
+                 else "negotiating" if number is not None else "unknown")
+        sheets = reply.get("term_sheets") or []
+        active = reply.get("standing_offer_id")
+        sheet = next((s for s in sheets if s.get("term_sheet_id") == active), {}) if active else (
+            sheets[0] if sheets else {})
+        return {"stage": stage, "buyer_message_number": number,
+                "supplier_status_before": status, "standing_terms_before": sheet.get("terms", {})}
+
     def episodes(self, supplier, case, session=None, run=None, limit=10):
         """Retrieve actual exchanges, never outcomes, scores or hidden benchmark data.
 
         Only the same supplier AND case qualify. Old quotes are evidence of a route,
         not live offers. Include the preceding buyer request to explain each reply.
         """
+        if limit <= 0:
+            return []
         excluded_run = run if session is None else None
         rows = self.db.execute(
             "SELECT id,timestamp,run_id,session_id,payload FROM events "
@@ -223,34 +260,67 @@ class Store:
             "AND (? IS NULL OR run_id!=?) ORDER BY id DESC LIMIT 160",
             (supplier, case, session, session, excluded_run, excluded_run),
         ).fetchall()
-        episodes, seen = [], set()
+        episodes, seen, contexts = [], set(), {}
         for event_id, timestamp, old_run, old_session, payload in rows:
             data = json.loads(payload)
             reply = data.get("supplier_reply", data)
             body = reply.get("body", "")
             sheets = [{"terms": s.get("terms", {})} for s in reply.get("term_sheets", [])]
-            signature = json.dumps([body, sheets], sort_keys=True)
-            if signature in seen:
-                continue
-            seen.add(signature)
             previous = self.db.execute(
-                "SELECT payload FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
+                "SELECT id,payload FROM events WHERE run_id=? AND session_id IS ? AND case_id=? "
                 "AND supplier_id=? AND kind='sent' AND id<? ORDER BY id DESC LIMIT 1",
                 (old_run, old_session, case, supplier, event_id),
             ).fetchone()
-            request = data.get("buyer_request") or (json.loads(previous[0]) if previous else {})
+            request = data.get("buyer_request") or (json.loads(previous[1]) if previous else {})
+            sent_id = previous[0] if previous else None
+            # The runner adds `from: buyer` when embedding the sent message in history.
+            # Ignore that transport field; any content mismatch means unknown prior state.
+            if previous and data.get("buyer_request"):
+                recorded = json.loads(previous[1])
+                if ({k: v for k, v in request.items() if k != "from"}
+                        != {k: v for k, v in recorded.items() if k != "from"}):
+                    sent_id = None
+            context_key = (old_run, old_session, sent_id)
+            if context_key not in contexts:
+                contexts[context_key] = self._episode_context(old_run, old_session, case, supplier, sent_id)
+            context = contexts[context_key]
+            buyer_terms = [s.get("terms", {}) for s in request.get("term_sheets", [])]
+            # Identical replies to different buyer moves must not erase those moves.
+            # Collapse duplicate received/exchange records, not the action-response link.
+            signature = json.dumps([request.get("body", ""), buyer_terms, context,
+                                    reply.get("status"), body, sheets], sort_keys=True)
+            if signature in seen:
+                continue
+            seen.add(signature)
             episodes.append({
                 "source_id": f"history:{event_id}", "timestamp": timestamp, "case_id": case,
                 "session_id": old_session, "status_then": reply.get("status"),
                 "buyer_request": request.get("body", "")[:1600],
-                "buyer_terms": [s.get("terms", {}) for s in request.get("term_sheets", [])],
+                "buyer_terms": buyer_terms, "context_before": context,
                 "supplier_reply": body[:2500], "quoted_packages_then": sheets,
                 "currently_executable": False,
             })
-        # Preserve earlier priced alternatives instead of letting repeated price-only
-        # replies push them out. Keep half the budget for the newest exchanges too.
+        # Reserve part of the historical budget for distinct opening actions. Choose
+        # by recency and terms, never score; repeated outcomes cannot consume every slot.
+        protected, opening_keys = {}, set()
+        opening_limit = min(limit // 2, max(1, limit // 3))
+        for episode in episodes:
+            if len(protected) >= opening_limit:
+                break
+            if episode["context_before"]["stage"] != "opening" or not episode["buyer_terms"]:
+                continue
+            key = tuple(sorted(json.dumps(terms, sort_keys=True) for terms in episode["buyer_terms"]))
+            if key not in opening_keys:
+                opening_keys.add(key)
+                protected[episode["source_id"]] = episode
+        # Fill the rest of the protected half with priced alternatives/evidence routes.
+        # At least half the budget remains available for the newest exchanges.
         special = [e for e in episodes if len(e["quoted_packages_then"]) > 1 or any(
             word in e["supplier_reply"].lower() for word in ("rebas", "recalculat", "approval", "breakdown")
         )]
-        selected = {e["source_id"]: e for e in special[:limit // 2] + episodes[:limit]}
+        for episode in special:
+            if len(protected) >= limit // 2:
+                break
+            protected.setdefault(episode["source_id"], episode)
+        selected = {**protected, **{e["source_id"]: e for e in episodes[:limit]}}
         return list(selected.values())[:limit]

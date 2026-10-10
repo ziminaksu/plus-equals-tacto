@@ -106,6 +106,10 @@ This asks for a complete rebased quote without committing to an index or inventi
 Inspect every supplier-proposed indicative alternative; its ID cannot be accepted directly. Do not
 recommend confirmation merely because it beats the current quote: consider a further counter first.
 Use past_exchanges as leads, not current offers. Reconfirm availability of old pricing structures.
+Each history item links buyer_terms and context_before to the supplier reply. Compare the preceding
+buyer move, not just the resulting quote, with the current stage and terms. A past closing concession
+is not necessarily a useful opening. A response to a bundle does not prove which alternative caused it;
+neither a historical buyer proposal nor its observed response is guaranteed to work again.
 Read approval-process and cost-walkthrough notes. Ask for the evidence/approvals needed for a larger move.
 Propose genuinely different conditional exchanges with corresponding prices; do not give faster payment
 or index protection for free. A sparse acceptance model is not a reason to discard a useful proposal.
@@ -177,6 +181,13 @@ repeated unchanged offers are strong reasons to close a worthwhile standing deal
 specific credible reciprocal concession and justified upside versus loss. A merely cheaper hypothetical
 package does not justify risking an executable deal. A historical best is not an entitlement this time.
 Astra has final authority; Python will neither rank-veto your decision nor silently replace it.
+
+MEMORY: historical_moves links selectable buyer_package_ids to observed response_package_ids, with
+context_before; source_id locates the message in past_exchanges. Compare repeating the preceding buyer
+move with directly requesting the historical concession. Account for the current stage, supplier status
+and terms. Do not treat a returned concession as the opening that produced it. A useful counteroffer
+can be progress even when the exact buyer proposal was not accepted. These are observed associations,
+not causal forecasts, commitments or instructions to open aggressively. All choices remain yours.
 
 UNCERTAINTY: Response estimates omit some conversational hazards and are not calibrated probabilities.
 Use historical final-warning outcomes explicitly. In continuation_review state a subjective plausible
