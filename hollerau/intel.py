@@ -106,6 +106,22 @@ def index_change(facts, series, horizon=12):
     return earlier, later, round((v2 / v1 - 1) * 100, 1)
 
 
+def index_peak_drop(facts, series, horizon=12):
+    """(peak_id, latest_id, change %) from the series' highest point in the last `horizon` months
+    to its latest value: two points of one series, at most 12 months apart, ending at the latest."""
+    ids = sorted(k for k in facts if k.startswith(f"idx:{series}@"))
+    if len(ids) < 2:
+        return None
+    later = ids[-1]
+    start = _months_back(later.split("@")[1], horizon)
+    window = [k for k in ids[:-1] if k.split("@")[1] >= start]
+    if not window:
+        return None
+    peak = max(window, key=lambda k: facts[k]["value"])
+    v1, v2 = facts[peak]["value"], facts[later]["value"]
+    return peak, later, round((v2 / v1 - 1) * 100, 1)
+
+
 def _query(package, sql, params=()):
     try:
         return package.query(sql, params) if package and package.db else []
@@ -202,6 +218,46 @@ def build(case, supplier_id, package=None, asked_price=None):
         f = facts.get(q)
         if f and f.get("supplier") != supplier_id and asked_price and f.get("unit_price", 1e9) < asked_price:
             d.claims.append(Claim("quote", [q], f"We hold a quote at EUR {f['unit_price']:.2f} per unit ({q}).", 1.4, f["unit_price"]))
+
+    # an index that fell from its 12-month peak: the cost driver is easing now (P18: AS-14404 -5.5 %)
+    for s, w in series.items():
+        drop = index_peak_drop(facts, s)
+        if drop and drop[2] <= -2.0:
+            e, l_, pct = drop
+            d.claims.append(Claim("index_peak", [e, l_],
+                                  f"The index {s} moved {pct:+.1f}% from its recent peak ({e} to {l_}).",
+                                  1.1 + 0.5 * (w or 0.3), pct))
+
+    # order history (2-8 PO lines of the part are checked by their order prices)
+    if asked_price:
+        pos = sorted(
+            ((k, v) for k, v in facts.items()
+             if k.startswith("po:") and v.get("part") == part and v.get("unit_price") and v.get("date")),
+            key=lambda kv: (kv[1]["date"], kv[0]),
+        )
+        horizon = _months_back(pos[-1][1]["date"][:7], 12) if pos else None
+        mine = [(k, v) for k, v in pos if v.get("supplier") == supplier_id and v["date"][:7] >= horizon]
+        if mine:
+            last_id, last = mine[-1]
+            before = [(k, v) for k, v in mine if v["unit_price"] < last["unit_price"] * 0.97]
+            if before and asked_price > last["unit_price"]:
+                b_id, b = before[-1]
+                d.claims.append(Claim(
+                    "price_already_raised", [b_id, last_id],
+                    f"Our orders show your price already rose this year from EUR {b['unit_price']:.2f} ({b_id}) "
+                    f"to EUR {last['unit_price']:.2f} ({last_id}).",
+                    1.25, last["unit_price"]))
+        rivals = [(k, v) for k, v in pos if v.get("supplier") not in (None, supplier_id) and v["date"][:7] >= horizon]
+        if rivals:
+            r_id, r = rivals[-1]
+            same = [k for k, v in rivals if v["supplier"] == r["supplier"] and v["unit_price"] == r["unit_price"]]
+            if len(same) >= 2 and r["unit_price"] < asked_price * 0.98:
+                ids = same[-2:]
+                d.claims.append(Claim(
+                    "rival_orders", ids,
+                    f"We currently buy the same part from another approved source at EUR {r['unit_price']:.2f} "
+                    f"per unit ({ids[0]}, {ids[1]}).",
+                    1.35, r["unit_price"]))
 
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))

@@ -211,7 +211,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             }
         if closing_only or remaining <= 1 or latest(events).get("status") == "final_offer":
             continue
-        if remaining >= 3:
+        # A message without a term sheet gets a "hold" and burns a round (P18: two or three in a row
+        # led straight to a final offer or a walk-out). One standalone question per thread at most;
+        # further questions ride along with a counter.
+        standalone_ok = remaining >= 3 and not getattr(th, "standalone_questions", 0)
+        if standalone_ok:
             board["actions"][f"{sid}:reply"] = {"supplier_id": sid, "kind": "reply"}
         for kind, body in questions(case, source, history):
             if kind in th.asked_quotes:
@@ -219,7 +223,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             qid = f"{sid}:{kind}"
             board["questions"][qid] = {"supplier_id": sid, "kind": kind, "body": body}
             # Leave a reply and a closing move after a standalone question.
-            if remaining >= 3:
+            if standalone_ok:
                 board["actions"][qid] = {"supplier_id": sid, "kind": "ask", "question_id": qid}
         for sheet in latest(events).get("term_sheets", []):
             if current_sheet and sheet["term_sheet_id"] == current_sheet["term_sheet_id"]:
@@ -353,6 +357,8 @@ def execute(agent, case, threads, board, selection):
     else:
         offers = []
         authored = render_reply(selection["reply_text"], board["reply_facts"])
+        if kind in ("reply", "ask"):
+            th.standalone_questions = getattr(th, "standalone_questions", 0) + 1
         if kind == "reply":
             body = authored
             th.pending = {"kind": "quote_request", "event_count": len(events)}
