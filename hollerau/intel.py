@@ -261,11 +261,17 @@ def build(case, supplier_id, package=None, asked_price=None):
         (supplier_id,),
     )
     if split:
-        names = ", ".join(f"{r['description']} ({r['part_id']})" for r in split[:2])
+        # Suppliers ask "which volume?" (P18 management): give our total yearly need from the forecast.
+        names = []
+        for r in split[:2]:
+            fc = _query(package, "SELECT qty_next_12m, uom FROM forecasts WHERE part_id = ? "
+                                 "ORDER BY snapshot_month DESC LIMIT 1", (r["part_id"],))
+            size = f", our total need about {fc[0]['qty_next_12m']:,} {fc[0]['uom']} a year" if fc else ""
+            names.append(f"{r['description']} ({r['part_id']}{size})")
         d.claims.append(Claim(
             "share_of_business", [],
-            f"Today you supply only part of our need for {names}; a competitive base price here would put "
-            "you first in line for a larger share of that business.",
+            f"Today you supply only part of our need for {' and '.join(names)}; a competitive base price "
+            "here would put you first in line for a larger share of that business.",
             1.15, None))
 
     # competition (leverage / routine only): another approved source already supplies this part.

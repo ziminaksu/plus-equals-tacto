@@ -1,0 +1,74 @@
+# V10: reliable role budgets and traceable negotiation plans
+
+Baseline: `4da51fb` (runtime source evaluated at `b7c1dbc`).
+Policy: `astra-v10-traceable-plans`. Two separately authorized P02 starts are now
+used: an initial validation failure and an additional completed session.
+[Results, including both attempts](v10-p02-results.md). No P18, third session,
+local simulator test or LLM replay was run.
+
+## Evidence and changes
+
+| Observed issue | Implemented change | How it is checked |
+|---|---|---|
+| Proposer 12-second allocation became `(12 - 3) * 0.8 = 7.2` seconds of read time; 16/19 calls timed out. | One monotonic deadline. Proposer up to 20 seconds, final up to 30, with a reserved final window. Async cancellation bounds the entire HTTP operation, without nested fractional reductions or automatic network retries. | Per-role allocation, preparation, duration, success, usage and failure records in the P02 run. |
+| Large duplicate cost/history boards and verbose scalar enums. | Lossless tables and exact repeated-string references; homogeneous enum values share one enum. All input records, offers, evidence and IDs survive. Production reconstruction is checked before dispatch. | Input character counts, schema sizes and hashes; final selection still validates against the full board. |
+| Missing proposer advice was not explicit in final context. | Per-supplier model availability distinguishes success, partial validation, unavailable, skipped for budget, and closure-only turns. | Availability is stored in the board and visible to final Astra. |
+| Rich deals but no mandatory linked negotiation sequence. | Structured expected reply/optional price interval; conditional actions; evidence basis; rejected alternative; explicit revision from the prior response. | Plan schema and semantic validation; linked `decision_record` / `plan_outcome`. |
+| Acceptance/walkout subtotal could look like total continuation value. | Rename it a partial value and explicitly identify the unvalued counteroffer branch. Require Astra's conditional plan for that branch. | Inspect the actual plan; no invented precise multi-turn probability or value. |
+| Menu construction influenced choice without a concise audit. | Generation provenance, duplicate counts, rejected candidate terms and policy-vs-protocol-vs-buyer-constraint labels. | Full board linked by event ID/hash from each decision. |
+| Score changes were not reproducible or easy to interpret. | Record source/data/memory fingerprints, model settings and hypothesis; report plans alongside actual replies. | Freeze each authorized run and publish all outcomes, including failures. |
+| No graceful way to stop queued sessions. | Stop-file checked before each reservation. Active session can finish; no allowance mutation. | Source-level control-flow review in this pass; no additional practice run to exercise stopping. |
+
+The controller uses 55 seconds from receipt, leaving five seconds outside it for
+Arena dispatch/overhead. Preparation and attachments consume the same deadline.
+Within it, the final step reserves 24 seconds plus three for board work and two
+for execution; proposer is skipped if fewer than eight useful seconds remain.
+These limits bound work; they cannot guarantee an external service responds on time.
+
+Astra remains both proposer and final decision-maker. No provider/model substitution,
+new buyer weights, hidden benchmark input or change to the official cost formula.
+Future plan branches do not authorize future actions; each turn is decided afresh.
+No claim that these structural fixes alone solve P02's negotiation strategy.
+
+## Validation scope
+
+Source parsing, targeted lint, diff inspection and credential checks before
+publication. No local runtime tests under the user's standing instruction.
+The two separately authorized P02 attempts check execution and decision records.
+The evaluation is exploratory: several structural changes are bundled, there is no
+matched baseline rerun, and one outcome does not demonstrate general superiority.
+
+## Implementation references
+
+- `budget.py`: allocation and reserves.
+- `router.py`: cancellable Responses requests and role telemetry.
+- `prompt_context.py`: reversible prompt encoding with production reconstruction check.
+- `contracts.py`, `decision_record.py`: plan requirements, provenance and response comparison.
+- `director.py`, `agent.py`: integration into the actual decision/observation loop.
+- `experiment.py`, `cli.py`, `report.py`: fingerprints, graceful stop and readable audit.
+
+The API design follows the official guidance on
+[latency optimization](https://developers.openai.com/api/docs/guides/latency-optimization)
+and [structured outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses).
+Those guides support reducing repeated input and handling incomplete output;
+observed improvements must come from our run, not from documentation claims.
+
+## Correction between the two authorized P02 sessions
+
+The first proposer completed in 9.450 seconds and the first final call in 18.721
+seconds. Final validation then rejected the action; no supplier message was sent.
+The older error path retained only `ValueError`, so the exact rejected choice and
+reason cannot be recovered for that call. This is a failed action, not a completed
+evaluation or a successful negotiation.
+
+The process stopped and the remote session subsequently timed out with score zero.
+It was not resumed. Before the separately authorized additional session, final
+responses and application validation reasons were added to the retained records. Available plan source IDs, nonempty plan strings and
+numeric-free reply prose are constrained in the output schema. If a syntactically
+valid response fails application validation and at least ten seconds remain, Astra
+may correct it once using explicit feedback within the original deadline. This
+is one output-correction call, not an HTTP retry or a Python-selected fallback.
+Every attempt is logged. The additional session ran with frozen corrected source
+and completed at 0.235, without needing a correction call. The first session remains
+a failure in the report. No further session is authorized; the completed run is
+exploratory evidence, not a matched comparison or proof that strategy improved.

@@ -1,0 +1,2332 @@
+{
+  "policy": "astra-v9-category-playbooks",
+  "evaluated_commit": "b7c1dbc4c377c39bf7a52534a026f53d61abf77a",
+  "selection": "best completed practice score < 0.7, excluding teammate P18 work",
+  "attempts": 6,
+  "source_unchanged": true,
+  "changed_source_files": [],
+  "cases": [
+    {
+      "case_id": "case:P01",
+      "previous_best_score": 0.6185848034441437,
+      "previous_latest_score": 0.6185848034441437,
+      "previous_latest_session": "8ce21019f5d5a281",
+      "run_id": "ehl-v9-other-low-a-20261010",
+      "status": "completed",
+      "session_id": "8f7ff0d7eea9513b",
+      "result": {
+        "score": 0.7836644432725519,
+        "deal": true,
+        "supplier_id": "sup:70110",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 42,
+          "volume_per_year": 8150,
+          "contract_months": 12,
+          "effective_date": "2027-04-01",
+          "index_clause": null,
+          "incoterm": "FCA",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 900,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 136.8
+        },
+        "cost_breakdown": {
+          "price": 1080293.22,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 11043.0,
+          "freight": 15485.0,
+          "late_delivery": 0.0,
+          "quality": 1584.36,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 733.53
+        },
+        "c_open": 1153779.74,
+        "c_deal": 1109139.11,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1216,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70110:counter",
+            "package_ids": [
+              "sup:70110:p3"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70110:e0",
+              "sup:70110:e7",
+              "sup:70110:e6"
+            ],
+            "tone": "cooperative",
+            "rationale": "Propose p3 as a reciprocal early-payment/delayed-effectiveness exchange: its €49,268 expected improvement includes relationship cost, preserves full coverage, and has less relationship downside than the lowest-price anchors. The same opening previously produced p1/p2 rather than exact acceptance, so requesting p3 preserves negotiating room versus directly requesting p1; if a comparable counter returns, consider one price concession with payment and effectiveness unchanged before closing.",
+            "reply_text": "Dear Mr Brandlhuber,\n\nThank you for your proposal. We want a stable agreement that supports our continuing cooperation. The contractual notice requirement and the decline in the electricity index provide a basis for revisiting the adjustment.\n\nWe propose the attached package, exchanging faster payment for a reduced price and later effectiveness. Our shared forecast supports production planning; it is not an additional commitment or a change to the contractual delivery period. The fixed annual volume and other enquiry terms remain unchanged.\n\nWould you agree to this complete package?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70110:p3",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "This subjective range reflects an open opening-stage discussion, a cash-flow exchange and two historical counteroffers, but sparse observations cannot establish supplier patience. It is below the target's optimistic break-even threshold of 1.0 because no improvement is yet secured; neither the response estimates nor that threshold guarantees success.",
+              "information_needed": "",
+              "stop_condition": "Assess the complete returned offer including relationship downside; if still open and commercially useful, allow one price concession toward p0 while retaining the proposed payment and effective date. Do not repeat a rejected package, and close a worthwhile executable offer upon a final warning or repeated unchanged response."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70110",
+            "message": {
+              "subject": "Re: Brandlhuber announces +9.5 % on HN volute casings",
+              "body": "Dear Mr Brandlhuber,\n\nThank you for your proposal. We want a stable agreement that supports our continuing cooperation. The contractual notice requirement and the decline in the electricity index provide a basis for revisiting the adjustment.\n\nWe propose the attached package, exchanging faster payment for a reduced price and later effectiveness. Our shared forecast supports production planning; it is not an additional commitment or a change to the contractual delivery period. The fixed annual volume and other enquiry terms remain unchanged.\n\nWould you agree to this complete package?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nYour letter doc:20260911-70110-P01 gives 51 days of notice, while our contract ctr:4600070110 requires 90 days.\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nOur shared forecast snapshot 2026-09 plans 8150 pc for 2026-10 through 2027-09 (fc:310010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 8150 units per year; 12 months; payment 14 days net; lead time 42 days; Incoterm FCA; quality 900 ppm; EUR 0.0 per complaint; tooling EUR 0; EUR 135.78 per unit; effective 2027-04-01; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 135.78,
+                    "effective_date": "2027-04-01",
+                    "payment_days": 14
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.219
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 34147,
+                "input_tokens_details": {
+                  "cache_write_tokens": 34144,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 520,
+                "output_tokens_details": {
+                  "reasoning_tokens": 36
+                },
+                "total_tokens": 34667
+              },
+              "seconds": 11.773
+            }
+          ]
+        },
+        {
+          "event_id": 1234,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70110:counter",
+            "package_ids": [
+              "sup:70110:p40"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70110:e1"
+            ],
+            "tone": "cooperative",
+            "rationale": "Make the previously planned intermediate price concession, retaining fast payment and delayed effectiveness, supported by the unused conditional share-of-business prospect; p40 improves expected total cost by €3,382.63 including relationship costs, with positive paired downside savings and unchanged supply coverage. A supplier counteroffer is plausible given the three observed counteroffers, but historical returned prices are neither entitlements nor better alternatives; after this move, close the best worthwhile executable offer rather than restart bargaining.",
+            "reply_text": "Dear Mr Brandlhuber,\n\nWe can commit to the fixed annual volume of {{fixed:volume_per_year}} units, but cannot increase that binding quantity. The forecast already shared remains planning evidence, not an additional volume commitment or a change to the contractual delivery period.\n\nThank you for revising your offer. We have moved our proposed price toward yours in the attached package, retaining the faster payment and later effective date. Separately, a competitive agreement here would support consideration of a larger share of the other casing business described below, without guaranteeing an additional award.\n\nCould you approve this revised complete package? All other enquiry terms remain unchanged.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70110:p40",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.05,
+              "risk_reason": "This subjective range reflects a conciliatory price movement, unused commercial support and no final warning or unchanged replies; the three observed counteroffers do not establish patience. It is below the optimistic break-even threshold of 7.35%, although incomplete concessions and conversational hazards make the real threshold lower.",
+              "information_needed": "",
+              "stop_condition": "After this intermediate concession, evaluate the returned complete terms including relationship downside and close the best worthwhile executable offer; if unchanged or final, accept the standing offer while valid rather than repeat the request or escalate."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70110",
+            "message": {
+              "subject": "Re: Brandlhuber announces +9.5 % on HN volute casings",
+              "body": "Dear Mr Brandlhuber,\n\nWe can commit to the fixed annual volume of 8150 units, but cannot increase that binding quantity. The forecast already shared remains planning evidence, not an additional volume commitment or a change to the contractual delivery period.\n\nThank you for revising your offer. We have moved our proposed price toward yours in the attached package, retaining the faster payment and later effective date. Separately, a competitive agreement here would support consideration of a larger share of the other casing business described below, without guaranteeing an additional award.\n\nCould you approve this revised complete package? All other enquiry terms remain unchanged.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nToday you supply only part of our need for Volute casing HN 100-315 (part:310012, our total need about 2,010 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 8150 units per year; 12 months; payment 14 days net; lead time 42 days; Incoterm FCA; quality 900 ppm; EUR 0.0 per complaint; tooling EUR 0; EUR 136.54 per unit; effective 2027-04-01; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 136.54,
+                    "effective_date": "2027-04-01",
+                    "payment_days": 14
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.192
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 40785,
+                "input_tokens_details": {
+                  "cache_write_tokens": 40782,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 517,
+                "output_tokens_details": {
+                  "reasoning_tokens": 36
+                },
+                "total_tokens": 41302
+              },
+              "seconds": 12.805
+            }
+          ]
+        },
+        {
+          "event_id": 1265,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70110:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Honour the previous stopping rule: the reciprocal counter produced a further concession, and accepting now secures €44,872.27 expected improvement with full annual coverage and compliant lead time. This includes the active relationship penalty; improvement remains €42,317.52 in the modelled downside and €37,383.48 under public should-cost assumptions, while another small price request offers insufficient incremental value and larger resets lack fresh reciprocal support.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "sup:70110:p14",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.05,
+              "risk_reason": "For another request, this subjective range reflects no final warning and four observed counteroffers, but exhausted commercial support and no ability to provide the higher volume requested. It spans the marginal price target p41's optimistic break-even threshold of 1.26%; incomplete concessions would lower that threshold further.",
+              "information_needed": "",
+              "stop_condition": "Close the current executable offer now, following the planned sequence of reciprocal counter, supplier concession and acceptance; do not reopen price or payment negotiations."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70110",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70110-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.19
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 41915,
+                "input_tokens_details": {
+                  "cache_write_tokens": 41912,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 350,
+                "output_tokens_details": {
+                  "reasoning_tokens": 47
+                },
+                "total_tokens": 42265
+              },
+              "seconds": 8.137
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1217,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Mr Brandlhuber,\n\nThank you for your proposal. We want a stable agreement that supports our continuing cooperation. The contractual notice requirement and the decline in the electricity index provide a basis for revisiting the adjustment.\n\nWe propose the attached package, exchanging faster payment for a reduced price and later effectiveness. Our shared forecast supports production planning; it is not an additional commitment or a change to the contractual delivery period. The fixed annual volume and other enquiry terms remain unchanged.\n\nWould you agree to this complete package?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nYour letter doc:20260911-70110-P01 gives 51 days of notice, while our contract ctr:4600070110 requires 90 days.\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nOur shared forecast snapshot 2026-09 plans 8150 pc for 2026-10 through 2027-09 (fc:310010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 8150 units per year; 12 months; payment 14 days net; lead time 42 days; Incoterm FCA; quality 900 ppm; EUR 0.0 per complaint; tooling EUR 0; EUR 135.78 per unit; effective 2027-04-01; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 135.78,
+                  "effective_date": "2027-04-01",
+                  "payment_days": 14
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1220,
+          "direction": "received",
+          "message": {
+            "body": "Guten Tag,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nOur family foundry values our long partnership deeply. We checked the index change data you cited; it holds and we took it into account. We checked the volume change data you cited; it holds and we took it into account. We also checked the notice period data you cited; it holds and we took it into account. We did not know that - a fair point.\n\nAt the same time, LCI-C rose 2.7 % in twelve months and is 30 % of our cost. That remains. PPI-C241 rose 6.5 % in twelve months and is 24 % of our cost. That remains. Our price reflects our costs; our calculation stays internal.\n\nWe welcome the 14-day payment terms and the shared forecast of 8150 units, which allows us to offer a reduced price of €137.30. Our current offer is a price of €137.30 per unit, Zahlungsziel 14 days net, valid from 1 April 2027. Alternatively, with valid from 1 January 2027: a price of €134.50 per unit, Zahlungsziel 14 days net, valid from 1 January 2027.\n\nOur standard Zahlungsziel is 30 days net. Our general terms and conditions apply; the quote lists our standard terms. A binding higher volume would help us and can improve the price. Which volume can you commit to?\n\nWe are happy to discuss this in a call; until then our offer stands. Our offer remains valid for 30 days.\n\nViele Grüße aus der Gießerei\nThomas Brandlhuber\nOwner, Gießerei Brandlhuber GmbH & Co. KG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70110-1",
+                "terms": {
+                  "unit_price": 137.3,
+                  "payment_days": 14,
+                  "effective_date": "2027-04-01"
+                }
+              },
+              {
+                "term_sheet_id": "offer:70110-1-a",
+                "terms": {
+                  "unit_price": 134.5,
+                  "payment_days": 14,
+                  "effective_date": "2027-01-01"
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1235,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Mr Brandlhuber,\n\nWe can commit to the fixed annual volume of 8150 units, but cannot increase that binding quantity. The forecast already shared remains planning evidence, not an additional volume commitment or a change to the contractual delivery period.\n\nThank you for revising your offer. We have moved our proposed price toward yours in the attached package, retaining the faster payment and later effective date. Separately, a competitive agreement here would support consideration of a larger share of the other casing business described below, without guaranteeing an additional award.\n\nCould you approve this revised complete package? All other enquiry terms remain unchanged.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nToday you supply only part of our need for Volute casing HN 100-315 (part:310012, our total need about 2,010 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 8150 units per year; 12 months; payment 14 days net; lead time 42 days; Incoterm FCA; quality 900 ppm; EUR 0.0 per complaint; tooling EUR 0; EUR 136.54 per unit; effective 2027-04-01; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 136.54,
+                  "effective_date": "2027-04-01",
+                  "payment_days": 14
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1244,
+          "direction": "received",
+          "message": {
+            "body": "Guten Tag,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nFor generations, our family foundry has taken pride in supplying reliable, quality craftsmanship to our long-standing regional partners. Regarding our current negotiation, our price reflects our costs; our calculation stays internal. As an additional award is not guaranteed, we must base our calculation on the confirmed volume. Which volume can you commit to? A binding higher volume would help us and can improve the price. \n\nIn the meantime, we are prepared to make a further concession to €136.80 per unit for the package with 14-day payment terms and an effective date of 1 April 2027. To summarize, our offer stands at a price of €136.80 per unit, Zahlungsziel 14 days net, valid from 1 April 2027. This offer remains valid for 30 days.\n\nViele Grüße aus der Gießerei\nThomas Brandlhuber\nOwner, Gießerei Brandlhuber GmbH & Co. KG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70110-2",
+                "terms": {
+                  "unit_price": 136.8,
+                  "payment_days": 14,
+                  "effective_date": "2027-04-01"
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1266,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70110-2"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": 0.16507963982840823,
+      "delta_vs_previous_latest": 0.16507963982840823
+    },
+    {
+      "case_id": "case:P02",
+      "previous_best_score": 0.25476459577171884,
+      "previous_latest_score": 0.25476459577171884,
+      "previous_latest_session": "bf51092df64ae6f8",
+      "run_id": "ehl-v9-other-low-a-20261010",
+      "status": "completed",
+      "session_id": "5e8a0bfb236e197c",
+      "result": {
+        "score": 0.25476459577171884,
+        "deal": true,
+        "supplier_id": "sup:70510",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "CU-NOTATION",
+            "material_share": 0.2,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 364.12
+        },
+        "cost_breakdown": {
+          "price": 2224773.2,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 22742.13,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 17798.19,
+          "relationship": 4298.55
+        },
+        "c_open": 2282867.49,
+        "c_deal": 2270803.51,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1281,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p2"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70510:e2",
+              "sup:70510:e0"
+            ],
+            "tone": "cooperative",
+            "rationale": "Propose p2 with earlier payment and verified commercial evidence: its calibrated total-cost improvement is €39,603.95, including €11,223.76 relationship cost, with €33,541.50 downside improvement, full coverage and a public-cost scenario below opening. History links this opening request to p3 rather than exact acceptance; unlike directly requesting that small concession or immediately offering the historical indexed package, this preserves indexation for a subsequent exchange toward p0/p1 if the supplier counters.",
+            "reply_text": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of {{fixed:volume_per_year}} units annually for the specified contract period and attach the shared forecast as supporting planning evidence; its horizon does not extend our binding commitments. We value continuity of supply and prefer a fixed-price agreement. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. Please also consider the attached opportunity for additional business, which is conditional rather than a volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?",
+            "continuation_review": {
+              "target_package_id": "sup:70510:p2",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.13,
+              "risk_reason": "This subjective range reflects sparse history with counteroffers, unchanged replies and acceptances but no observed walkout or final warning; it is not a calibrated forecast. It is below the target's optimistic break-even threshold of 1.0 because no improvement is yet secured, although a non-walkout need not deliver the target.",
+              "information_needed": "",
+              "stop_condition": "If the supplier returns p3, make one moderated fixed-price request toward p0, offering p1 only as a separately priced indexed alternative if needed; reassess all relationship and index costs against the live offer. Do not repeat an unchanged proposal, and close a worthwhile standing deal upon a final warning or repeated unchanged responses after that exchange."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of 6110 units annually for the specified contract period and attach the shared forecast as supporting planning evidence; its horizon does not extend our binding commitments. We value continuity of supply and prefer a fixed-price agreement. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. Please also consider the attached opportunity for additional business, which is conditional rather than a volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?\n\nOur shared forecast snapshot 2026-09 plans 6110 pc for 2026-10 through 2027-09 (fc:350011@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nToday you supply only part of our need for Motor IE3 4 kW, 4-pole (part:350010, our total need about 8,490 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 361.42 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 361.42,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 6.996
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 57779,
+                "input_tokens_details": {
+                  "cache_write_tokens": 57776,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 545,
+                "output_tokens_details": {
+                  "reasoning_tokens": 36
+                },
+                "total_tokens": 58324
+              },
+              "seconds": 12.232
+            }
+          ]
+        },
+        {
+          "event_id": 1295,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70510:counter",
+            "package_ids": [
+              "sup:70510:p0",
+              "sup:70510:p1"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Following the planned moderated exchange, prefer p0: it improves standing total cost by €9,653.82, including relationship costs, with €8,593.70 improvement in the downside comparison; p1 offers a historically supported alternative but higher relationship and index exposure. Request these complete alternatives rather than repeat the rejected opening, then assess the actual counteroffer and close a worthwhile improved deal rather than pursue the historically stagnant post-agreement exchanges.",
+            "reply_text": "Dear Ms Lechner, thank you for revising your offer and considering our volume evidence. We retain the confirmed enquiry volume and earlier-payment proposal, and have moderated our fixed-price request in the attached preferred package. Alternatively, we would consider the attached copper-indexed package only in exchange for its corresponding rebased price, avoiding duplication between the base price and index adjustment. These are alternative complete packages, not cumulative concessions, with the remaining enquiry terms unchanged. Could you approve either package, or submit them to the responsible pricing committee, while keeping your current offer available for comparison? We value continuity of supply and prefer the fixed-price structure.",
+            "continuation_review": {
+              "target_package_id": "sup:70510:p0",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.13,
+              "risk_reason": "This subjective range reflects an open, improving exchange and historical counteroffers and acceptances, with no observed final-warning walkout; sparse, non-independent observations do not establish patience. It is below p0's optimistic break-even threshold of 0.6111, but that threshold assumes every non-walkout delivers the target and therefore overstates tolerable risk.",
+              "information_needed": "",
+              "stop_condition": "If either package or a beneficial counteroffer is returned, compare its full relationship and index costs and close unless a clearly supported materially different exchange remains; if unchanged, do not repeat these proposals and close the worthwhile standing offer. Any explicit final warning triggers acceptance of the best valid worthwhile offer or walk-away, not another concession request."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "subject": "Re: Nordmark passes on copper for the 7.5 kW motor",
+              "body": "Dear Ms Lechner, thank you for revising your offer and considering our volume evidence. We retain the confirmed enquiry volume and earlier-payment proposal, and have moderated our fixed-price request in the attached preferred package. Alternatively, we would consider the attached copper-indexed package only in exchange for its corresponding rebased price, avoiding duplication between the base price and index adjustment. These are alternative complete packages, not cumulative concessions, with the remaining enquiry terms unchanged. Could you approve either package, or submit them to the responsible pricing committee, while keeping your current offer available for comparison? We value continuity of supply and prefer the fixed-price structure.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 367.0 per unit; no index clause.\n\nPackage 2: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 364.12 per unit; index clause {\"series\": \"CU-NOTATION\", \"material_share\": 0.2, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.\n\nThese are alternative complete packages, not cumulative concessions.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 367.0,
+                    "payment_days": 14,
+                    "index_clause": null
+                  }
+                },
+                {
+                  "terms": {
+                    "unit_price": 364.12,
+                    "payment_days": 14,
+                    "index_clause": {
+                      "series": "CU-NOTATION",
+                      "material_share": 0.2,
+                      "deadband_pct": 5.0,
+                      "base_month": "2026-08"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.04
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 67794,
+                "input_tokens_details": {
+                  "cache_write_tokens": 67791,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 529,
+                "output_tokens_details": {
+                  "reasoning_tokens": 33
+                },
+                "total_tokens": 68323
+              },
+              "seconds": 11.776
+            }
+          ]
+        },
+        {
+          "event_id": 1315,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70510:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the standing offer, securing an estimated €12,215.53 improvement with full volume coverage and compliant lead time, after including €17,798.19 index risk and €4,148.36 expected relationship cost; calibrated downside still improves on opening, although the public-cost scenario is less favourable. Honour the previous closing condition: repeating fixed-price requests has weak historical support, while directly requesting the historical payment exchange p7 offers only €830.32 additional savings and does not justify reopening the agreement.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.03,
+              "walkout_probability_high": 0.13,
+              "risk_reason": "For another request, this subjective range reflects no observed walkouts or final warnings but seven unchanged offer responses and four unchanged question responses, rather than assuming continued patience. It straddles p7's optimistic 0.0636 break-even threshold, which additionally assumes every non-walkout achieves that improvement.",
+              "information_needed": "",
+              "stop_condition": "Close the current executable offer now without further concessions or escalation; the historical payment exchange could produce a modest counteroffer or an unchanged response, but its limited gain does not warrant another negotiation sequence."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70510",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70510-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.037
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 67312,
+                "input_tokens_details": {
+                  "cache_write_tokens": 67309,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 359,
+                "output_tokens_details": {
+                  "reasoning_tokens": 36
+                },
+                "total_tokens": 67671
+              },
+              "seconds": 8.905
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1282,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Ms Lechner, thank you for your offer. We confirm the enquiry volume of 6110 units annually for the specified contract period and attach the shared forecast as supporting planning evidence; its horizon does not extend our binding commitments. We value continuity of supply and prefer a fixed-price agreement. In exchange for earlier payment, please consider the attached reduced fixed-price package, with the remaining enquiry terms unchanged. Please also consider the attached opportunity for additional business, which is conditional rather than a volume commitment. Could you approve this package or submit it to your pricing committee, while keeping your existing offer available for comparison?\n\nOur shared forecast snapshot 2026-09 plans 6110 pc for 2026-10 through 2027-09 (fc:350011@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nToday you supply only part of our need for Motor IE3 4 kW, 4-pole (part:350010, our total need about 8,490 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 361.42 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 361.42,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1283,
+          "direction": "received",
+          "message": {
+            "body": "Dear Sir or Madam,\nThank you for your message.\nWe have reviewed your offer and can adjust our Angebot as follows.\nOur terms: a price of €368.65 per unit, Zahlungsziel 14 days net, no Preisgleitklausel.\nPlease note:\nWe checked the volume change data you cited; it holds and we took it into account.\nWe appreciate your confirmation of the volume and the proposed 14-day payment terms, which we have incorporated into our revised offer.\nBased on the improved payment terms, we can offer a revised price of €368.65 per unit.\nShould you require further information, please let us know.\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-1",
+                "terms": {
+                  "unit_price": 368.65,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1296,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Ms Lechner, thank you for revising your offer and considering our volume evidence. We retain the confirmed enquiry volume and earlier-payment proposal, and have moderated our fixed-price request in the attached preferred package. Alternatively, we would consider the attached copper-indexed package only in exchange for its corresponding rebased price, avoiding duplication between the base price and index adjustment. These are alternative complete packages, not cumulative concessions, with the remaining enquiry terms unchanged. Could you approve either package, or submit them to the responsible pricing committee, while keeping your current offer available for comparison? We value continuity of supply and prefer the fixed-price structure.\n\nPackage 1: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 367.0 per unit; no index clause.\n\nPackage 2: 6110 units per year; 12 months; payment 14 days net; lead time 35 days; Incoterm DAP; quality 250 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 364.12 per unit; index clause {\"series\": \"CU-NOTATION\", \"material_share\": 0.2, \"deadband_pct\": 5.0, \"base_month\": \"2026-08\"}.\n\nThese are alternative complete packages, not cumulative concessions.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 367.0,
+                  "payment_days": 14,
+                  "index_clause": null
+                }
+              },
+              {
+                "terms": {
+                  "unit_price": 364.12,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "CU-NOTATION",
+                    "material_share": 0.2,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1301,
+          "direction": "received",
+          "message": {
+            "body": "Dear Sir or Madam,\n\nWe acknowledge your preference for a fixed-price agreement and have reviewed your alternative packages. In response to your improved offer, we are prepared to make a further concession on the base price. Our price reflects our costs; our calculation stays internal.\n\nWe can accept your terms and await your order. \n\nOur offer is a price of €364.12 per unit, Zahlungsziel 14 days net, a Preisgleitklausel on CU-NOTATION. \n\nThis offer is valid for 30 days. Our standard terms apply to everything the quote does not state; see attached.\n\nMit freundlichen Grüßen\nPetra Lechner\nKey Account Manager, Antriebstechnik Nordmark AG",
+            "status": "agreed",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70510-2",
+                "terms": {
+                  "unit_price": 364.12,
+                  "payment_days": 14,
+                  "index_clause": {
+                    "series": "CU-NOTATION",
+                    "material_share": 0.2,
+                    "deadband_pct": 5.0,
+                    "base_month": "2026-08"
+                  }
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1316,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70510-2"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": 0.0,
+      "delta_vs_previous_latest": 0.0
+    },
+    {
+      "case_id": "case:P05",
+      "previous_best_score": 0.4325706072725315,
+      "previous_latest_score": 0.3831949254263143,
+      "previous_latest_session": "71813595bf534217",
+      "run_id": "ehl-v9-other-low-a-20261010",
+      "status": "completed",
+      "session_id": "904074340678f20a",
+      "result": {
+        "score": 0.47023999647348785,
+        "deal": true,
+        "supplier_id": "sup:70250",
+        "terms": {
+          "payment_days": 30,
+          "lead_time_days": 35,
+          "volume_per_year": 4200,
+          "contract_months": 24,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 600,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 31.5
+        },
+        "cost_breakdown": {
+          "price": 264600.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 1764.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 564.48,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "c_open": 305544.96,
+        "c_deal": 266928.48,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1344,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70210:counter",
+            "package_ids": [
+              "sup:70210:p0"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70210:e4",
+              "sup:70210:e6",
+              "sup:70210:e1"
+            ],
+            "tone": "cooperative",
+            "rationale": "Accepting now secures zero improvement; the historically productive opening exchange p0 offers credible upside despite rising material and labour drivers, and is preferable to immediately requesting the historical returned price of €32.00. Propose p0, assess a plausible counter near p2 without assuming repeatability, then approach untried Hrvelec for a feasible competing package rather than repeat the price-only reductions that previously produced unchanged and final offers.",
+            "reply_text": "Thank you for your quotation. We cannot accept the opening package as it stands, but can offer earlier payment and greater delivery flexibility in exchange for the attached price reduction. Our enquiry retains its annual volume of {{fixed:volume_per_year}} and contract duration of {{fixed:contract_months}} months. The attached energy and material index evidence supports a fresh pricing review, while the delivery record makes a dependable agreed schedule important. Can you offer the attached complete package on that basis?",
+            "continuation_review": {
+              "target_package_id": "sup:70210:p0",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "This subjective range reflects a substantial opening reduction offset by a historically productive reciprocal exchange; sparse observations show concessions and unchanged replies, not a current final warning. It is below the target's optimistic break-even threshold of 100% because no improvement is secured, but that threshold does not imply that surviving negotiation achieves the target.",
+              "information_needed": "",
+              "stop_condition": "If a counter near p2 arrives, retain it for comparison and next seek feasible competition from Hrvelec; do not recycle historical price-only reductions against the same terms. Stop bargaining with Dralveck on any explicit final offer, and close the best feasible live package after testing credible competing routes."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70210",
+            "message": {
+              "subject": "Re: RFQ: pump shaft for the new HX series",
+              "body": "Thank you for your quotation. We cannot accept the opening package as it stands, but can offer earlier payment and greater delivery flexibility in exchange for the attached price reduction. Our enquiry retains its annual volume of 4200 and contract duration of 24 months. The attached energy and material index evidence supports a fresh pricing review, while the delivery record makes a dependable agreed schedule important. Can you offer the attached complete package on that basis?\n\nYour on-time delivery was 80.8% (sc:70210@2026Q3).\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nPackage 1: 4200 units per year; 24 months; payment 14 days net; lead time 42 days; Incoterm DAP; quality 1200 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.96 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 30.96,
+                    "payment_days": 14,
+                    "lead_time_days": 42
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.202
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 69899,
+                "input_tokens_details": {
+                  "cache_write_tokens": 69896,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 526,
+                "output_tokens_details": {
+                  "reasoning_tokens": 63
+                },
+                "total_tokens": 70425
+              },
+              "seconds": 11.835
+            }
+          ]
+        },
+        {
+          "event_id": 1353,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70240:counter",
+            "package_ids": [
+              "sup:70240:p5"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70240:e1",
+              "sup:70240:e2",
+              "sup:70240:e4"
+            ],
+            "tone": "cooperative",
+            "rationale": "Honour the previous review by retaining Dralveck's EUR 269,833.76 standing package while testing Hrvelec with an earlier-payment exchange that repairs its infeasible lead time and targets EUR 264,675.82 total cost. Historical p5 produced a feasible p4 counter rather than acceptance, whereas the much lower p0 anchor produced a worse quote; if a similar counter returns, seek one commercially supported approval review rather than repeat price-only demands.",
+            "reply_text": "Thank you for your quotation. The quoted delivery schedule does not meet our enquiry, so we cannot proceed on the opening package. We can offer earlier payment in exchange for the attached reduced-price package and a compliant delivery schedule. Our enquiry already provides an annual volume of {{fixed:volume_per_year}} over {{fixed:contract_months}} months, giving a firm basis for capacity planning. The attached material-index evidence supports a fresh pricing review, and the delivery record makes a dependable schedule important. Please also consider the attached opportunity for a larger share of our existing business, without treating that prospect as an additional commitment. Can you offer the attached complete package?",
+            "continuation_review": {
+              "target_package_id": "sup:70240:p5",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "This subjective range reflects an untried open thread, a reciprocal payment concession, and historical counteroffers rather than walkouts; later repeated demands did produce a final warning. It is below the target's optimistic 100% break-even threshold with no improvement secured on this thread, but neither target attainment nor continued availability of Dralveck's separate offer is guaranteed.",
+              "information_needed": "",
+              "stop_condition": "If Hrvelec counters near historical p4, request at most one approval review tied to the verified business prospect while preserving compliant delivery; do not repeat rejected price-only packages. Stop bargaining with Hrvelec at any final warning, test the remaining credible supplier route, and close the lowest-cost feasible live offer."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70240",
+            "message": {
+              "subject": "Re: RFQ: pump shaft for the new HX series",
+              "body": "Thank you for your quotation. The quoted delivery schedule does not meet our enquiry, so we cannot proceed on the opening package. We can offer earlier payment in exchange for the attached reduced-price package and a compliant delivery schedule. Our enquiry already provides an annual volume of 4200 over 24 months, giving a firm basis for capacity planning. The attached material-index evidence supports a fresh pricing review, and the delivery record makes a dependable schedule important. Please also consider the attached opportunity for a larger share of our existing business, without treating that prospect as an additional commitment. Can you offer the attached complete package?\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nToday you supply only part of our need for Flange DN 100 PN 16, machined (part:320031, our total need about 4,420 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nYour on-time delivery was 62.5% (sc:70240@2026Q3).\n\nPackage 1: 4200 units per year; 24 months; payment 14 days net; lead time 42 days; Incoterm DAP; quality 1400 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.87 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 30.87,
+                    "payment_days": 14,
+                    "lead_time_days": 42
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.257
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 80169,
+                "input_tokens_details": {
+                  "cache_write_tokens": 80166,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 588,
+                "output_tokens_details": {
+                  "reasoning_tokens": 71
+                },
+                "total_tokens": 80757
+              },
+              "seconds": 13.773
+            }
+          ]
+        },
+        {
+          "event_id": 1362,
+          "kind": "reply",
+          "selection": {
+            "action_id": "sup:70240:reply",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Dralveck currently offers the lowest feasible total cost at EUR 269,833.76, so closing with Hrvelec now is inferior; honour the previous stopping plan by seeking one approval review rather than repeating the rejected package. A revised compliant quote could improve competition, after which we will test Fuchsreiter's supported commercial route before closing the lowest-cost live offer.",
+            "reply_text": "Thank you for confirming a compliant delivery schedule. Your current package is not yet the most competitive complete offer we have received. Could you ask the person authorised to approve project pricing to review a further price reduction while retaining the offered payment and delivery terms? Please consider the previously discussed opportunity for a larger share of our flange business as a commercial prospect, not an additional commitment. Please provide any approved improvement as a complete quote and keep your existing offer available for comparison.",
+            "continuation_review": {
+              "target_package_id": "sup:70240:p34",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "This subjective range reflects five historical counteroffers and one unchanged offer, but no question outcomes; repeated historical price demands eventually triggered a final warning, though no post-warning walkout is documented here. The range is below the target's optimistic 93.69% break-even threshold, which assumes target attainment on every non-walkout and therefore overstates the practical tolerance for risk.",
+              "information_needed": "Whether an authorised review produces a complete compliant quote below Dralveck's EUR 269,833.76 total cost; a refusal or unchanged quote ends this approval route.",
+              "stop_condition": "Allow this approval review only: retain any improved quote for comparison, but do not repeat the request after refusal or an unchanged response. Test the remaining credible Fuchsreiter route next, cease bargaining on any explicit final offer, and close the lowest-cost feasible live package once useful supported exchanges are exhausted."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70240",
+            "message": {
+              "subject": "Re: RFQ: pump shaft for the new HX series",
+              "body": "Thank you for confirming a compliant delivery schedule. Your current package is not yet the most competitive complete offer we have received. Could you ask the person authorised to approve project pricing to review a further price reduction while retaining the offered payment and delivery terms? Please consider the previously discussed opportunity for a larger share of our flange business as a commercial prospect, not an additional commitment. Please provide any approved improvement as a complete quote and keep your existing offer available for comparison.",
+              "term_sheets": []
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 4453,
+                "input_tokens_details": {
+                  "cache_write_tokens": 2980,
+                  "cached_tokens": 1470
+                },
+                "output_tokens": 260,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 4713
+              },
+              "seconds": 5.236,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 106931,
+                "input_tokens_details": {
+                  "cache_write_tokens": 106928,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 571,
+                "output_tokens_details": {
+                  "reasoning_tokens": 106
+                },
+                "total_tokens": 107502
+              },
+              "seconds": 13.565
+            }
+          ]
+        },
+        {
+          "event_id": 1371,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70250:counter",
+            "package_ids": [
+              "sup:70250:p55"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70250:e1",
+              "sup:70250:e2",
+              "sup:70250:e6"
+            ],
+            "tone": "cooperative",
+            "rationale": "Retain Dralveck's best feasible standing quote and honour the previous stopping rule by testing untried Fuchsreiter rather than repeating Hrvelec's unchanged approval request. The exploratory package could improve total cost by EUR 12,274.08 versus Dralveck; if Fuchsreiter counters on payment, consider earlier payment in exchange for a competitive complete price, without treating the anchor or response estimates as assured outcomes.",
+            "reply_text": "Thank you for your quotation. The opening package does not work for us against the competing complete offers received. Please review the attached proposal, which allows more delivery flexibility while retaining the enquiry's fixed annual volume and contract duration. The attached index evidence supports a fresh pricing review, and the spacer-sleeve opportunity is a commercial prospect rather than an additional commitment. Can you offer this complete package? If payment timing is the obstacle, please identify the price reduction that earlier payment would buy.",
+            "continuation_review": {
+              "target_package_id": "sup:70250:p55",
+              "walkout_probability_low": 0.05,
+              "walkout_probability_high": 0.2,
+              "risk_reason": "This subjective range reflects an ambitious price and extended-payment request against a supplier expressing interest in early payment, with no observed responses or final warnings on this thread. It is below the target's optimistic 100% break-even threshold because no improvement is secured with Fuchsreiter, but survival does not imply target attainment and other live offers must not be assumed indefinitely available.",
+              "information_needed": "",
+              "stop_condition": "If Fuchsreiter returns a concrete counter identifying payment as the obstacle, permit one earlier-payment exchange conditional on total cost beating the best feasible live offer. If it remains materially uncompetitive, repeats an unchanged quote, or declares a final offer, stop bargaining on this thread and close the lowest-cost feasible live package after comparing any actual improvement."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70250",
+            "message": {
+              "subject": "Re: RFQ: pump shaft for the new HX series",
+              "body": "Thank you for your quotation. The opening package does not work for us against the competing complete offers received. Please review the attached proposal, which allows more delivery flexibility while retaining the enquiry's fixed annual volume and contract duration. The attached index evidence supports a fresh pricing review, and the spacer-sleeve opportunity is a commercial prospect rather than an additional commitment. Can you offer this complete package? If payment timing is the obstacle, please identify the price reduction that earlier payment would buy.\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nToday you supply only part of our need for Spacer sleeve (part:320090, our total need about 27,000 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nPackage 1: 4200 units per year; 24 months; payment 90 days net; lead time 35 days; Incoterm DAP; quality 600 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.8 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 30.8,
+                    "payment_days": 90,
+                    "lead_time_days": 35
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 4461,
+                "input_tokens_details": {
+                  "cache_write_tokens": 2988,
+                  "cached_tokens": 1470
+                },
+                "output_tokens": 263,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 4724
+              },
+              "seconds": 6.236,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 107335,
+                "input_tokens_details": {
+                  "cache_write_tokens": 107332,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 598,
+                "output_tokens_details": {
+                  "reasoning_tokens": 114
+                },
+                "total_tokens": 107933
+              },
+              "seconds": 15.908
+            }
+          ]
+        },
+        {
+          "event_id": 1380,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70250:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept Fuchsreiter's compliant final offer at EUR 266,928.48 total cost, the lowest executable quote and EUR 59,192 below its opening cost. All suppliers have been tested; honour the prior closing condition rather than repeat Hrvelec's unchanged approval route or pursue unsupported additional concessions against Dralveck's already improved package.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.1,
+              "walkout_probability_high": 0.3,
+              "risk_reason": "This subjective range concerns hypothetical further bargaining after the explicit final warning, not acceptance; no post-warning outcomes establish a calibrated estimate. Further bargaining with this supplier is prohibited, so no permitted target or applicable optimistic break-even threshold warrants risking the secured improvement.",
+              "information_needed": "",
+              "stop_condition": "Close Fuchsreiter's current complete offer now without additional volume commitments or further concessions; no subsequent negotiation step is needed."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70250",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70250-3"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 6.103
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 77695,
+                "input_tokens_details": {
+                  "cache_write_tokens": 77692,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 305,
+                "output_tokens_details": {
+                  "reasoning_tokens": 38
+                },
+                "total_tokens": 78000
+              },
+              "seconds": 8.557
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1345,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for your quotation. We cannot accept the opening package as it stands, but can offer earlier payment and greater delivery flexibility in exchange for the attached price reduction. Our enquiry retains its annual volume of 4200 and contract duration of 24 months. The attached energy and material index evidence supports a fresh pricing review, while the delivery record makes a dependable agreed schedule important. Can you offer the attached complete package on that basis?\n\nYour on-time delivery was 80.8% (sc:70210@2026Q3).\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nPackage 1: 4200 units per year; 24 months; payment 14 days net; lead time 42 days; Incoterm DAP; quality 1200 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.96 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 30.96,
+                  "payment_days": 14,
+                  "lead_time_days": 42
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1346,
+          "direction": "received",
+          "message": {
+            "body": "Hallo,\n\nWe have reviewed your offer and can adjust our Angebot as follows.\n\nHallo, I looked at your index data and the delivery numbers, and you're right that things moved a bit. As to the index change and delivery record data you cited, we did not know that - a fair point. \n\nOur price follows our main cost drivers: LCI-C, PPI-C2431, AS-14404, PPI-D351. We have free capacity for your parts. Getting paid in 14 days works well for us, so I'm fine with the 42 days lead time. With overtime we can deliver in 28 days, at a premium.\n\nWe can make an offer of a price of €31.50 per unit, Zahlungsziel 14 days net, Lieferzeit 42 days. Our Lieferzeit is 42 days. I can do €31.50 per piece for this package. Let me know.\n\nGruß\nAndreas Dralveck\nOwner, Zerspanung Dralveck GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70210-1",
+                "terms": {
+                  "unit_price": 31.5,
+                  "payment_days": 14,
+                  "lead_time_days": 42
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1354,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for your quotation. The quoted delivery schedule does not meet our enquiry, so we cannot proceed on the opening package. We can offer earlier payment in exchange for the attached reduced-price package and a compliant delivery schedule. Our enquiry already provides an annual volume of 4200 over 24 months, giving a firm basis for capacity planning. The attached material-index evidence supports a fresh pricing review, and the delivery record makes a dependable schedule important. Please also consider the attached opportunity for a larger share of our existing business, without treating that prospect as an additional commitment. Can you offer the attached complete package?\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nToday you supply only part of our need for Flange DN 100 PN 16, machined (part:320031, our total need about 4,420 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nYour on-time delivery was 62.5% (sc:70240@2026Q3).\n\nPackage 1: 4200 units per year; 24 months; payment 14 days net; lead time 42 days; Incoterm DAP; quality 1400 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.87 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 30.87,
+                  "payment_days": 14,
+                  "lead_time_days": 42
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1355,
+          "direction": "received",
+          "message": {
+            "body": "Hello,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nHi, we can do the 42 days lead time and 14 days payment you want. We hear you on the delivery record and the flange business, but that material index drop was already in our first price. With these terms, we can do €31.50 per piece.\n\nSo our offer is a price of €31.50 per unit, Zahlungsziel 14 days net, Lieferzeit 42 days. This offer stays valid for 30 days.\n\nWe are really eager to work with you and prove ourselves as a great partner for your business!\n\nKind regards\nJana Procházková\nExport Manager, Strojírna Hrvelec s.r.o.\n\nFreight Forwarder: Our Lieferzeit is 42 days. With overtime we can deliver in 35 days, at a premium.\n\nFreight Forwarder: Our Lieferzeit is 42 days. With overtime we can deliver in 35 days, at a premium.",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70240-2",
+                "terms": {
+                  "unit_price": 31.5,
+                  "payment_days": 14,
+                  "lead_time_days": 42
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1363,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for confirming a compliant delivery schedule. Your current package is not yet the most competitive complete offer we have received. Could you ask the person authorised to approve project pricing to review a further price reduction while retaining the offered payment and delivery terms? Please consider the previously discussed opportunity for a larger share of our flange business as a commercial prospect, not an additional commitment. Please provide any approved improvement as a complete quote and keep your existing offer available for comparison.",
+            "term_sheets": []
+          }
+        },
+        {
+          "event_id": 1364,
+          "direction": "received",
+          "message": {
+            "body": "Hello,\n\nThank you for your message. Hi, thanks for the message! If you want me to take this to my boss for a special price, I need to show them some numbers from this competing offer you mentioned. Which figures is that based on? Please send us the data.\n\nRight now, our offer is a price of €31.50 per unit, Zahlungsziel 14 days net, Lieferzeit 42 days. Right now, €31.50 is the best we can do for 14 days payment and 42 days lead time. Our standard Zahlungsziel is 45 days net. Faster payment is welcome; we can reflect it in the price. \n\nPlease note that our offer stays valid for 30 days. Also, our price follows our main cost drivers: LCI-C, PPI-C2431, AS-14404, PPI-D351.\n\nKind regards\nJana Procházková\nExport Manager, Strojírna Hrvelec s.r.o.",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70240-3",
+                "terms": {
+                  "unit_price": 31.5,
+                  "payment_days": 14,
+                  "lead_time_days": 42
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1372,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for your quotation. The opening package does not work for us against the competing complete offers received. Please review the attached proposal, which allows more delivery flexibility while retaining the enquiry's fixed annual volume and contract duration. The attached index evidence supports a fresh pricing review, and the spacer-sleeve opportunity is a commercial prospect rather than an additional commitment. Can you offer this complete package? If payment timing is the obstacle, please identify the price reduction that earlier payment would buy.\n\nThe index AS-14404 moved -5.5% from its recent peak (idx:AS-14404@2026-06 to idx:AS-14404@2026-09).\n\nToday you supply only part of our need for Spacer sleeve (part:320090, our total need about 27,000 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nPackage 1: 4200 units per year; 24 months; payment 90 days net; lead time 35 days; Incoterm DAP; quality 600 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 30.8 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 30.8,
+                  "payment_days": 90,
+                  "lead_time_days": 35
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1373,
+          "direction": "received",
+          "message": {
+            "body": "Hallo,\n\nWe received a lot of material; we looked at what bears on this part. The index stuff is already in our numbers, and for the spacer-sleeve we need to see actual volume data before we can count it. Which volume can you commit to? A binding higher volume would help us and can improve the price. Our price follows our main cost drivers: LCI-C, PPI-C2431, AS-14404, PPI-D351. \n\nOur standard Zahlungsziel is 30 days net. Faster payment is welcome; we can reflect it in the price. With 30 days payment and 35 days lead time, I can give you 31.50 EUR. So, our offer is a price of €31.50 per unit, Zahlungsziel 30 days net, Lieferzeit 35 days. \n\nThis is our final offer (letztes Angebot). Please decide.\n\nGruß\nClaudia Fuchsreiter\nOwner, Drehteile Fuchsreiter GmbH",
+            "status": "final_offer",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70250-3",
+                "terms": {
+                  "unit_price": 31.5,
+                  "payment_days": 30,
+                  "lead_time_days": 35
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1381,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70250-3"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": 0.03766938920095636,
+      "delta_vs_previous_latest": 0.08704507104717357
+    },
+    {
+      "case_id": "case:P07",
+      "previous_best_score": 0.6476339342280315,
+      "previous_latest_score": 0.6476339342280315,
+      "previous_latest_session": "e68df559ba8e9ca4",
+      "run_id": "ehl-v9-other-low-a-20261010",
+      "status": "completed",
+      "session_id": "585dd228517930a3",
+      "result": {
+        "score": 0.6938603103678986,
+        "deal": true,
+        "supplier_id": "sup:70610",
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 5,
+          "volume_per_year": 30000,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 80,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.4
+        },
+        "cost_breakdown": {
+          "price": 324000.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 3312.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 28.8,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "c_open": 391027.4,
+        "c_deal": 327340.8,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1394,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70610:counter",
+            "package_ids": [
+              "sup:70610:p0"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70610:e3",
+              "sup:70610:e5",
+              "sup:70610:e1"
+            ],
+            "tone": "cooperative",
+            "rationale": "Accepting the opening secures zero improvement; p0 offers a credible reciprocal anchor, historically associated with a useful counter at p2 rather than exact acceptance, while directly requesting p2 would surrender negotiating room. Seek the longer contract and earlier-payment exchange now, assess the actual counter, then consider extending duration further only for an additional price reduction.",
+            "reply_text": "Thank you for your proposal. We are attaching shared component forecasts to support your planning; their planning periods differ from the proposed contract period, and they do not increase our binding kit volume. Our aim is to consolidate the kit with your business at the fixed annual requirement of {{fixed:volume_per_year}} kits. In exchange for the longer commitment and earlier payment in the attached package, could you approve the proposed lower unit price? Please review this as a complete commercial exchange, keeping the enquiry's other fixed terms unchanged.",
+            "continuation_review": {
+              "target_package_id": "sup:70610:p0",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "This subjective range reflects an ambitious opening but a supported reciprocal exchange: all five observed offers produced counters, with no current final warning and no secured improvement at risk. It is below the optimistic break-even threshold of 1.0, although sparse observations and uncalibrated estimates cannot guarantee continued engagement.",
+              "information_needed": "The supplier's executable counter and whether a further duration extension would buy an additional reduction.",
+              "stop_condition": "After the response, consider one further duration-for-price exchange only if the supplier remains open and the incremental benefit justifies risking the newly secured savings; if that exchange produces no benefit, close the worthwhile standing deal rather than repeat it. Any explicit final offer triggers acceptance or walk-away without another concession request."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70610",
+            "message": {
+              "subject": "Re: Bundle the fastener kit with one distributor",
+              "body": "Thank you for your proposal. We are attaching shared component forecasts to support your planning; their planning periods differ from the proposed contract period, and they do not increase our binding kit volume. Our aim is to consolidate the kit with your business at the fixed annual requirement of 30000 kits. In exchange for the longer commitment and earlier payment in the attached package, could you approve the proposed lower unit price? Please review this as a complete commercial exchange, keeping the enquiry's other fixed terms unchanged.\n\nOur shared forecast snapshot 2026-09 plans 574000 pc for 2026-10 through 2027-09 (fc:360010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nOur shared forecast snapshot 2026-09 plans 654000 pc for 2026-10 through 2027-09 (fc:360012@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nToday you supply only part of our need for Hex nut ISO 4032 M12 8, zinc (part:360012, our total need about 654,000 pc a year) and Hex bolt ISO 4017 M12x40 8.8, zinc (part:360010, our total need about 574,000 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 30000 units per year; 24 months; payment 14 days net; lead time 5 days; Incoterm DAP; quality 80 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.11 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.11,
+                    "payment_days": 14,
+                    "contract_months": 24
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.244
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 34749,
+                "input_tokens_details": {
+                  "cache_write_tokens": 34746,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 510,
+                "output_tokens_details": {
+                  "reasoning_tokens": 42
+                },
+                "total_tokens": 35259
+              },
+              "seconds": 11.999
+            }
+          ]
+        },
+        {
+          "event_id": 1403,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70610:counter",
+            "package_ids": [
+              "sup:70610:p34"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70610:e4",
+              "sup:70610:e6"
+            ],
+            "tone": "cooperative",
+            "rationale": "Accepting secures €58,837.53 improvement, but the unused duration extension supports one further reciprocal exchange targeting €13,941.07 additional savings without adding scored coverage costs. Unlike repeating the preceding proposal or requesting the historical €5.47 concession worth only €606.14, propose p34, allow a smaller executable counter, then close rather than pursue marginal reductions.",
+            "reply_text": "Thank you for the revised offer and for reviewing the planning data. We can extend the commitment further while retaining the early-payment terms, conditional on the lower price in the attached package. Could you approve this complete exchange, keeping the enquiry's fixed terms unchanged? We have also attached the remaining component forecasts for planning; these do not increase our binding kit requirement, and their planning periods differ from the contract period.",
+            "continuation_review": {
+              "target_package_id": "sup:70610:p34",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.04,
+              "risk_reason": "This subjective range reflects six observed counters, no current final warning, and a genuine additional commitment, not assumed patience from remaining moves. It is below the optimistic 19.16% break-even threshold, but historical marginal concessions culminating in a final offer indicate that actual upside can be much smaller; no post-warning walkout is documented.",
+              "information_needed": "An executable price for the extended commitment will determine whether to select that package or retain the current shorter agreement.",
+              "stop_condition": "After this duration-for-price exchange, close the lowest-cost valid offer, including the current agreement if the extension buys no benefit; do not repeat the request or chase the historical marginal concession. Any explicit final offer triggers acceptance or walk-away without further negotiation."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70610",
+            "message": {
+              "subject": "Re: Bundle the fastener kit with one distributor",
+              "body": "Thank you for the revised offer and for reviewing the planning data. We can extend the commitment further while retaining the early-payment terms, conditional on the lower price in the attached package. Could you approve this complete exchange, keeping the enquiry's fixed terms unchanged? We have also attached the remaining component forecasts for planning; these do not increase our binding kit requirement, and their planning periods differ from the contract period.\n\nOur shared forecast snapshot 2026-09 plans 208400 pc for 2026-10 through 2027-09 (fc:360011@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nOur shared forecast snapshot 2026-09 plans 736000 pc for 2026-10 through 2027-09 (fc:360030@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 30000 units per year; 36 months; payment 14 days net; lead time 5 days; Incoterm DAP; quality 80 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.25 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 5.25,
+                    "payment_days": 14,
+                    "contract_months": 36
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 9595,
+                "input_tokens_details": {
+                  "cache_write_tokens": 8149,
+                  "cached_tokens": 1443
+                },
+                "output_tokens": 440,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 10035
+              },
+              "seconds": 7.31,
+              "validation_errors": []
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 54622,
+                "input_tokens_details": {
+                  "cache_write_tokens": 54619,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 488,
+                "output_tokens_details": {
+                  "reasoning_tokens": 42
+                },
+                "total_tokens": 55110
+              },
+              "seconds": 11.847
+            }
+          ]
+        },
+        {
+          "event_id": 1412,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70610:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable standing offer at total cost EUR 327,340.80, securing EUR 63,686.60 improvement over opening and honouring the prior stop condition after the duration-for-price exchange. The staged exchanges have produced further savings; another price-only request could yield merely the small historical concessions rather than its target, with no remaining supported reciprocal concession to justify risking the secured improvement.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.01,
+              "walkout_probability_high": 0.05,
+              "risk_reason": "For another counter, this subjective range reflects seven observed counteroffers and no current final warning, but exhausted payment and duration concessions; historical bargaining culminated in a final offer, with no documented post-warning walkout. Although below the intermediate price target p37's optimistic 6.25% break-even threshold, actual break-even can be much lower when only a marginal concession results.",
+              "information_needed": "None; the extended commitment has received an executable improved quote and the planned closing condition is met.",
+              "stop_condition": "Close the standing offer now following the successful duration-for-price exchange; make no further concession request or escalation."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70610",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70610-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.243
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 42395,
+                "input_tokens_details": {
+                  "cache_write_tokens": 42392,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 344,
+                "output_tokens_details": {
+                  "reasoning_tokens": 28
+                },
+                "total_tokens": 42739
+              },
+              "seconds": 7.829
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1395,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for your proposal. We are attaching shared component forecasts to support your planning; their planning periods differ from the proposed contract period, and they do not increase our binding kit volume. Our aim is to consolidate the kit with your business at the fixed annual requirement of 30000 kits. In exchange for the longer commitment and earlier payment in the attached package, could you approve the proposed lower unit price? Please review this as a complete commercial exchange, keeping the enquiry's other fixed terms unchanged.\n\nOur shared forecast snapshot 2026-09 plans 574000 pc for 2026-10 through 2027-09 (fc:360010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nOur shared forecast snapshot 2026-09 plans 654000 pc for 2026-10 through 2027-09 (fc:360012@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nToday you supply only part of our need for Hex nut ISO 4032 M12 8, zinc (part:360012, our total need about 654,000 pc a year) and Hex bolt ISO 4017 M12x40 8.8, zinc (part:360010, our total need about 574,000 pc a year); a competitive base price here would put you first in line for a larger share of that business.\n\nPackage 1: 30000 units per year; 24 months; payment 14 days net; lead time 5 days; Incoterm DAP; quality 80 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.11 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 5.11,
+                  "payment_days": 14,
+                  "contract_months": 24
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1396,
+          "direction": "received",
+          "message": {
+            "body": "Dear customer,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We checked the volume change data you cited; it holds and we took it into account. We have already taken that volume change data into account. \n\nWe appreciate the shared forecasts and the prospect of expanding our business with you on these components. In exchange for the 24-month commitment and the improved 14-day payment terms, we are pleased to offer a reduced unit price of €5.48. Our Angebot comprises a price of €5.48 per unit, Zahlungsziel 14 days net, a contract term of 24 months. Our standard Zahlungsziel is 30 days net. \n\nThis represents a significant step towards your target while reflecting the value and reliability of the consolidated kit. Please note that this offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFranz Stadler\nInside Sales, Schraubenhandel Leitner & Sohn GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70610-1",
+                "terms": {
+                  "unit_price": 5.48,
+                  "payment_days": 14,
+                  "contract_months": 24
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1404,
+          "direction": "sent",
+          "message": {
+            "body": "Thank you for the revised offer and for reviewing the planning data. We can extend the commitment further while retaining the early-payment terms, conditional on the lower price in the attached package. Could you approve this complete exchange, keeping the enquiry's fixed terms unchanged? We have also attached the remaining component forecasts for planning; these do not increase our binding kit requirement, and their planning periods differ from the contract period.\n\nOur shared forecast snapshot 2026-09 plans 208400 pc for 2026-10 through 2027-09 (fc:360011@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nOur shared forecast snapshot 2026-09 plans 736000 pc for 2026-10 through 2027-09 (fc:360030@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 30000 units per year; 36 months; payment 14 days net; lead time 5 days; Incoterm DAP; quality 80 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 5.25 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 5.25,
+                  "payment_days": 14,
+                  "contract_months": 36
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1405,
+          "direction": "received",
+          "message": {
+            "body": "Dear customer,\n\nWe received a lot of material; we looked at what bears on this part. We have reviewed your offer and can adjust our Angebot as follows. \n\nWe appreciate your willingness to extend the contract term to 36 months. In exchange for this longer commitment, we are pleased to reduce our unit price to €5.40. Please note that the additional forecast data aligns with the volume expectations we already factored into our previous offer. \n\nOur current Angebot provides a price of €5.40 per unit, Zahlungsziel 14 days net, and a contract term of 36 months. Our price follows our main cost drivers: PPI-C2594, LCI-C. Please keep in mind that our general terms and conditions apply; the quote lists our standard terms. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nFranz Stadler\nInside Sales, Schraubenhandel Leitner & Sohn GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70610-2",
+                "terms": {
+                  "unit_price": 5.4,
+                  "payment_days": 14,
+                  "contract_months": 36
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1413,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70610-2"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": 0.04622637613986713,
+      "delta_vs_previous_latest": 0.04622637613986713
+    },
+    {
+      "case_id": "case:P08",
+      "previous_best_score": 0.382992340439104,
+      "previous_latest_score": 0.382992340439104,
+      "previous_latest_session": "82a821f172254c66",
+      "run_id": "ehl-v9-other-low-a-20261010",
+      "status": "not_started",
+      "session_id": null,
+      "result": null,
+      "decisions": [],
+      "messages": [],
+      "errors": [],
+      "not_started_reason": "User stopped queued experiments for architecture review."
+    },
+    {
+      "case_id": "case:P10",
+      "previous_best_score": 0.6863220713040008,
+      "previous_latest_score": 0.6863220713040008,
+      "previous_latest_session": "820e1b85c83734f4",
+      "run_id": "ehl-v9-other-low-b-20261010",
+      "status": "completed",
+      "session_id": "328c1fa21f0b7c6c",
+      "result": {
+        "score": 0.6629052177602854,
+        "deal": true,
+        "supplier_id": "sup:70410",
+        "terms": {
+          "payment_days": 30,
+          "lead_time_days": 56,
+          "volume_per_year": 23400,
+          "contract_months": 24,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 300,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 31.7
+        },
+        "cost_breakdown": {
+          "price": 1483560.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 9890.4,
+          "freight": 0.0,
+          "late_delivery": 33600.0,
+          "quality": 5335.2,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "c_open": 1932492.18,
+        "c_deal": 1532385.6,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1218,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70410:counter",
+            "package_ids": [
+              "sup:70410:p28"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70410:e4"
+            ],
+            "tone": "cooperative",
+            "rationale": "Propose full-volume, on-time coverage over 24 months: p28 improves modelled total cost by EUR 440,302.26 with zero modelled relationship penalty, whereas the opening fails minimum allocation and historical low-price openings produced slower-delivery counters rather than acceptance. If Ravensteiner counters with feasible capacity but delivery restrictions, consider a conditional extension to 36 months for improved delivery; practice cost intervals are upper bounds, not proof of profitability, and any final warning ends bargaining.",
+            "reply_text": "Dear Ms Zellner,\n\nPlease find our shared demand forecast attached for capacity planning. Its planning period differs from the proposed contract period; it is not an additional binding commitment.\n\nThank you for your quotation. The offered allocation does not cover our required volume. We propose the attached package, exchanging a longer firm commitment for full allocation and delivery aligned with our production needs, together with a revised price. The enquiry's fixed terms remain unchanged.\n\nCould you confirm this complete package, including the capacity reservation and delivery commitment? If approval is required, please take this specific proposal to the responsible decision-maker.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70410:p28",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.15,
+              "risk_reason": "This subjective range reflects an opening reciprocal offer and five historical counteroffers versus one unchanged response, but capacity constraints and sparse observations prevent confidence in the response estimates. It is below the optimistic break-even threshold of 100% because no improvement is secured; historical second-turn final warnings warrant a short negotiation sequence.",
+              "information_needed": "Whether the longer firm commitment secures full allocation and on-time delivery, and whether any delivery restriction can be resolved through a further permitted term extension.",
+              "stop_condition": "If the supplier remains open but cannot meet delivery, evaluate one conditional extension to 36 months against its complete counterquote, including late-delivery and relationship costs; do not repeat an unchanged proposal. At any final warning, close the lowest-total-cost feasible standing offer with positive improvement, or walk away if none meets the hard constraints."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70410",
+            "message": {
+              "subject": "Re: Ravensteiner cuts the seal allocation",
+              "body": "Dear Ms Zellner,\n\nPlease find our shared demand forecast attached for capacity planning. Its planning period differs from the proposed contract period; it is not an additional binding commitment.\n\nThank you for your quotation. The offered allocation does not cover our required volume. We propose the attached package, exchanging a longer firm commitment for full allocation and delivery aligned with our production needs, together with a revised price. The enquiry's fixed terms remain unchanged.\n\nCould you confirm this complete package, including the capacity reservation and delivery commitment? If approval is required, please take this specific proposal to the responsible decision-maker.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nOur shared forecast snapshot 2026-09 plans 21310 pc for 2026-10 through 2027-09 (fc:340010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 23400 units per year; 24 months; payment 30 days net; lead time 42 days; Incoterm DAP; quality 300 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 31.56 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 31.56,
+                    "volume_per_year": 23400,
+                    "contract_months": 24,
+                    "lead_time_days": 42
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.237
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 30420,
+                "input_tokens_details": {
+                  "cache_write_tokens": 30417,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 574,
+                "output_tokens_details": {
+                  "reasoning_tokens": 38
+                },
+                "total_tokens": 30994
+              },
+              "seconds": 13.168
+            }
+          ]
+        },
+        {
+          "event_id": 1236,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70410:counter",
+            "package_ids": [
+              "sup:70410:p25"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Offer delivery flexibility rather than repeat the rejected on-time price request: p25 preserves full-volume and horizon coverage and saves €62,508.48 after late-delivery costs, with zero modelled relationship penalty, although practice-derived cost bounds remain uncertain. Historical p0 produced p1 rather than its ambitious requested price, so a direct, nearby exchange is more credible; a comparable counterquote would still improve cost, with a conditional term extension reserved only if a useful open negotiation remains.",
+            "reply_text": "Dear Ms Zellner,\n\nThank you for confirming the full allocation and providing the delivery schedule. We can offer greater delivery flexibility in exchange for the revised price in the attached package, while retaining the full annual allocation and firm contract commitment.\n\nPlease review this complete alternative and confirm whether you can reserve the capacity on that basis. The enquiry's fixed terms remain unchanged; please keep your current quotation available while we compare the alternatives.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70410:p25",
+              "walkout_probability_low": 0.02,
+              "walkout_probability_high": 0.08,
+              "risk_reason": "This subjective range reflects a concrete reciprocal exchange, six observed counteroffers and one unchanged offer, but sparse history and repeated second-turn final warnings limit confidence. It is below the optimistic 15.37% break-even threshold, although partial concessions reduce that threshold and the €344,193.78 already secured remains at risk.",
+              "information_needed": "Whether delivery flexibility yields a complete lower-total-cost quote while preserving full allocation and contract coverage.",
+              "stop_condition": "At any final warning, close the lowest-total-cost feasible executable offer with positive improvement; do not negotiate further. If unchanged, close rather than repeat; if a useful counter remains open, consider at most one conditional extension to the permitted longer term for a further supported improvement, including late-delivery and relationship costs."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70410",
+            "message": {
+              "subject": "Re: Ravensteiner cuts the seal allocation",
+              "body": "Dear Ms Zellner,\n\nThank you for confirming the full allocation and providing the delivery schedule. We can offer greater delivery flexibility in exchange for the revised price in the attached package, while retaining the full annual allocation and firm contract commitment.\n\nPlease review this complete alternative and confirm whether you can reserve the capacity on that basis. The enquiry's fixed terms remain unchanged; please keep your current quotation available while we compare the alternatives.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nPackage 1: 23400 units per year; 24 months; payment 30 days net; lead time 56 days; Incoterm DAP; quality 300 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 31.56 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "unit_price": 31.56,
+                    "volume_per_year": 23400,
+                    "contract_months": 24,
+                    "lead_time_days": 56
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.235
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 34363,
+                "input_tokens_details": {
+                  "cache_write_tokens": 34360,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 576,
+                "output_tokens_details": {
+                  "reasoning_tokens": 96
+                },
+                "total_tokens": 34939
+              },
+              "seconds": 12.638
+            }
+          ]
+        },
+        {
+          "event_id": 1249,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70410:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable final offer: it covers the full annual need and scoring horizon, securing €400,106.58 improvement over opening after including €33,600 late-delivery cost and the modelled zero relationship penalty. The reciprocal delivery-flexibility exchange produced a worthwhile concession; honour the previous stop condition rather than pursue historical, non-executable prices after a final warning.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.1,
+              "walkout_probability_high": 0.5,
+              "risk_reason": "This subjective range concerns hypothetical further negotiation after the explicit final warning; there are no observed post-final outcomes to calibrate it. No permitted continuation target or break-even threshold exists, and continuation would expose the secured improvement unnecessarily.",
+              "information_needed": "None for closing; the complete standing offer is executable and satisfies the mandatory volume requirement.",
+              "stop_condition": "Accept the standing final offer now; make no further concession request or escalation."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70410",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70410-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 14573,
+                "input_tokens_details": {
+                  "cache_write_tokens": 14570,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 271,
+                "output_tokens_details": {
+                  "reasoning_tokens": 0
+                },
+                "total_tokens": 14844
+              },
+              "seconds": 6.566
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1219,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Ms Zellner,\n\nPlease find our shared demand forecast attached for capacity planning. Its planning period differs from the proposed contract period; it is not an additional binding commitment.\n\nThank you for your quotation. The offered allocation does not cover our required volume. We propose the attached package, exchanging a longer firm commitment for full allocation and delivery aligned with our production needs, together with a revised price. The enquiry's fixed terms remain unchanged.\n\nCould you confirm this complete package, including the capacity reservation and delivery commitment? If approval is required, please take this specific proposal to the responsible decision-maker.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nOur shared forecast snapshot 2026-09 plans 21310 pc for 2026-10 through 2027-09 (fc:340010@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nPackage 1: 23400 units per year; 24 months; payment 30 days net; lead time 42 days; Incoterm DAP; quality 300 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 31.56 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 31.56,
+                  "volume_per_year": 23400,
+                  "contract_months": 24,
+                  "lead_time_days": 42
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1225,
+          "direction": "received",
+          "message": {
+            "body": "Dear Sir or Madam,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We checked the volume change data you cited; it holds, but it does not change our calculation. We have reviewed your request for an increased volume of 23,400 units and a reduced lead time of 42 days. Accommodating this higher allocation and faster delivery within our heavily utilized production schedule requires a price adjustment. We can offer this revised package at EUR 33.60 per unit. Our Lieferzeit is 42 days.\n\nOur current Angebot consists of a price of €33.60 per unit, Lieferzeit 42 days, a volume of 23400 pcs per year, a contract term of 24 months. This offer stays valid for 30 days.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70410-1",
+                "terms": {
+                  "unit_price": 33.6,
+                  "lead_time_days": 42,
+                  "volume_per_year": 23400,
+                  "contract_months": 24
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1237,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Ms Zellner,\n\nThank you for confirming the full allocation and providing the delivery schedule. We can offer greater delivery flexibility in exchange for the revised price in the attached package, while retaining the full annual allocation and firm contract commitment.\n\nPlease review this complete alternative and confirm whether you can reserve the capacity on that basis. The enquiry's fixed terms remain unchanged; please keep your current quotation available while we compare the alternatives.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nPackage 1: 23400 units per year; 24 months; payment 30 days net; lead time 56 days; Incoterm DAP; quality 300 ppm; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; EUR 31.56 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "unit_price": 31.56,
+                  "volume_per_year": 23400,
+                  "contract_months": 24,
+                  "lead_time_days": 56
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1238,
+          "direction": "received",
+          "message": {
+            "body": "Dear Sir or Madam,\n\nWe note your willingness to extend the lead time to 56 days. On this basis, we can confirm the capacity reservation for the full allocation and offer a unit price of EUR 31.70. \n\nPlease note that this is our final offer (letztes Angebot). Please decide. \n\nFor our records, which figures is that based on? Please send us the data. \n\nTo summarize our Angebot, we propose a price of €31.70 per unit, a Lieferzeit of 56 days, a volume of 23400 pcs per year, and a contract term of 24 months. Our Lieferzeit is 56 days. This offer stays valid for 7 days.\n\nMit freundlichen Grüßen\nMonika Zellner\nSegment Manager, Dichtungswerk Ravensteiner GmbH",
+            "status": "final_offer",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70410-2",
+                "terms": {
+                  "unit_price": 31.7,
+                  "lead_time_days": 56,
+                  "volume_per_year": 23400,
+                  "contract_months": 24
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1250,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70410-2"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": -0.023416853543715366,
+      "delta_vs_previous_latest": -0.023416853543715366
+    },
+    {
+      "case_id": "case:P11",
+      "previous_best_score": 0.6262806593072341,
+      "previous_latest_score": 0.6262806593072341,
+      "previous_latest_session": "cd3e7320baca25a9",
+      "run_id": "ehl-v9-other-low-b-20261010",
+      "status": "completed",
+      "session_id": "751cfb4d330eb40c",
+      "result": {
+        "score": 0.5426650839658143,
+        "deal": true,
+        "supplier_id": "sup:70140",
+        "terms": {
+          "payment_days": 60,
+          "lead_time_days": 56,
+          "volume_per_year": 15900,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "FCA",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 300,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 46.5
+        },
+        "cost_breakdown": {
+          "price": 739350.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 0.0,
+          "freight": 24486.0,
+          "late_delivery": 0.0,
+          "quality": 2146.5,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "c_open": 817578.0,
+        "c_deal": 765982.5,
+        "end_reason": null
+      },
+      "decisions": [
+        {
+          "event_id": 1279,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70140:counter",
+            "package_ids": [
+              "sup:70140:p32",
+              "sup:70140:p30"
+            ],
+            "question_id": "",
+            "evidence_ids": [
+              "sup:70140:e4",
+              "sup:70140:e2",
+              "sup:70140:e5"
+            ],
+            "tone": "cooperative",
+            "rationale": "The opening is infeasible and no improvement is secured; these priced quality/liability alternatives follow the quality-first playbook and target lower total cost without changing fixed terms. Historical aggressive proposals produced useful counters whereas directly requesting the historical concession produced a higher quote, so seek a fresh counter now, then consider one reimbursement concession only in exchange for a price reduction.",
+            "reply_text": "Dear Marek,\n\nThank you for your offer. Attached is our shared demand forecast for planning; its planning window differs from the contract period and it does not extend our binding commitments.\n\nThe offered quality commitment does not meet our requirements. In light of the verified quality record and the falling electricity index, please consider the attached alternatives: a tighter defect target with moderate complaint reimbursement, or a looser permitted target with stronger reimbursement. We would consider the looser target only with the corresponding cost recovery protection.\n\nOur annual volume remains {{fixed:volume_per_year}}, and payment remains {{fixed:payment_days}} days; all other fixed enquiry terms remain unchanged. Which complete package can you support?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70140:p30",
+              "walkout_probability_low": 0.03,
+              "walkout_probability_high": 0.18,
+              "risk_reason": "This subjective range reflects an ambitious liability request and historical cash constraints, despite no observed walkouts among the sparse offer responses; it is below the optimistic break-even threshold of 1.0 because no improvement is secured. Historical repeated unchanged quotes culminated in final warnings, so an open response will not be treated as unlimited patience.",
+              "information_needed": "A fresh complete quote establishing the available price, defect commitment and reimbursement combination; historical offers are not executable.",
+              "stop_condition": "After a useful counter, consider one reduction in reimbursement only for a corresponding price reduction while retaining compliant quality and fixed payment terms; if that exchange produces an unchanged offer, close the best feasible worthwhile standing deal rather than repeat it. Any explicit final offer ends concession requests immediately."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70140",
+            "message": {
+              "subject": "Re: Kalwisz: bearing brackets in red",
+              "body": "Dear Marek,\n\nThank you for your offer. Attached is our shared demand forecast for planning; its planning window differs from the contract period and it does not extend our binding commitments.\n\nThe offered quality commitment does not meet our requirements. In light of the verified quality record and the falling electricity index, please consider the attached alternatives: a tighter defect target with moderate complaint reimbursement, or a looser permitted target with stronger reimbursement. We would consider the looser target only with the corresponding cost recovery protection.\n\nOur annual volume remains 15900, and payment remains 60 days; all other fixed enquiry terms remain unchanged. Which complete package can you support?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nOur shared forecast snapshot 2026-09 plans 15930 pc for 2026-10 through 2027-09 (fc:310020@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nYour rolling defect rate is 2376 ppm (sc:70140@2026Q3).\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nPackage 1: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 150 per complaint; effective 2027-01-01; tooling EUR 0; quality 300 ppm; EUR 45.15 per unit; no index clause.\n\nPackage 2: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 500 per complaint; effective 2027-01-01; tooling EUR 0; quality 1500 ppm; EUR 45.15 per unit; no index clause.\n\nThese are alternative complete packages, not cumulative concessions.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "ppm_commitment": 300,
+                    "chargeback_eur_per_complaint": 150,
+                    "unit_price": 45.15
+                  }
+                },
+                {
+                  "terms": {
+                    "ppm_commitment": 1500,
+                    "chargeback_eur_per_complaint": 500,
+                    "unit_price": 45.15
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.202
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 35846,
+                "input_tokens_details": {
+                  "cache_write_tokens": 35843,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 724,
+                "output_tokens_details": {
+                  "reasoning_tokens": 188
+                },
+                "total_tokens": 36570
+              },
+              "seconds": 18.756
+            }
+          ]
+        },
+        {
+          "event_id": 1299,
+          "kind": "counter",
+          "selection": {
+            "action_id": "sup:70140:counter",
+            "package_ids": [
+              "sup:70140:p9"
+            ],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accepting secures EUR 36,411 of improvement, but exchanging complaint reimbursement for the historically quoted price while retaining 300 ppm could add EUR 23,134.50 after the EUR 715.50 increase in defect exposure. Request that concession directly rather than repeat the much lower historical buyer anchors; a partial price concession is plausible, after which we should close the best worthwhile executable offer rather than prolong the historical pattern of unchanged replies.",
+            "reply_text": "Dear Marek,\n\nPayment must remain at {{fixed:payment_days}} days net; we cannot offer earlier payment. Thank you for the revised quality commitment and corrective-action report.\n\nWe can remove the complaint chargeback in exchange for the lower unit price in the attached package, while retaining your tight defect commitment and all fixed enquiry terms. This pricing structure was discussed previously, but we are asking for a fresh offer rather than treating that discussion as binding.\n\nCan you support this complete exchange? Please keep your current offer available for comparison if you propose an alternative.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke",
+            "continuation_review": {
+              "target_package_id": "sup:70140:p9",
+              "walkout_probability_low": 0.03,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "This subjective range is below the target's optimistic break-even threshold of 0.3885, although partial concessions make the real threshold lower; the early-stage reciprocal exchange supports continuing without relying on uncalibrated response estimates. Historical observations include seven unchanged replies and eventual final warnings, but no recorded walkout, so this is a bounded attempt rather than evidence of unlimited patience.",
+              "information_needed": "A fresh complete quote showing whether removing reimbursement buys a price reduction while preserving the tight defect commitment and fixed terms.",
+              "stop_condition": "After this reimbursement-for-price exchange, accept the best feasible worthwhile executable offer if the supplier grants the target or a useful partial concession; if unchanged, close rather than repeat the request, honoring the previous stopping rule. Any explicit final offer ends concession requests immediately."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70140",
+            "message": {
+              "subject": "Re: Kalwisz: bearing brackets in red",
+              "body": "Dear Marek,\n\nPayment must remain at 60 days net; we cannot offer earlier payment. Thank you for the revised quality commitment and corrective-action report.\n\nWe can remove the complaint chargeback in exchange for the lower unit price in the attached package, while retaining your tight defect commitment and all fixed enquiry terms. This pricing structure was discussed previously, but we are asking for a fresh offer rather than treating that discussion as binding.\n\nCan you support this complete exchange? Please keep your current offer available for comparison if you propose an alternative.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nPackage 1: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; quality 300 ppm; EUR 46.0 per unit; no index clause.",
+              "term_sheets": [
+                {
+                  "terms": {
+                    "ppm_commitment": 300,
+                    "chargeback_eur_per_complaint": 0.0,
+                    "unit_price": 46.0
+                  }
+                }
+              ]
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.244
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 43800,
+                "input_tokens_details": {
+                  "cache_write_tokens": 43797,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 551,
+                "output_tokens_details": {
+                  "reasoning_tokens": 46
+                },
+                "total_tokens": 44351
+              },
+              "seconds": 13.118
+            }
+          ]
+        },
+        {
+          "event_id": 1337,
+          "kind": "accept",
+          "selection": {
+            "action_id": "sup:70140:accept",
+            "package_ids": [],
+            "question_id": "",
+            "evidence_ids": [],
+            "tone": "cooperative",
+            "rationale": "Accept the executable offer: the reimbursement-for-price exchange produced a useful partial concession while retaining 300 ppm, securing EUR 51,595.50 improvement over opening and satisfying the prior stopping rule. The historical EUR 46.00 concession is not executable; pursuing it again risks secured improvement without a new supported exchange, whereas closing preserves the achieved quality and price gains.",
+            "reply_text": "",
+            "continuation_review": {
+              "target_package_id": "",
+              "walkout_probability_low": 0.03,
+              "walkout_probability_high": 0.12,
+              "risk_reason": "For another counter, this subjective range is below the EUR 46.00 target's optimistic 0.1335 break-even threshold, but unchanged or partial responses lower the real threshold. Seven historical unchanged replies and eventual final warnings, with no recorded walkout, support caution rather than assuming further concessions.",
+              "information_needed": "None; the fresh complete offer establishes the useful partial concession required by the previous closing rule.",
+              "stop_condition": "The planned exchange has produced a useful partial concession; accept offer:70140-2 now and end negotiation rather than repeat the historical price request or reopen reimbursement."
+            }
+          },
+          "action": {
+            "supplier_id": "sup:70140",
+            "message": {
+              "action": {
+                "type": "accept",
+                "term_sheet_id": "offer:70140-2"
+              }
+            }
+          },
+          "llm_calls": [
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "negotiator",
+              "status": "ReadTimeout",
+              "seconds": 7.241
+            },
+            {
+              "model": "gpt-6-astra",
+              "provider": "openai",
+              "role": "final_decision",
+              "status": "ok",
+              "http_status": 200,
+              "usage": {
+                "input_tokens": 43526,
+                "input_tokens_details": {
+                  "cache_write_tokens": 43523,
+                  "cached_tokens": 0
+                },
+                "output_tokens": 330,
+                "output_tokens_details": {
+                  "reasoning_tokens": 24
+                },
+                "total_tokens": 43856
+              },
+              "seconds": 8.068
+            }
+          ]
+        }
+      ],
+      "messages": [
+        {
+          "event_id": 1280,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Marek,\n\nThank you for your offer. Attached is our shared demand forecast for planning; its planning window differs from the contract period and it does not extend our binding commitments.\n\nThe offered quality commitment does not meet our requirements. In light of the verified quality record and the falling electricity index, please consider the attached alternatives: a tighter defect target with moderate complaint reimbursement, or a looser permitted target with stronger reimbursement. We would consider the looser target only with the corresponding cost recovery protection.\n\nOur annual volume remains 15900, and payment remains 60 days; all other fixed enquiry terms remain unchanged. Which complete package can you support?\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nOur shared forecast snapshot 2026-09 plans 15930 pc for 2026-10 through 2027-09 (fc:310020@2026-09); this is planning evidence, with binding volume and delivery obligations limited to the case terms.\n\nYour rolling defect rate is 2376 ppm (sc:70140@2026Q3).\n\nThe PPI-D351 index changed -3.7% between the named observations (idx:PPI-D351@2025-08 to idx:PPI-D351@2026-08); this is an input movement, not a whole-product price change.\n\nPackage 1: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 150 per complaint; effective 2027-01-01; tooling EUR 0; quality 300 ppm; EUR 45.15 per unit; no index clause.\n\nPackage 2: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 500 per complaint; effective 2027-01-01; tooling EUR 0; quality 1500 ppm; EUR 45.15 per unit; no index clause.\n\nThese are alternative complete packages, not cumulative concessions.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "ppm_commitment": 300,
+                  "chargeback_eur_per_complaint": 150,
+                  "unit_price": 45.15
+                }
+              },
+              {
+                "terms": {
+                  "ppm_commitment": 1500,
+                  "chargeback_eur_per_complaint": 500,
+                  "unit_price": 45.15
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1290,
+          "direction": "received",
+          "message": {
+            "body": "Hello,\n\nWe have reviewed your offer and can adjust our Angebot as follows. We checked the index change data you cited; it holds and we took it into account. We checked the quality record data you cited; it holds and we took it into account. We checked the volume change data you cited; it holds and we took it into account. \n\nWe see your figures, but we cannot give up margin right now. Faster payment would help us more than anything. Our price follows our main cost drivers: LCI-C, PPI-C241, PPI-D351. \n\nWe can do 47.50 EUR for this package, let's get this sorted! So, our Angebot is a price of €47.50 per unit, a quality commitment of 300 ppm, a chargeback of €150.00 per complaint. This offer is valid for 30 days.\n\nKind regards\nMarek Lis\nExport Manager, Odlewnia Kalwisz Sp. z o.o.\n\nQuality: We take the complaints seriously; our 8D report is attached.",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70140-1",
+                "terms": {
+                  "unit_price": 47.5,
+                  "ppm_commitment": 300,
+                  "chargeback_eur_per_complaint": 150.0
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1300,
+          "direction": "sent",
+          "message": {
+            "body": "Dear Marek,\n\nPayment must remain at 60 days net; we cannot offer earlier payment. Thank you for the revised quality commitment and corrective-action report.\n\nWe can remove the complaint chargeback in exchange for the lower unit price in the attached package, while retaining your tight defect commitment and all fixed enquiry terms. This pricing structure was discussed previously, but we are asking for a fresh offer rather than treating that discussion as binding.\n\nCan you support this complete exchange? Please keep your current offer available for comparison if you propose an alternative.\n\nKind regards,\nPurchasing, Hollerau Pumpenwerke\n\nPackage 1: 15900 units per year; 12 months; payment 60 days net; lead time 56 days; Incoterm FCA; EUR 0.0 per complaint; effective 2027-01-01; tooling EUR 0; quality 300 ppm; EUR 46.0 per unit; no index clause.",
+            "term_sheets": [
+              {
+                "terms": {
+                  "ppm_commitment": 300,
+                  "chargeback_eur_per_complaint": 0.0,
+                  "unit_price": 46.0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "event_id": 1307,
+          "direction": "received",
+          "message": {
+            "body": "Hello,\n\nWe have reviewed your offer and can adjust our Angebot as follows. \n\nShame about the payment terms, getting paid faster would have really helped us out right now. We can drop the chargeback to 0 EUR as you asked and keep the tight 300 ppm target. Since we stick to 60 days payment, we can offer 46.50 EUR for this package. \n\nSo our complete offer is a price of €46.50 per unit, a quality commitment of 300 ppm, a chargeback of €0.00 per complaint. Please note that our offer stays valid for 30 days. We are really eager to work together and look forward to building a strong partnership!\n\nKind regards\nMarek Lis\nExport Manager, Odlewnia Kalwisz Sp. z o.o.",
+            "status": "open",
+            "term_sheets": [
+              {
+                "term_sheet_id": "offer:70140-2",
+                "terms": {
+                  "unit_price": 46.5,
+                  "ppm_commitment": 300,
+                  "chargeback_eur_per_complaint": 0.0
+                }
+              }
+            ],
+            "action": null
+          }
+        },
+        {
+          "event_id": 1338,
+          "direction": "sent",
+          "message": {
+            "action": {
+              "type": "accept",
+              "term_sheet_id": "offer:70140-2"
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "delta_vs_previous_best": -0.08361557534141983,
+      "delta_vs_previous_latest": -0.08361557534141983
+    }
+  ],
+  "limitations": [
+    "One attempt per case; no matched baseline rerun.",
+    "New strategy, integrated memory and timing allocation changed together.",
+    "Cases may retain different histories; no isolated causal attribution.",
+    "No local tests, simulations or LLM replays.",
+    "No result above threshold is assumed without an Arena score.",
+    "A historical best-of-several is not a matched control for a single new run."
+  ],
+  "planned_session_allowance": 7,
+  "effective_session_allowance": 6,
+  "evaluation_status": "stopped_by_user_after_current_session",
+  "stop_record": {
+    "reason": "User requested clear project structure before further experiments.",
+    "finished_in_progress_case": "case:P07",
+    "not_started": [
+      "case:P08"
+    ],
+    "mechanism": "Group A SQLite allowance lowered from 5 to 4 already-reserved starts. CLI stopped on cap mismatch before reserving or opening P08. Group B had already completed its 2 starts.",
+    "new_policy_changes_during_evaluation": false
+  },
+  "model_call_summary": [
+    {
+      "role": "final_decision",
+      "status": "ok",
+      "count": 20
+    },
+    {
+      "role": "negotiator",
+      "status": "ReadTimeout",
+      "count": 16
+    },
+    {
+      "role": "negotiator",
+      "status": "ok",
+      "count": 3
+    }
+  ]
+}

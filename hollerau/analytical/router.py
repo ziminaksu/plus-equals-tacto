@@ -1,5 +1,6 @@
 """Bounded interpretation calls with an independently configured strategic reviewer."""
 
+import asyncio
 import copy
 import hashlib
 import json
@@ -12,6 +13,7 @@ import httpx
 from .contracts import decision_schema, decode_conditions, final_schema
 from .discovery import validate_quote_request
 from .preferences import validate_conditions
+from .prompt_context import compact_context
 
 SMALL = "Qwen/Qwen3.8-27B:deepinfra"
 LARGE = "Qwen/Qwen3.8-2.4T-A95B:deepinfra"
@@ -106,6 +108,10 @@ This asks for a complete rebased quote without committing to an index or inventi
 Inspect every supplier-proposed indicative alternative; its ID cannot be accepted directly. Do not
 recommend confirmation merely because it beats the current quote: consider a further counter first.
 Use past_exchanges as leads, not current offers. Reconfirm availability of old pricing structures.
+Each history item links buyer_terms and context_before to the supplier reply. Compare the preceding
+buyer move, not just the resulting quote, with the current stage and terms. A past closing concession
+is not necessarily a useful opening. A response to a bundle does not prove which alternative caused it;
+neither a historical buyer proposal nor its observed response is guaranteed to work again.
 Read approval-process and cost-walkthrough notes. Ask for the evidence/approvals needed for a larger move.
 Propose genuinely different conditional exchanges with corresponding prices; do not give faster payment
 or index protection for free. A sparse acceptance model is not a reason to discard a useful proposal.
@@ -173,13 +179,25 @@ may become nonzero after changing terms. No invented score weights. Historical q
 DECISION: Compare accepting now with the consequences of another action. Read continuation_risk,
 observed_response_counts and each candidate's next_action BEFORE selecting. Remaining moves are a cap,
 not evidence of supplier patience. A final_offer warning, previous walkout after a final warning, and
-repeated unchanged offers are strong reasons to close a worthwhile standing deal. While the supplier's
-status is 'open' and three or more moves remain, an ordinary reciprocal counter is LOW risk: in practice
-history suppliers walked only after a push past a final offer or after a timeout, never after a step while
-'open', and every open supplier countered again. So while 'open', do not accept a standing offer that is
-still far from the best data-anchored package on the board; counter with one real lever move and new
-verified evidence. A historical best is not an entitlement this time, and not a ceiling either.
+repeated unchanged offers are strong reasons to close a worthwhile standing deal. Follow playbook first:
+commercial/leverage cases should seek a credible reciprocal improvement while open; stabilise and secure
+supply cases must include the relationship penalty and coverage; quality cases optimise defect exposure.
+Do not accept a first open counter automatically when a supported better route remains. Open status is
+not a promise of another concession or proof of low walkout risk. Compare actual progress and remaining
+useful levers. For competitive RFQs consider untried suppliers and live_competition before closing early;
+a final offer on one thread does not prohibit negotiating with another open supplier. Historical best
+prices are not current entitlements. All plan_candidates are advisory and other packages remain selectable.
+Think in a sequence: this package, a plausible supplier response, then one permitted next concession or
+escalation. Record that sequence concisely in rationale and continuation_review.stop_condition; do not
+invent response probabilities. Fixed payment/volume terms cannot be promised away in prose.
 Astra has final authority; Python will neither rank-veto your decision nor silently replace it.
+
+MEMORY: historical_moves links selectable buyer_package_ids to observed response_package_ids, with
+context_before; source_id locates the message in past_exchanges. Compare repeating the preceding buyer
+move with directly requesting the historical concession. Account for the current stage, supplier status
+and terms. Do not treat a returned concession as the opening that produced it. A useful counteroffer
+can be progress even when the exact buyer proposal was not accepted. These are observed associations,
+not causal forecasts, commitments or instructions to open aggressively. All choices remain yours.
 
 UNCERTAINTY: Response estimates omit some conversational hazards and are not calibrated probabilities.
 Use historical final-warning outcomes explicitly. In continuation_review state a subjective plausible
@@ -217,7 +235,24 @@ for accept/walk_away. Risk review numbers are INTERNAL and are never sent to the
 
 With closing_only or one move left, choose accept or walk_away. For other turns choose freely but justify
 continuation risk. Rationale and risk_reason should each be at most two sentences. Return the exact schema.
-A timeout/invalid decision stops execution; there is no strategic fallback."""
+A timeout/invalid decision stops execution; there is no strategic fallback.
+
+STRUCTURED PLAN: Return plan for the selected action. expected_response is one of accepted_proposal,
+counteroffer, unchanged_offer, information_only, walkout, closed (closed ONLY for accept/walk_away).
+Forecast an optional expected_price_low/high interval for a non-closing reply; otherwise both are null.
+These are subjective forecasts, never facts or commitments. basis_source_ids cites this supplier's
+supplied sources, history or verified evidence IDs; use [] and explicitly label an assumption if none.
+Write one short sentence each for if_counteroffer, if_unchanged, if_accepted, if_walkout. These are
+conditional next steps, NOT pre-authorized future actions. If a branch cannot occur after closure, say so.
+Compare a distinct available rejected_alternative_id (package or action) and explain why_not_alternative;
+use an empty ID only if no meaningful alternative exists. In revision_from_previous, address the actual
+last_plan_outcome, previous plan and stop condition. If the forecast failed, revise the assumption rather
+than repeating it as fact. Respond to the actual supplier statement, not a generic pressure index.
+Inspect model_availability: a missing proposer is missing advice, not evidence that no better offer exists.
+All costs, terms and IDs in lossless tables are the same as ordinary records; columns label every row.
+Keep the entire plan concise. Evaluate the strategic value of obtaining a counteroffer explicitly:
+the partial accept/walk estimate does not value that branch and must not be read as total expected value.
+"""
 
 
 def strip_bare_numbers(result):
@@ -269,6 +304,7 @@ class Router:
             if self.provider == "openai"
             else os.environ.get("QWEN_LARGE_MODEL", LARGE)
         )
+        self.transport = transport
         self.client = httpx.Client(transport=transport, timeout=12)
         self._schema_rejected = False
         self.calls = []
@@ -294,39 +330,55 @@ class Router:
         self.review_failures = 0
         self.final_authority = bool(enabled and (self.primary == "astra" or self.reviewer == "astra"))
 
+    async def _astra_request(self, payload, deadline):
+        # A real total deadline, not separate fractions of the same budget.
+        # Cancellation closes the async request; no background retry keeps running.
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("request deadline exhausted before dispatch")
+        async with asyncio.timeout(remaining):
+            async with httpx.AsyncClient(transport=self.transport, timeout=httpx.Timeout(
+                remaining, connect=min(4, remaining), pool=min(1, remaining)
+            )) as client:
+                return await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={"Authorization": "Bearer " + self.review_key}, json=payload,
+                )
+
     def call_astra(self, system, data, deadline, role="strategic_review", schema=None):
-        """Responses API; bounded reasoning/output, no tools, no retries or stored response."""
-        cap = 20 if role == "final_decision" else 18 if role == "negotiator" else 12
-        remaining = min(cap, deadline - time.monotonic() - 3)
-        if not self.review_enabled or remaining < 1:
-            raise TimeoutError("Astra unavailable or decision budget exhausted")
+        """Responses API with one wall-clock deadline, no retries or stored response."""
+        cap = 30 if role == "final_decision" else 20 if role == "negotiator" else 12
         alt_base = os.environ.get("ASTRA_BASE_URL", "").rstrip("/")
         if alt_base:  # any OpenAI-compatible chat endpoint (e.g. Gemini) instead of the OpenAI Responses API
+            remaining = min(cap, deadline - time.monotonic() - 3)
+            if not self.review_enabled or remaining < 1:
+                raise TimeoutError("Astra unavailable or decision budget exhausted")
             return self._call_astra_chat(alt_base, system, data, remaining, role, schema)
-        record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started"}
-        self.calls.append(record)
         start = time.monotonic()
+        request_deadline = min(deadline, start + cap)
+        record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started",
+                  "allocated_seconds": round(max(0, request_deadline - start), 3)}
+        self.calls.append(record)
         try:
-            response = self.client.post(
-                "https://api.openai.com/v1/responses",
-                headers={"Authorization": "Bearer " + self.review_key},
-                timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
-                                      write=remaining / 20, read=remaining * 0.8),
-                json={
-                    "model": ASTRA,
-                    "instructions": system,
-                    # Responses JSON mode checks input as well as the instructions field.
-                    "input": "Review the following evidence and return one JSON object.\n"
-                    + json.dumps(data, ensure_ascii=False),
-                    "reasoning": {"effort": "low"},
-                    "text": {"format": (
-                        {"type": "json_schema", "name": role, "strict": True, "schema": schema}
-                        if schema else {"type": "json_object"}
-                    )},
-                    "max_output_tokens": 4096,
-                    "store": False,
-                },
-            )
+            if not self.review_enabled or request_deadline - start < 1:
+                raise TimeoutError("Astra unavailable or decision budget exhausted")
+            text, metadata = compact_context(data)
+            record.update(metadata)
+            payload = {
+                "model": ASTRA, "instructions": system,
+                "input": "Read the supplied data and return one JSON object.\n" + text,
+                "reasoning": {"effort": "low"},
+                "text": {"format": (
+                    {"type": "json_schema", "name": role, "strict": True, "schema": schema}
+                    if schema else {"type": "json_object"}
+                )},
+                "max_output_tokens": 4096,
+                "store": False,
+            }
+            record["schema_chars"] = len(json.dumps(schema, separators=(",", ":")))
+            record["preparation_seconds"] = round(time.monotonic() - start, 3)
+            record["network_budget_seconds"] = round(max(0, request_deadline - time.monotonic()), 3)
+            response = asyncio.run(self._astra_request(payload, request_deadline))
             record["http_status"] = response.status_code
             if response.is_error:
                 try:
@@ -663,33 +715,41 @@ The application appends the exact offer and verified arguments separately."""
         return self.call(self.small, system, context, deadline, max_tokens=300)
 
     def final_decision(self, board, deadline):
-        """One bounded final authority call. Failure cannot turn into Python acceptance."""
+        """Final authority; one bounded correction of invalid output, never an HTTP retry."""
         from .director import FinalDecisionUnavailable, validate_selection
 
-        try:
-            result = self.call_astra(FINAL_DIRECTOR, board, deadline, role="final_decision",
-                                     schema=final_schema(board))
-            if os.environ.get("ASTRA_BASE_URL"):
+        data = board
+        chat = bool(os.environ.get("ASTRA_BASE_URL"))
+        for attempt in range(2):
+            try:
+                result = self.call_astra(FINAL_DIRECTOR, data, deadline, role="final_decision",
+                                         schema=final_schema(board))
+            except Exception:
+                # A network failure or refusal is not retried and never authorizes a substitute.
+                raise FinalDecisionUnavailable("Final Astra request unavailable; no action authorized") from None
+            if chat:
                 result = strip_bare_numbers(result)
+            record = self.calls[-1]
+            record["returned_decision"] = copy.deepcopy(result)
+            record["validation_attempt"] = attempt + 1
             try:
                 validate_selection(board, result)
-            except (ValueError, KeyError, TypeError) as invalid:
-                # A weaker model without enforced schemas (round 4: gemini lite) may slip on the shape: one
-                # repair attempt with the exact error, still validated by the same code.
-                if not os.environ.get("ASTRA_BASE_URL") or deadline - time.monotonic() < 6:
-                    raise
-                fixed = dict(board, previous_answer=result,
-                             previous_answer_error=f"{type(invalid).__name__}: {invalid}"[:300],
-                             instruction="Your previous answer was invalid. Return a corrected JSON object with "
-                                         "exactly the schema's keys, using only ids that exist on this board.")
-                result = strip_bare_numbers(self.call_astra(FINAL_DIRECTOR, fixed, deadline, role="final_decision",
-                                                            schema=final_schema(board)))
-                validate_selection(board, result)
-            return result
-        except Exception as exc:
-            if self.calls and self.calls[-1].get("role") == "final_decision":
-                self.calls[-1]["final_validation"] = type(exc).__name__
-            raise FinalDecisionUnavailable("Final Astra decision unavailable; no action authorized") from None
+                record["final_validation"] = "ok"
+                return result
+            except (ValueError, KeyError, TypeError) as exc:
+                # These validators emit application-authored messages, not HTTP bodies.
+                reason = str(exc) if isinstance(exc, ValueError) else type(exc).__name__
+                record["final_validation"] = type(exc).__name__
+                record["validation_reason"] = reason
+                if attempt == 0 and deadline - time.monotonic() >= (6 if chat else 10):
+                    data = {**board, "validation_feedback": {
+                        "invalid_decision": result, "reason": reason,
+                        "instruction": "Correct this validation error and return a complete valid decision. "
+                                       "No action has been sent. Keep all buyer constraints and evidence rules.",
+                    }}
+                    continue
+                raise FinalDecisionUnavailable("Final Astra decision invalid; no action authorized") from None
+        raise FinalDecisionUnavailable("Final validation exhausted; no action authorized")
 
     def close(self):
         self.client.close()

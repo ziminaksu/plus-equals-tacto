@@ -1,0 +1,14 @@
+{
+  "source_session_id": "01a1206b-eecd-7871-9f28-8fe2c4a40559",
+  "import_scope_id": "ehl-v10-validation-audit-20261010",
+  "scope_start": "2026-10-10T18:57:46.267Z",
+  "records_exported": 70,
+  "transformations": [
+    "earlier turns omitted",
+    "internal/system context omitted",
+    "images omitted",
+    "visible messages and tool events converted to Entire JSONL",
+    "known credentials and API-key patterns redacted"
+  ],
+  "export_sha256": "0e16884a4cdda67613ae43c580f4a689dcdfeb3b7ae22044f39405e17a9aa9c4"
+}

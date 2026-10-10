@@ -14,8 +14,11 @@ from arena_kit.cost import complete_offer, cost_breakdown, total_cost
 from arena_kit.play import latest, live_threads, moves_left
 
 from .. import compliance
+from .budget import TurnBudget
 from .communication import describe_complete, render_reply, reply_facts
+from .decision_record import phase, record_decision, validate_plan
 from .deliberation import add_action_consequences, economics_context, objective_scope
+from .playbook import add_playbooks, anchor_packages, feasible_seed
 
 
 class FinalDecisionUnavailable(RuntimeError):
@@ -163,11 +166,14 @@ def data_anchors(case, th, current):
 def build_board(agent, case, threads, source_map, history_map, closing_only=False):
     """Expose feasible actions, not a Python-selected winner. No guessed probability pruning."""
     board = {
-        "case": {k: case.get(k) for k in ("case_id", "title", "briefing", "negotiable", "term_options",
+        "case": {k: case.get(k) for k in ("case_id", "type", "suppliers", "title", "briefing", "negotiable", "term_options",
                                          "fixed_terms", "buyer")},
         "instructions": {
             "response_forecasts": "UNCALIBRATED estimates from sparse observations; never ground truth.",
-            "history": "Past same-supplier/same-case exchanges; quotes need fresh confirmation.",
+            "history": "Past same-supplier/same-case exchanges; quotes need fresh confirmation. "
+                       "historical_moves links preceding buyer proposals to observed replies. "
+                       "A returned concession is not the opening that produced it. Compare stage "
+                       "and prior terms; an observed response is not proof of causality or repeatability.",
             "agreed": "Supplier agreement is an executable offer, not an obligation to accept.",
             "confirmation": "Confirming a quote establishes its status; it does not close the case.",
             "closing_only": closing_only,
@@ -241,6 +247,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         "reply_facts": reply_facts(case),
         "fallback_estimated_cost_eur": agent.alternatives(case),
         "suppliers": {}, "packages": {}, "actions": {}, "evidence": {}, "questions": {},
+        "protocol_checks": ["Accept only the current received offer ID; validate supplier/action ownership."],
+        "buyer_constraints": {"fixed_terms": case.get("fixed_terms", {}),
+                              "must_haves": case["buyer"].get("must_haves", [])},
+        "policy_rules": ["Close after final_offer; this is a strategy guard, not a buyer constraint.",
+                         "At most one standalone question per supplier; additional questions accompany a counter.",
+                         "Anchor grids and the 24-anchor limit are heuristics; the offer menu is not exhaustive.",
+                         "Response probabilities and economic scenarios are estimates, not verified supplier facts."],
+        "candidate_generation": {"attempted": 0, "duplicates": 0, "rejected": [],
+                                 "anchor_cap_per_supplier": 24, "exhaustive": False},
     }
     for sid in live_threads(threads):
         th, events = agent.threads[sid], threads[sid]
@@ -251,6 +266,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         remaining = moves_left(case, events)
         supplier = {
             "status": latest(events).get("status"), "remaining_moves": remaining,
+            "buyer_messages_sent": sum(e.get("from") == "buyer" for e in events),
             "sources": source, "past_exchanges": history,
             "recent_exchange": [{k: e.get(k) for k in ("from", "body", "term_sheets", "status")}
                                 for e in events[-6:]],
@@ -259,6 +275,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "supplier_economics": economics_context(case, th),
             "stagnant_replies": th.stagnation,
             "previous_continuation_review": th.continuation_review,
+            "previous_plan": getattr(th, "previous_plan", None),
+            "last_plan_outcome": getattr(th, "last_plan_outcome", None),
             "observed_response_counts": th.response_counts,
             "evidence_inventory": th.retrieval_inventory,
             "previous_practice_outcomes": th.economics.feedback[-6:],
@@ -266,13 +284,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                    **cost_card(agent, case, th, th.reference),
                                    "currently_executable": False},
         }
+        supplier["phase"] = phase(supplier)
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
         case_used = getattr(agent, "case_used", set())
         for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
             # A re-cited ID scores 'duplicate' and buys nothing (P18 rounds 2-3); an ID counts once per
             # CASE, so one cited to another supplier is spent too (P05: index evidence 'duplicate').
-            if set(claim.refs) & (th.used | case_used):
+            if set(claim.refs) & (th.used | case_used) or (
+                    not claim.refs and claim.kind in getattr(th, "used_kinds", set())):
                 continue
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
@@ -335,17 +355,26 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         keys = {}
 
         def add_package(terms, origin, th=th, sid=sid, keys=keys):
+            agent.check_budget()
+            generation = board["candidate_generation"]
+            generation["attempted"] += 1
             if not valid_offer(agent, case, th, terms):
+                generation["rejected"].append({"supplier_id": sid, "origin": origin, "terms": terms,
+                                               "reason": "failed complete-offer, allowed-option or buyer-constraint validation"})
                 return None
             key = json.dumps(terms, sort_keys=True)
             if key in keys:
+                generation["duplicates"] += 1
+                origins = board["packages"][keys[key]]["origins"]
+                if origin not in origins:
+                    origins.append(origin)
                 return keys[key]
             pid = f"{sid}:p{len(keys)}"
             keys[key] = pid
             card = cost_card(agent, case, th, terms)
             card.pop("uncertainty", None)  # Shared warning above; avoid repeating it per package.
             board["packages"][pid] = {
-                "supplier_id": sid, "terms": terms, "origin": origin, **card,
+                "supplier_id": sid, "terms": terms, "origin": origin, "origins": [origin], **card,
                 "versus_standing": th.economics.compare(terms, current),
                 "versus_opening": th.economics.compare(terms, th.reference),
             }
@@ -409,18 +438,36 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     "supplier_id": sid, "kind": "confirm", "package_id": pid,
                     "source_sheet_id": sheet["term_sheet_id"],
                 }
-        seeds = th.analyst_candidates[:3] + [complete_offer(case, current)]
+        seeds = th.analyst_candidates[:3] + [feasible_seed(case, current)]
         if th.last_terms:
             seeds.append(th.last_terms)
-        # Include history as explicitly unconfirmed proposals, not executable sheet IDs.
+        # Expose the buyer move alongside its response, without declaring it a winner.
+        # Package IDs are fresh and validated against this case; old offer IDs never execute.
+        supplier["historical_moves"] = []
         for episode in history:
+            buyer_ids, response_ids = [], []
+            for old_terms in episode.get("buyer_terms", []):
+                terms = {f: old_terms[f] for f in case["negotiable"] if f in old_terms}
+                pid = add_package(terms, "historical buyer proposal: observed response in historical_moves")
+                if pid and pid not in buyer_ids:
+                    buyer_ids.append(pid)
             for sheet in episode["quoted_packages_then"]:
                 terms = {f: sheet["terms"][f] for f in case["negotiable"] if f in sheet["terms"]}
-                add_package(terms, "historical quote: must renegotiate/reconfirm")
+                pid = add_package(terms, "historical quote: must renegotiate/reconfirm")
+                if pid and pid not in response_ids:
+                    response_ids.append(pid)
+            if buyer_ids or response_ids:
+                supplier["historical_moves"].append({
+                    "source_id": episode["source_id"],
+                    "context_before": episode.get("context_before", {"stage": "unknown"}),
+                    "buyer_package_ids": buyer_ids, "response_package_ids": response_ids,
+                    "response_status": episode.get("status_then"),
+                    "currently_executable": False,
+                })
         for row in th.sustainability_candidates:
             add_package(row["terms"], row["origin"])
         for seed in seeds:
-            base_id = add_package(seed, "Astra proposal" if seed in th.analyst_candidates else "current/previous terms")
+            base_id = add_package(seed, "Astra proposal" if seed in th.analyst_candidates else "feasible current/previous term variant")
             if not base_id:
                 continue
             target = board["packages"][base_id]["direct_cost_eur"]
@@ -512,14 +559,16 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             board["actions"] = {k: v for k, v in board["actions"].items()
                                 if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
 
+    board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
+    add_playbooks(board)
     return board
 
 
 def validate_selection(board, selection):
     if not isinstance(selection, dict) or set(selection) != {
         "action_id", "package_ids", "question_id", "evidence_ids", "tone", "rationale",
-        "reply_text", "continuation_review",
+        "reply_text", "continuation_review", "plan",
     }:
         raise ValueError("invalid final decision shape")
     action = board["actions"].get(selection["action_id"])
@@ -569,6 +618,7 @@ def validate_selection(board, selection):
         raise ValueError("risk reason and stopping condition are required")
     if action["kind"] in ("ask", "reply") and not review["information_needed"].strip():
         raise ValueError("a question needs an explicit decision-relevant information goal")
+    validate_plan(board, action, selection)
     if action["kind"] not in ("accept", "walk_away"):
         render_reply(selection["reply_text"], board["reply_facts"])
     return action
@@ -625,6 +675,16 @@ def execute(agent, case, threads, board, selection):
                     claims = (claims + [punctual])[-3:] if len(claims) >= 3 else claims + [punctual]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
+            # Escalating to the supplier's approver: management moved for a longer contract plus the
+            # share-of-business prospect (P18 0.563) and not without it (0.509) - attach it if unused.
+            if qid and board["questions"][qid]["kind"] == "approval_route":
+                share = next((e for e in board["evidence"].values()
+                              if e["supplier_id"] == sid and e.get("kind") == "share_of_business"), None)
+                if share and share not in claims:
+                    claims = (claims + [share])[-3:] if len(claims) >= 3 else claims + [share]
+            for claim in claims:
+                if not claim["refs"]:
+                    th.used_kinds = getattr(th, "used_kinds", set()) | {claim.get("kind")}
             body = "\n\n".join(x for x in [authored, *[c["text"] for c in claims], *[
                 f"Package {i + 1}: {describe_complete(case, offer, th.std)}."
                 for i, offer in enumerate(offers)
@@ -648,6 +708,8 @@ def execute(agent, case, threads, board, selection):
             body += "\n\n" + "\n\n".join(claim["text"] for claim in claims)
             for claim in claims:
                 th.used.update(claim["refs"])
+                if not claim["refs"]:
+                    th.used_kinds = getattr(th, "used_kinds", set()) | {claim.get("kind")}
         if any(not valid_offer(agent, case, th, t) for t in offers):
             raise ValueError("final offer violates constraints")
         message = {"subject": "Re: " + case["title"], "body": body,
@@ -660,7 +722,6 @@ def execute(agent, case, threads, board, selection):
     decision = {"supplier_id": sid, "message": message}
     agent.log("decision", {"authority": "astra", "kind": kind, "selection": selection,
                            "action": decision, "llm_calls": agent.router.calls}, sid)
-    agent.router.calls = []
     return decision
 
 
@@ -705,30 +766,58 @@ def compact_board(board, keep=24):
 
 
 def decide(agent, case, threads, deadline, closing_only=False):
+    started = time.monotonic()
+    budget = TurnBudget(deadline)
     sources, history = {}, {}
     for sid in live_threads(threads):
         sources[sid] = agent.sources(sid, threads[sid])
         history[sid] = agent.threads[sid].episodes
-    # One negotiator call per turn. The final reviewer sees all suppliers and chooses
-    # independently. Reserve time for it instead of spending the window on grid search.
+    timings = {"at_start": budget.snapshot(), "source_seconds": round(time.monotonic() - started, 3)}
+    availability = {sid: {"status": "not_called_this_turn"} for sid in live_threads(threads)}
     viable = [sid for sid in live_threads(threads)
               if moves_left(case, threads[sid]) > 1
               and latest(threads[sid]).get("status") != "final_offer"]
     if viable and not closing_only:
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
-        agent.interpret(case, sid, threads[sid], min(deadline - 14, time.monotonic() + 17))
+        if budget.can_propose():
+            before = time.monotonic()
+            analysis, _ = agent.interpret(case, sid, threads[sid], budget.proposer_deadline())
+            availability[sid] = {"status": "unavailable" if analysis.get("fallback") else
+                                  "partial" if analysis.get("validation_errors") else "ok",
+                                 "failure_type": analysis.get("failure_type"),
+                                 "accepted_proposals": len(agent.threads[sid].analyst_candidates),
+                                 "cache_hit": bool(analysis.get("cache_hit"))}
+            timings["proposer_stage_seconds"] = round(time.monotonic() - before, 3)
+        else:
+            # Do not carry stale model proposals across a changed reply when skipped.
+            agent.threads[sid].analyst_candidates = []
+            availability[sid] = {"status": "skipped_insufficient_budget", "budget": budget.snapshot()}
+    else:
+        availability = {sid: {"status": "not_needed_closing"} for sid in availability}
+    before = time.monotonic()
     board = build_board(agent, case, threads, sources, history, closing_only)
+    board["model_availability"] = availability
+    board["timing"] = {**timings, "board_seconds": round(time.monotonic() - before, 3),
+                       "before_final": budget.snapshot()}
     if os.environ.get("ASTRA_BASE_URL") or os.environ.get("ASTRA_COMPACT"):
         board = compact_board(board)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")
-    agent.log("final_board", board)
+    board_event_id = agent.log("final_board", board)
     try:
-        choice = agent.router.final_decision(copy.deepcopy(board), deadline)
-        # Validate twice: schema membership and actual current state at execution.
+        choice = agent.router.final_decision(board, budget.final_deadline())
         validate_selection(board, choice)
-        return execute(agent, case, threads, board, choice)
+        if time.monotonic() >= deadline:
+            raise TimeoutError("decision arrived after execution deadline")
+        decision = execute(agent, case, threads, board, choice)
+        timings = {**board["timing"], "total_decision_seconds": round(time.monotonic() - started, 3),
+                   "remaining_before_send_seconds": round(max(0, deadline - time.monotonic()), 3)}
+        record_decision(agent, case, board, choice, decision, board_event_id, started, timings)
+        agent.router.calls = []
+        return decision
     except (ValueError, KeyError, TypeError, ArithmeticError, TimeoutError, FinalDecisionUnavailable) as exc:
         agent.log("final_decision_failed", {"error_type": type(exc).__name__, "sent": False,
+                                            "board_event_id": board_event_id,
+                                            "model_availability": availability, "budget": budget.snapshot(),
                                             "llm_calls": agent.router.calls})
         raise FinalDecisionUnavailable("Astra did not authorize a valid action; no substitute was sent") from None

@@ -1,16 +1,36 @@
 # += Tacto Negotiation Arena
 
-Autonomous AI buyer for Hollerau Pumpenwerke · EHL Munich 2026.
+Autonomous buyer for Hollerau Pumpenwerke · EHL Munich 2026.
 
-The agent negotiates with suppliers by e-mail to minimise **total cost**, not just unit price. In the analytical agent, Astra proposes packages and a separate Astra call chooses every final action. Python calculates costs and validates constraints. If final authorization fails, this path stops without sending a substitute offer or acceptance. Legacy agents retain their explicit fallback modes.
+**Purpose:** negotiate executable agreements that improve total buyer cost under
+the case's constraints. Price, supply coverage, delivery, quality, financing and
+applicable relationship costs all matter.
 
-## Strategy
+## Start here
 
-- Read the case, supplier data, quotes, history and evidence (`hollerau/intel.py`).
-- Calculate total costs, alternatives and viable term sheets (`hollerau/agent.py`, `hollerau/levers.py`).
-- Select a negotiating move and draft a concise e-mail (`hollerau/brain.py`).
-- Validate must-haves, numeric claims, evidence IDs, offer limits and acceptance decisions (`hollerau/compliance.py`).
-- Accept a suitable deal or walk away when the alternative is better.
+| What you need | Read |
+|---|---|
+| What the system actually does, and who decides | [Current architecture](docs/CURRENT_ARCHITECTURE.md) |
+| A clear contract for the next structural improvement | [Decision contract](docs/DECISION_CONTRACT.md) |
+| Actual latest results, including failures | [V10 P02 report](docs/evaluation/v10-p02-results.md), [V9 baseline](docs/evaluation/v9-arena-results.md) |
+| Setup, bounded runs and inspection | [Operating guide](docs/ANALYTICAL.md) |
+| Original challenge and starter kit | [Brief](brief/README.md), [starter-kit guide](README-kit.md) |
+| Earlier designs and evaluations | [Historical analytical notes](docs/history/ANALYTICAL-through-v82.md), [strategy announcements](docs/history/README-strategy-history.md) |
+
+## Current state
+
+Policy **`astra-v10-traceable-plans`** keeps Ksu's bargaining improvements and
+adds one shared deadline, lossless prompt compaction, mandatory conditional plans,
+linked reply-error records and reproducible experiment metadata. Python prices
+and validates; Astra makes the final strategic choice; SQLite retains the evidence.
+
+The v9 baseline had 16/19 proposer timeouts. V10 removes its approximately
+7.2-second effective read limit and allocates up to 20 seconds within a shared
+55-second turn budget. After an initial validation failure, a separately authorized
+P02 run completed: all six calls returned and all three final decisions validated.
+Its score was **0.235**, below the previous **0.255**; execution recovered without
+demonstrating a strategy improvement. See the [results](docs/evaluation/v10-p02-results.md)
+and [implementation scope](docs/evaluation/v10-traceable-plans.md).
 
 ## Setup
 
@@ -22,43 +42,31 @@ cp -n .env.example .env
 uv run arena data
 ```
 
-Fill `.env` locally with `ARENA_API_KEY` and `OPENAI_API_KEY`; never commit it. The default `play` and `run` commands now select the analytical Astra agent. `.env.example` also retains `LLM_API_KEY` and `BRAIN_MODEL` for explicit legacy `--brain llm` comparisons. OpenAI API usage is billed separately from ChatGPT plans.
+Configure `ARENA_API_KEY`, `ARENA_DATA` and `OPENAI_API_KEY` in ignored `.env`.
+Never commit credentials. `play` and `run` default to the analytical Astra agent;
+legacy modes remain explicit comparisons. See the operating guide before starting
+practice sessions. Both authorized P02 starts are used; further Arena runs need
+authorization. Local runtime tests remain stopped.
 
-## Run
+## Repository map
 
-```bash
-uv run pytest -q
-uv run python -m hollerau local --brain code --cases 5
-uv run python -m hollerau local --brain llm --cases 5
-uv run python -m hollerau play case:P01
-```
+- `hollerau/analytical/` — default negotiation controller, models, evidence and storage.
+- `arena_kit/` — API protocol, runner and published cost calculation.
+- `hollerau/agent.py`, `brain.py` and other legacy modules — explicit comparison paths.
+- `docs/` — current architecture and operating contract; `evaluation/` has versioned evidence.
+- `hollerau/logs/` — ignored local databases and raw traces.
+- `brief/`, `tests/`, `tools/` — challenge reference, existing tests and developer tools.
 
-For the Live Final, start before **11 October 2026, 12:00 (Munich time)**:
+## Publishing with Entire
 
-```bash
-uv run python -m hollerau run --set final --brain analytical --parallel 10 > final.log 2>&1
-```
+Entire is enabled with `git-refs` checkpoints and telemetry disabled. The team uses
+its external-agent import to attach actual scoped Codex session records, excluding
+unrelated history, internal reasoning and credentials. Verify the commit's
+`Entire-Checkpoint` trailer and the corresponding remote checkpoint ref after
+publishing. Configuration alone is not evidence of a recorded session.
 
-Refresh the arena data after the Sunday 08:00 release. The final runner does not call the forbidden `/v1/events`, `/screen`, `/leaderboard` or `/results` endpoints. Submit the Git repository URL, the **exact final commit hash**, a short description and pitch slides on ehl.gg.
-
-## Entire
-
-The repository contains Entire configuration in `.entire/settings.json` with checkpoint mode `git-refs` and telemetry disabled. Scoped development-session imports and checkpoint delivery have been verified for the analytical-agent commits. For future local sessions, check:
-
-```bash
-command -v entire
-entire --version
-git show-ref | grep -i entire
-```
-
-Git configuration alone does not prove that checkpoints have been recorded. Follow the [EHL Entire event instructions](https://hack.entire.io/ehl-munich-2026/) for event-specific requirements.
-
-## Project
-
-- `hollerau/` — team agent and local simulation
-- `arena_kit/` — Tacto API client, runner and cost model
-- `brief/` — official competition requirements
-- `tests/` — tests
+Follow the [EHL Entire instructions](https://hack.entire.io/ehl-munich-2026/).
+Submit the repository and exact final commit hash required by the challenge.
 
 Starter-kit code: `LICENSE-kit` (MIT). Data: `LICENSE-data` (CC BY 4.0).
 

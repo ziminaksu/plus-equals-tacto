@@ -3,6 +3,7 @@
 import hashlib
 import json
 import math
+import os
 import re
 import time
 from dataclasses import asdict
@@ -15,6 +16,8 @@ from .. import compliance, intel, levers
 from ..agent import _opening_standard, describe
 from ..params import Params
 from .beliefs import Beliefs
+from .budget import TURN_SECONDS
+from .decision_record import finish_plan, observe_plan
 from .deliberation import economics_context, objective_scope
 from .director import FinalDecisionUnavailable, cost_card
 from .director import decide as astra_decide
@@ -22,14 +25,15 @@ from .discovery import REBASE_QUESTION, discover_quote_requests, validate_quote_
 from .feedback import event_key, learn_reply
 from .offers import equivalent_alternative
 from .planning import counter_costs, paired_objective
+from .playbook import feasible_seed
 from .preferences import extract_explicit_conditions, violated
 from .retrieval import retrieve
 from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v82-evidence-access"
-DECISION_BUDGET_S = 35
+POLICY_VERSION = "astra-v10-traceable-plans+gemini"
+DECISION_BUDGET_S = TURN_SECONDS
 INFRA_ERRORS = {"HTTPStatusError", "ConnectError", "ConnectTimeout", "ReadTimeout", "RemoteProtocolError",
                 "ReadError", "WriteError", "PoolTimeout"}
 
@@ -73,7 +77,7 @@ class AnalyticalAgent:
             raise DecisionBudgetExpired
 
     def log(self, kind, payload, sid=None):
-        self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
+        return self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
 
     def risk_for_case(self, case):
         """Conservative default except for quality-first cases where tail risk can overprice quality.
@@ -214,6 +218,7 @@ class AnalyticalAgent:
 
     def finish(self, case, result):
         """Persist only permitted completed-practice components for the next session."""
+        finish_plan(self, case, result)
         sid = result.get("supplier_id")
         th = self.threads.get(sid)
         predicted = th.economics.card(result["terms"])["expected_breakdown_eur"] if (
@@ -251,6 +256,7 @@ class AnalyticalAgent:
             if learned:
                 self.log("observation", learned, sid)
                 self.log("coefficients", th.beliefs.snapshot(), sid)
+            observe_plan(self, case, sid, safe_reply, learned)
             th.pending = None
 
     def receive_terminal(self, case, threads, sid, request, reply):
@@ -488,7 +494,7 @@ class AnalyticalAgent:
         sources = self.sources(sid, events)
         if self.router.enabled:
             current = standing(events)[1] or th.reference
-            th.sustainability_candidates = th.economics.frontier(complete_offer(case, current))
+            th.sustainability_candidates = th.economics.frontier(feasible_seed(case, current))
             analysis = self.router.analyse(
                 sources,
                 [],
@@ -777,7 +783,8 @@ class AnalyticalAgent:
             last = (self.router.calls or [{}])[-1]
             infra = last.get("status") in INFRA_ERRORS and (
                 last.get("http_status") in (None, 408, 429) or (last.get("http_status") or 0) >= 500)
-            if not infra:
+            # A free chat model (ASTRA_BASE_URL) that slips on the answer shape must not cost the whole case.
+            if not infra and not os.environ.get("ASTRA_BASE_URL"):
                 raise
             decision = self.offline_move(case, threads)
             self.log("decision", {"action": decision, "reason": "Astra unreachable; offline fallback",
