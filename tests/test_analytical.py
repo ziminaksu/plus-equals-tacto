@@ -581,3 +581,109 @@ def test_price_pressure_bounds_reject_invalid_settings():
     for v in (-0.01, 0.41, math.nan, math.inf):
         with pytest.raises(ValueError, match="price_pressure"):
             AnalyticalAgent(router=Router(enabled=False), price_pressure=v)
+
+
+
+def test_index_protection_requires_explicit_supplier_requirement():
+    from hollerau.analytical.router import supports_index_protection
+
+    positive = [
+        "We require a raw-material indexation clause for a long-term contract.",
+        "For a 36-month commitment we need a price-adjustment clause.",
+        "We cannot commit to three years without an index clause.",
+        "An indexation clause is required for any extended term.",
+    ]
+    negative = [
+        "We do not require an indexation clause.",
+        "No price-adjustment clause is required.",
+        "Indexation is not required.",
+        "We mentioned the indexation clause but did not request it.",
+        "The price-adjustment clause is excluded.",
+    ]
+    assert all(supports_index_protection(x) for x in positive)
+    assert not any(supports_index_protection(x) for x in negative)
+    sources = {str(i): s for i, s in enumerate(positive + negative)}
+    analysis = {
+        "interpretations": [],
+        "ambiguities": [],
+        "signals": [
+            {"kind": "index_protection", "source_id": k, "quote": v}
+            for k, v in sources.items()
+        ],
+    }
+    out = Router.validate(analysis, sources, ["unit_price", "index_clause", "contract_months"])
+    assert len(out["signals"]) == len(positive)
+    assert Router.validate(analysis, sources, ["unit_price"])["signals"] == []
+
+
+def test_index_supplier_value_activates_only_after_quoted_evidence():
+    case, ref, sup = sample()
+    case["negotiable"] = ["unit_price", "index_clause", "contract_months"]
+    case["fixed_terms"].pop("index_clause", None)
+    case["fixed_terms"].pop("contract_months", None)
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["term_options"] = {"index_clause": [None, clause], "contract_months": [12, 36]}
+    ref = {**ref, "index_clause": None, "contract_months": 12}
+    sup = {**sup, "standard": ref}
+    b = Beliefs(case, ref, sup, seed=42)
+    p = b.particles[0]
+    base = {**ref, "unit_price": 100}
+    index_12 = {**base, "index_clause": clause}
+    index_36 = {**index_12, "contract_months": 36}
+    no_index_36 = {**base, "contract_months": 36}
+    assert b.value(index_12, p) == pytest.approx(b.value(base, p))
+    assert b.apply_evidence([
+        {"kind": "index_protection", "quote": "We require an indexation clause for long-term supply."}
+    ]) == ["index_protection"]
+    assert b.value(index_12, p) > b.value(base, p)
+    assert b.value(index_36, p) - b.value(no_index_36, p) > b.value(index_12, p) - b.value(base, p)
+    # Do not double-credit a clause already contained in the supplier's opening terms.
+    indexed_ref = {**ref, "index_clause": clause}
+    indexed_sup = {**sup, "standard": indexed_ref}
+    existing = Beliefs(case, indexed_ref, indexed_sup, seed=42)
+    existing.apply_evidence([
+        {"kind": "index_protection", "quote": "We require an indexation clause for long-term supply."}
+    ])
+    assert existing.value(indexed_ref, existing.particles[0]) == pytest.approx(
+        existing.value({**indexed_ref}, existing.particles[0])
+    )
+
+
+def test_index_package_offers_include_long_term_tradeoffs_offline(tmp_path):
+    case, ref, _ = sample()
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["negotiable"] = ["unit_price", "index_clause", "contract_months"]
+    case["term_options"] = {"index_clause": [None, clause], "contract_months": [12, 36]}
+    case["fixed_terms"].pop("index_clause", None)
+    case["fixed_terms"].pop("contract_months", None)
+    opening = {**ref, "index_clause": None, "contract_months": 12}
+    event = {
+        "from": "supplier",
+        "status": "open",
+        "body": "For a 36-month agreement we require indexation.",
+        "term_sheets": [{"term_sheet_id": "opening", "terms": opening}],
+    }
+    agent = AnalyticalAgent(store=Store(tmp_path / "index.sqlite"), router=Router(enabled=False))
+    agent.start(case, {"sup:1": [event]})
+    th = agent.threads["sup:1"]
+    th.beliefs.apply_evidence([
+        {"kind": "index_protection", "quote": "For a 36-month agreement we require indexation."}
+    ])
+    candidates = agent.candidates(case, th, opening)
+    assert any(t.get("index_clause") == clause and t["contract_months"] == 36 for t in candidates)
+    assert any(t.get("index_clause") is None and t["contract_months"] == 36 for t in candidates)
+
+
+def test_index_cost_still_uses_official_buyer_function():
+    from arena_kit.cost import cost_breakdown
+
+    case, ref, _ = sample()
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["buyer"]["index_paths"] = {"PPI": 0.08}
+    case["buyer"]["index_risk_pct"] = 3
+    indexed = {**ref, "index_clause": clause}
+    without = cost_breakdown(case, {**ref, "index_clause": None})
+    with_index = cost_breakdown(case, indexed)
+    assert with_index["index_clause"] > 0
+    assert with_index["index_risk"] > 0
+    assert with_index["price"] == without["price"]
