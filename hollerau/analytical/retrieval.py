@@ -67,7 +67,10 @@ def retrieve(package, case, supplier_id, latest_body=""):
             earlier, later, pct = change
             rows.append({**driver, "earlier": {"id": earlier, **package.facts[earlier]},
                          "later": {"id": later, **package.facts[later]}, "change_pct": pct})
-            # Neutral evidence is selectable; never imply a rising input supports a cut.
+            # A rising input argues for the supplier (P18: +5.9 % / +12.3 % on the board); it stays in
+            # the sources as context, only a flat or falling input is offered as a citable argument.
+            if pct > 0:
+                continue
             claims.append(Claim("index_context", [earlier, later],
                                 f"The {driver['series_id']} index changed {pct:+.1f}% between the named observations "
                                 f"({earlier} to {later}); this is an input movement, not a whole-product price change.",

@@ -79,6 +79,7 @@ class Dossier:
     wants_partnership: bool = False
     notes: list = field(default_factory=list)
     claims: list = field(default_factory=list)
+    reference_prices: dict = field(default_factory=dict)  # our own recent order prices (anchors)
 
 
 def _months_back(month, n):
@@ -228,7 +229,8 @@ def build(case, supplier_id, package=None, asked_price=None):
                                   f"The index {s} moved {pct:+.1f}% from its recent peak ({e} to {l_}).",
                                   1.1 + 0.5 * (w or 0.3), pct))
 
-    # order history (2-8 PO lines of the part are checked by their order prices)
+    # order history (2-8 PO lines of the part are checked by their order prices). Another supplier's
+    # orders are NOT used: the arena rated them irrelevant for this supplier (P18).
     if asked_price:
         pos = sorted(
             ((k, v) for k, v in facts.items()
@@ -240,25 +242,15 @@ def build(case, supplier_id, package=None, asked_price=None):
         if mine:
             last_id, last = mine[-1]
             before = [(k, v) for k, v in mine if v["unit_price"] < last["unit_price"] * 0.97]
+            d.reference_prices["current_orders"] = last["unit_price"]
             if before and asked_price > last["unit_price"]:
                 b_id, b = before[-1]
+                d.reference_prices["before_raise"] = b["unit_price"]
                 d.claims.append(Claim(
                     "price_already_raised", [b_id, last_id],
                     f"Our orders show your price already rose this year from EUR {b['unit_price']:.2f} ({b_id}) "
                     f"to EUR {last['unit_price']:.2f} ({last_id}).",
                     1.25, last["unit_price"]))
-        rivals = [(k, v) for k, v in pos if v.get("supplier") not in (None, supplier_id) and v["date"][:7] >= horizon]
-        if rivals:
-            r_id, r = rivals[-1]
-            same = [k for k, v in rivals if v["supplier"] == r["supplier"] and v["unit_price"] == r["unit_price"]]
-            if len(same) >= 2 and r["unit_price"] < asked_price * 0.98:
-                ids = same[-2:]
-                d.claims.append(Claim(
-                    "rival_orders", ids,
-                    f"We currently buy the same part from another approved source at EUR {r['unit_price']:.2f} "
-                    f"per unit ({ids[0]}, {ids[1]}).",
-                    1.35, r["unit_price"]))
-
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
     cash_denied = capacity_denied = False

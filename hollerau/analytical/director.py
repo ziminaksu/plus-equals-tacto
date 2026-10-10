@@ -104,6 +104,46 @@ def questions(case, sources, history):
     return items
 
 
+def data_anchors(case, th, current):
+    """Packages below the supplier's ask, priced from our own data, on the levers that cost us least.
+    Without them the board only held prices near the supplier's numbers (P18: nothing below 5.70,
+    while the supplier later accepted 5.50 and the arena's best package was ~4.73)."""
+    quote = (current or th.reference).get("unit_price")
+    if not quote:
+        return []
+    prices = {round(quote * m, 2) for m in (0.80, 0.85, 0.90, 0.94)}
+    refs = dict(getattr(th.dossier, "reference_prices", {}) or {})
+    if case["buyer"].get("current_unit_price"):
+        refs["current_price"] = case["buyer"]["current_unit_price"]
+    prices |= {round(p, 2) for p in refs.values() if p and p < quote}
+    fields, opts = case["negotiable"], case.get("term_options", {})
+    base = complete_offer(case, current or th.reference)
+    best = dict(base)
+    pay = [d for d in opts.get("payment_days", []) if d >= case["buyer"]["reference_payment_days"]]
+    if "payment_days" in fields and pay:
+        best["payment_days"] = max(pay)  # never pay earlier than our reference for free
+    months = 12 * case["buyer"]["horizon_years"]
+    if "contract_months" in fields and months in opts.get("contract_months", []):
+        best["contract_months"] = months  # cover the horizon, no more
+    variants = [best]
+    if "index_clause" in fields:
+        clauses = opts.get("index_clause", [])
+        if None in clauses:
+            variants.append({**best, "index_clause": None})
+        banded = [c for c in clauses if c]
+        if banded:
+            variants.append({**best, "index_clause": max(banded, key=lambda c: c.get("deadband_pct") or 0)})
+    out, seen = [], set()
+    for v in variants:
+        for price in sorted(prices):
+            terms = {**v, "unit_price": price}
+            key = json.dumps(terms, sort_keys=True)
+            if key not in seen:
+                seen.add(key)
+                out.append((terms, "data anchor: below the ask, from our order history and current price"))
+    return out[:24]
+
+
 def build_board(agent, case, threads, source_map, history_map, closing_only=False):
     """Expose feasible actions, not a Python-selected winner. No guessed probability pruning."""
     board = {
@@ -273,6 +313,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                              f"exchange for {base_id}; approximately equal direct buyer cost")
                         if paired:
                             board["packages"][paired]["paired_with"] = base_id
+        for terms, origin in data_anchors(case, th, current):
+            add_package(terms, origin)
         if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
