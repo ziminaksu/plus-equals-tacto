@@ -189,7 +189,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
-            "rfq_competition": "walk_away ends the WHOLE case for every supplier; with several live "
+            "rfq_competition": "Several packages in one e-mail must cost us about the same (different terms, "
+                               "not a price ladder - Python drops any that cost more than 1 % above the cheapest). "
+                               "walk_away ends the WHOLE case for every supplier; with several live "
                                "suppliers it is not on the menu - simply stop answering a supplier you do not "
                                "need and close with the best one. With several suppliers, competition is the lever: cite a rival's live offer "
                                "(rival_offer evidence) to each other supplier and ask for a better complete "
@@ -452,6 +454,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             ahead = {sid for sid in live if contacts[sid] > floor + 1}
             board["actions"] = {k: v for k, v in board["actions"].items()
                                 if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
+            if floor == 0:  # someone has not heard from us yet: no early accept of an ordinary open offer
+                board["actions"] = {
+                    k: v for k, v in board["actions"].items()
+                    if not (v["kind"] == "accept"
+                            and latest(threads[v["supplier_id"]]).get("status") not in ("final_offer", "agreed"))}
     add_action_consequences(agent, board)
     return board
 
@@ -551,7 +558,12 @@ def execute(agent, case, threads, board, selection):
             th.asked_confirmations.add(json.dumps(offers[0], sort_keys=True))
             th.pending = {"kind": "quote_confirmation", "request": action, "event_count": len(events)}
         else:
-            offers = [board["packages"][pid]["terms"] for pid in selection["package_ids"]]
+            # Alternatives in ONE e-mail must cost us about the same; a price ladder shows the supplier how
+            # far we go (free Gemini P05: 28.80/30.60/32.40 sent, the supplier answered 32.50).
+            picked = [board["packages"][pid] for pid in selection["package_ids"]]
+            cheapest = min((p.get("direct_cost_eur") or float("inf")) for p in picked)
+            offers = [p["terms"] for p in picked
+                      if (p.get("direct_cost_eur") or float("inf")) <= cheapest * 1.01] or [picked[0]["terms"]]
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
