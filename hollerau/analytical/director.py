@@ -181,12 +181,6 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
-            "payment_trade": "Paying earlier is a cheap concession for us: a 30-day step costs only "
-                             "interest_rate x 30/360 of spend (about 0.7 % at 8 %), while suppliers in practice "
-                             "answered a 90->60 step with about 2 % off the price. Before closing, if we still "
-                             "hold payment above our reference, offer that one step (keep everything else) - it "
-                             "is usually the best-value move left. Check the cost cards: a step that lowers "
-                             "expected_total_eur is worth making.",
             "explicit_final_offer": "An explicit final offer is a closing decision. Astra may accept a currently valid standing quote or walk away, but must not counter or ask for more concessions.",
             "weights": "Use the published buyer costs, including relationship costs. Do not invent score weights.",
             "sustainability": "ONLY when objective_scope.relationship_cost_active is true: compare public "
