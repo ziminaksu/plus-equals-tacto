@@ -268,3 +268,33 @@ def test_candidate_shortlist_keeps_capacity_coverage(tmp_path):
     candidates = agent.candidates(case, agent.threads["sup:1"], opening)
     assert candidates
     assert any(t["volume_per_year"] == need and t["contract_months"] >= 24 for t in candidates)
+
+
+def test_openai_router_uses_project_credentials_without_hf_specific_fields(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "openai")
+    monkeypatch.setenv("LLM_API_KEY", "local-test-key")
+    monkeypatch.setenv("ANALYTICAL_SMALL_MODEL", "gpt-4.1-mini")
+    requests = []
+
+    def handler(req):
+        body = json.loads(req.content)
+        requests.append((str(req.url), body))
+        assert req.headers["Authorization"] == "Bearer local-test-key"
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content":
+                  '{"interpretations":[],"ambiguities":[],"question":""}'}}]},
+        )
+
+    router = Router(transport=httpx.MockTransport(handler))
+    assert router.provider == "openai"
+    assert router.enabled
+    result = router.analyse({}, [], time.monotonic() + 20)
+    assert result["interpretations"] == []
+    assert len(requests) == 1
+    url, body = requests[0]
+    assert url == "https://api.openai.com/v1/chat/completions"
+    assert body["model"] == "gpt-4.1-mini"
+    assert "chat_template_kwargs" not in body
+    assert "reasoning_effort" not in body
+    router.close()
