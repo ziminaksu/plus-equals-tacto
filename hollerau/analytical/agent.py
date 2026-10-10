@@ -311,6 +311,13 @@ class AnalyticalAgent:
                     or (th.last_outcome == "counter" and value < previous_value + max(0.01, quote * 0.002))
                 ):
                     continue
+                if previous and self.weighted(
+                    th,
+                    [th.beliefs.value(terms, p) - th.beliefs.value(previous, p) for p in th.beliefs.particles],
+                ) < -0.01:
+                    # Central estimates can misrank nonlinear volume/capacity trades.
+                    # Do not reoffer packages worse for the supplier on average.
+                    continue
                 if (
                     previous
                     and th.last_outcome == "counter"
