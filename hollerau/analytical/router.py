@@ -286,6 +286,9 @@ class Router:
         remaining = min(cap, deadline - time.monotonic() - 3)
         if not self.review_enabled or remaining < 1:
             raise TimeoutError("Astra unavailable or decision budget exhausted")
+        alt_base = os.environ.get("ASTRA_BASE_URL", "").rstrip("/")
+        if alt_base:  # any OpenAI-compatible chat endpoint (e.g. Gemini) instead of the OpenAI Responses API
+            return self._call_astra_chat(alt_base, system, data, remaining, role, schema)
         record = {"model": ASTRA, "provider": "openai", "role": role, "status": "started"}
         self.calls.append(record)
         start = time.monotonic()
@@ -336,6 +339,48 @@ class Router:
                     if part.get("type") == "output_text":
                         chunks.append(part["text"])
             obj = decode_conditions(parse_object("".join(chunks)))
+            record["status"] = "ok"
+            return obj
+        except Exception as exc:
+            record["status"] = type(exc).__name__
+            raise
+        finally:
+            record["seconds"] = round(time.monotonic() - start, 3)
+
+    def _call_astra_chat(self, base, system, data, remaining, role, schema):
+        """Astra's roles over an OpenAI-compatible /chat/completions endpoint (ASTRA_BASE_URL, ASTRA_MODEL,
+        key in OPENAI_API_KEY): used when no OpenAI credits are available. JSON mode; the exact schema is
+        given in the instructions and the result is validated by the same code as before."""
+        model = os.environ.get("ASTRA_MODEL", "gemini-2.5-flash")
+        record = {"model": model, "provider": base.split("/")[2], "role": role, "status": "started"}
+        self.calls.append(record)
+        start = time.monotonic()
+        instructions = system
+        if schema:
+            instructions += "\n\nReturn exactly one JSON object that matches this JSON schema:\n" + json.dumps(schema)
+        try:
+            response = self.client.post(
+                f"{base}/chat/completions",
+                headers={"Authorization": "Bearer " + self.review_key},
+                timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
+                                      write=remaining / 20, read=remaining * 0.8),
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": instructions},
+                        {"role": "user", "content": "Review the following evidence and return one JSON object.\n"
+                                                    + json.dumps(data, ensure_ascii=False)},
+                    ],
+                    "response_format": {"type": "json_object"},
+                    "max_tokens": 4096,
+                },
+            )
+            record["http_status"] = response.status_code
+            response.raise_for_status()
+            result = response.json()
+            record["usage"] = result.get("usage", {})
+            text = result["choices"][0]["message"].get("content") or ""
+            obj = decode_conditions(parse_object(text))
             record["status"] = "ok"
             return obj
         except Exception as exc:
