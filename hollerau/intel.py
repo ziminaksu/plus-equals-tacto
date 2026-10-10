@@ -268,6 +268,24 @@ def build(case, supplier_id, package=None, asked_price=None):
             "you first in line for a larger share of that business.",
             1.15, None))
 
+    # competition (leverage / routine only): another approved source already supplies this part.
+    # True from the source list; no figure, no ID that could check as 'irrelevant'.
+    if b.get("category_goal") in ("leverage", "routine") and part:
+        others = _query(
+            package,
+            "SELECT supplier_id, quota_pct FROM sourcing WHERE part_id = ? AND supplier_id != ? "
+            "AND status = 'active' ORDER BY quota_pct DESC",
+            (part, supplier_id),
+        )
+        if others:
+            most = others[0]["quota_pct"] >= 50
+            d.claims.append(Claim(
+                "competition", [],
+                ("Another approved source already supplies most of our need for this part"
+                 if most else "We have another approved source for this part")
+                + ", so we can shift volume between our approved sources.",
+                1.2, None))
+
     # what the notes say (context, not checked)
     docs = _query(package, "SELECT id, kind, file FROM documents WHERE supplier_id = ? ORDER BY date", (supplier_id,))
     cash_denied = capacity_denied = False
