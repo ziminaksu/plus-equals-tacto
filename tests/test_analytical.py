@@ -689,3 +689,40 @@ def test_index_cost_still_uses_official_buyer_function():
     assert with_index["index_clause"] > 0
     assert with_index["index_risk"] > 0
     assert with_index["price"] == without["price"]
+
+
+def test_initial_counteroffer_prefers_safe_saving_when_opening_has_zero_score(tmp_path):
+    """Pure Python; no API, hidden supplier parameters or Arena sessions."""
+    from types import SimpleNamespace
+    from arena_kit.cost import complete_offer, total_cost
+    case, ref, sup = sample()
+    case["negotiable"] = ["unit_price", "payment_days"]
+    case["term_options"] = {"payment_days": [30, 60, 90]}
+    case["fixed_terms"] = {k: v for k, v in case["fixed_terms"].items() if k not in case["negotiable"]}
+    ref = closing_terms(case, {"unit_price": 100, "payment_days": 60})
+    agent = AnalyticalAgent(store=Store(tmp_path / "probe.sqlite"), router=Router(enabled=False), opening_probe=True)
+    class BeliefStub:
+        conditions = []
+    thread = SimpleNamespace(
+        std=ref, reference=ref, last_terms=None, planning_moves=8,
+        beliefs=BeliefStub()
+    )
+    opening = complete_offer(case, ref)
+    improving = complete_offer(case, {**ref, "unit_price": 99.0})
+    rows = [
+        {"terms": improving, "probabilities": {"accept": 0.4, "counter": 0.59, "walk": 0.01}},
+    ]
+    best = (total_cost(case, opening, ref), "sup:1", "offer:test", opening)
+    assert agent.initial_counteroffer(case, {"sup:1": [{"from": "supplier"}]}, "sup:1", thread, best, rows) == rows[0]
+    assert agent.initial_counteroffer(case, {"sup:1": [{"from": "buyer"}]}, "sup:1", thread, best, rows) is None
+    assert agent.initial_counteroffer(case, {"sup:1": [{"from": "supplier"}]}, "sup:1", thread, best, [
+        {"terms": improving, "probabilities": {"accept": 0.4, "counter": 0.49, "walk": 0.11}},
+    ]) is None
+    agent.store.close()
+
+
+def test_initial_counteroffer_is_opt_in(tmp_path):
+    case, ref, sup = sample()
+    agent = AnalyticalAgent(store=Store(tmp_path / "no-probe.sqlite"), router=Router(enabled=False))
+    assert agent.opening_probe is False
+    agent.store.close()
