@@ -64,11 +64,12 @@ them. Keeping them constant makes the memory intervention separately assessable.
 
 ## Validation and outcome status
 
-Source parsing, targeted static lint and diff checks are the validation boundary
-for this update. No local unit tests, simulations, model replays or new Arena
-sessions were run. An independent read-only code review checks the implementation.
-There is **no measured score improvement** for v8.3, and v8.2's retrieval change
-also remains unevaluated in Arena.
+At implementation time, validation was source parsing, targeted static lint,
+diff checks and independent read-only code review. A subsequent authorized
+Arena pair scored P02 0.254765 and P18 0.273018, both unchanged. The earlier
+P18 opening was selectable but not chosen; all three P18 proposer calls timed
+out. See [the full results](v83-arena-results.md). No local unit tests,
+simulations or model replays ran. There is **no measured score improvement**.
 
 Any subsequent strategy evaluation must use only P02 and P18. Compare this patch
 with its v8.2 baseline using the same saved memory and public inputs; do not mix in
