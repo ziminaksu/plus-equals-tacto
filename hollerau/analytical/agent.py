@@ -18,7 +18,7 @@ from .beliefs import Beliefs
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v2.4-experimental"
+POLICY_VERSION = "bayes-v2.5-index-evidence"
 
 
 class AnalyticalAgent:
@@ -193,11 +193,28 @@ class AnalyticalAgent:
             for value in levers.field_options(case, field, th.std):
                 packages.append({**packages[0], field: value})
         packages.extend(levers.packages(case, th.std))
+        # Even when generic cross-product search is capped, keep explicit
+        # index-protection / commitment combinations for supplier trade-offs.
+        # This does not force acceptance: official buyer TCO still prices
+        # indexed packages, and ranking must justify any extra cost.
+        if th.beliefs.signal_counts.get("index_protection") and "index_clause" in case["negotiable"]:
+            clauses = [c for c in levers.field_options(case, "index_clause", th.std) if c]
+            months = (
+                levers.field_options(case, "contract_months", th.std)
+                if "contract_months" in case["negotiable"]
+                else [packages[0].get("contract_months")]
+            )
+            for clause in clauses:
+                for duration in months:
+                    combined = {**packages[0], "index_clause": clause}
+                    if "contract_months" in case["negotiable"]:
+                        combined["contract_months"] = duration
+                    packages.append(combined)
         quote = current.get("unit_price") or th.reference["unit_price"]
         center = SimpleNamespace(
             **{
                 k: self.weighted(th, [getattr(p, k) for p in th.beliefs.particles])
-                for k in ("r", "b_pay", "b_term", "b_flex", "b_quality", "b_capacity", "full_cost")
+                for k in ("r", "b_pay", "b_term", "b_flex", "b_quality", "b_capacity", "full_cost", "b_index")
             }
         )
         previous = th.last_terms
