@@ -36,7 +36,7 @@ uv run python -m hollerau play case:P01
 For the Live Final, start before **11 October 2026, 12:00 (Munich time)**:
 
 ```bash
-uv run python -m hollerau run --set final --parallel 10 > final.log 2>&1
+uv run python -m hollerau run --set final --brain analytical --parallel 10 > final.log 2>&1
 ```
 
 Refresh the arena data after the Sunday 08:00 release. The final runner does not call the forbidden `/v1/events`, `/screen`, `/leaderboard` or `/results` endpoints. Submit the Git repository URL, the **exact final commit hash**, a short description and pitch slides on ehl.gg.

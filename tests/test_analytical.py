@@ -491,3 +491,201 @@ def test_openai_router_uses_project_credentials_without_hf_specific_fields(monke
     assert "chat_template_kwargs" not in body
     assert "reasoning_effort" not in body
     router.close()
+
+
+def test_supplier_note_signal_classification_requires_positive_evidence():
+    from hollerau.intel import supplier_signals_from_note
+
+    assert supplier_signals_from_note("Our capacity is fully booked; we cannot accept additional volume.") == {
+        "cash_short": False,
+        "spare_capacity": False,
+    }
+    assert supplier_signals_from_note("We have no cash flow issues and stable liquidity.") == {
+        "cash_short": False,
+        "spare_capacity": False,
+    }
+    assert supplier_signals_from_note("We have spare capacity on a second shift.")["spare_capacity"]
+    assert supplier_signals_from_note("We face a cash shortage and need earlier payment.")["cash_short"]
+    assert not supplier_signals_from_note("Spare capacity was discussed, but we have no spare capacity.")[
+        "spare_capacity"
+    ]
+
+
+def test_quality_first_prior_reduces_unproven_supplier_quality_resistance():
+    case, ref, sup = sample()
+    case["buyer"]["category_goal"] = "quality_first"
+    quality = Beliefs(case, ref, sup, seed=9)
+    routine_case = {**case, "buyer": {**case["buyer"], "category_goal": "routine"}}
+    routine = Beliefs(routine_case, ref, sup, seed=9)
+    assert quality.quality_cost_max < routine.quality_cost_max
+    assert max(p.b_quality for p in quality.particles) < max(p.b_quality for p in routine.particles)
+    assert quality.summary()["quality_prior_max_eur_per_1000ppm"] > 0
+
+
+def test_quality_first_risk_coefficient_replays_p11_audit_ordering():
+    """Offline reproduction of the recorded v2.2 P11 decision; no remote Arena call.
+
+    Same ppm (300), chargeback (0), and opening terms in both candidate rows.
+    The old risk coefficient of 0.25 preferred an unnecessarily expensive
+    EUR 48.41 offer; v2.3 prefers the lower expected-cost EUR 47.64 proposal.
+    This only verifies the ranking, NOT supplier acceptance of EUR 47.64.
+    """
+    case, _, _ = sample()
+    case["buyer"]["category_goal"] = "quality_first"
+    agent = AnalyticalAgent(router=Router(enabled=False))
+    lower = agent.objective(case, 816023.3833769511, 28040.13183758494)
+    higher = agent.objective(case, 816553.0164572278, 20423.696360588096)
+    assert agent.risk_for_case(case) == pytest.approx(0.05)
+    assert lower < higher
+    other_case = {**case, "buyer": {**case["buyer"], "category_goal": "routine"}}
+    assert agent.risk_for_case(other_case) == pytest.approx(0.25)
+    # Overrides remain available for matched offline sensitivity experiments.
+    conservative = AnalyticalAgent(router=Router(enabled=False), risk_aversion=0.25)
+    assert conservative.objective(case, 816023.3833769511, 28040.13183758494) > (
+        conservative.objective(case, 816553.0164572278, 20423.696360588096)
+    )
+
+
+def test_quality_cost_requires_explicit_cost_evidence():
+    sources = {
+        "quote": "We offer a quality commitment of 6400 ppm.",
+        "note": "A tighter quality target requires additional investment.",
+    }
+    analysis = {
+        "interpretations": [],
+        "ambiguities": [],
+        "signals": [
+            {"kind": "quality_cost", "source_id": "quote", "quote": sources["quote"]},
+            {"kind": "quality_cost", "source_id": "note", "quote": sources["note"]},
+        ],
+    }
+    result = Router.validate(analysis, sources, ["ppm_commitment"])
+    assert [x["source_id"] for x in result["signals"]] == ["note"]
+
+
+def test_price_pressure_reward_only_for_cheaper_unit_price():
+    case, ref, _ = sample()
+    quote = ref["unit_price"]
+    base = AnalyticalAgent(router=Router(enabled=False), price_pressure=0.0)
+    moderate = AnalyticalAgent(router=Router(enabled=False), price_pressure=0.1)
+    assert base.price_pressure_bonus(case, {**ref, "unit_price": quote - 1}, quote) == 0
+    cheaper = {**ref, "unit_price": quote - 1}
+    full = closing_terms(case, cheaper)
+    years = min(full["contract_months"] / 12 if full["contract_months"] else 1, case["buyer"]["horizon_years"])
+    assert moderate.price_pressure_bonus(case, cheaper, quote) == pytest.approx(0.1 * full["volume_per_year"] * years)
+    assert moderate.price_pressure_bonus(case, {**ref, "unit_price": quote + 1}, quote) == 0
+    assert moderate.price_pressure_bonus(case, {**ref, "unit_price": quote}, quote) == 0
+
+
+def test_price_pressure_bounds_reject_invalid_settings():
+    for v in (-0.01, 0.41, math.nan, math.inf):
+        with pytest.raises(ValueError, match="price_pressure"):
+            AnalyticalAgent(router=Router(enabled=False), price_pressure=v)
+
+
+def test_index_protection_requires_explicit_supplier_requirement():
+    from hollerau.analytical.router import supports_index_protection
+
+    positive = [
+        "We require a raw-material indexation clause for a long-term contract.",
+        "For a 36-month commitment we need a price-adjustment clause.",
+        "We cannot commit to three years without an index clause.",
+        "An indexation clause is required for any extended term.",
+    ]
+    negative = [
+        "We do not require an indexation clause.",
+        "No price-adjustment clause is required.",
+        "Indexation is not required.",
+        "We mentioned the indexation clause but did not request it.",
+        "The price-adjustment clause is excluded.",
+    ]
+    assert all(supports_index_protection(x) for x in positive)
+    assert not any(supports_index_protection(x) for x in negative)
+    for batch, expected in ((positive, len(positive)), (negative, 0)):
+        # The analyst's documented maximum is eight signals per reply.
+        sources = {str(i): text for i, text in enumerate(batch)}
+        analysis = {
+            "interpretations": [],
+            "ambiguities": [],
+            "signals": [{"kind": "index_protection", "source_id": k, "quote": v} for k, v in sources.items()],
+        }
+        out = Router.validate(analysis, sources, ["unit_price", "index_clause", "contract_months"])
+        assert len(out["signals"]) == expected
+        assert Router.validate(analysis, sources, ["unit_price"])["signals"] == []
+
+
+def test_index_supplier_value_activates_only_after_quoted_evidence():
+    case, ref, sup = sample()
+    case["negotiable"] = ["unit_price", "index_clause", "contract_months"]
+    case["fixed_terms"].pop("index_clause", None)
+    case["fixed_terms"].pop("contract_months", None)
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["term_options"] = {"index_clause": [None, clause], "contract_months": [12, 36]}
+    ref = {**ref, "index_clause": None, "contract_months": 12}
+    sup = {**sup, "standard": ref}
+    b = Beliefs(case, ref, sup, seed=42)
+    p = b.particles[0]
+    base = {**ref, "unit_price": 100}
+    index_12 = {**base, "index_clause": clause}
+    index_36 = {**index_12, "contract_months": 36}
+    no_index_36 = {**base, "contract_months": 36}
+    assert b.value(index_12, p) == pytest.approx(b.value(base, p))
+    assert b.apply_evidence(
+        [{"kind": "index_protection", "quote": "We require an indexation clause for long-term supply."}]
+    ) == ["index_protection"]
+    assert b.value(index_12, p) > b.value(base, p)
+    assert b.value(index_36, p) - b.value(no_index_36, p) > b.value(index_12, p) - b.value(base, p)
+    assert b.probabilities(index_36, p, 100)["accept"] > b.probabilities(no_index_36, p, 100)["accept"]
+    # Pressure now uses total supplier package value: compensating index
+    # protection can reduce walk risk, but must never increase it.
+    assert b.probabilities(index_36, p, 100)["walk"] <= b.probabilities(no_index_36, p, 100)["walk"]
+    # Do not double-credit a clause already contained in the supplier's opening terms.
+    indexed_ref = {**ref, "index_clause": clause}
+    indexed_sup = {**sup, "standard": indexed_ref}
+    existing = Beliefs(case, indexed_ref, indexed_sup, seed=42)
+    existing.apply_evidence(
+        [{"kind": "index_protection", "quote": "We require an indexation clause for long-term supply."}]
+    )
+    assert existing.value(indexed_ref, existing.particles[0]) > (
+        existing.value({**indexed_ref, "index_clause": None}, existing.particles[0])
+    )
+
+
+def test_index_package_offers_include_long_term_tradeoffs_offline(tmp_path):
+    case, ref, _ = sample()
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["negotiable"] = ["unit_price", "index_clause", "contract_months"]
+    case["term_options"] = {"index_clause": [None, clause], "contract_months": [12, 36]}
+    case["fixed_terms"].pop("index_clause", None)
+    case["fixed_terms"].pop("contract_months", None)
+    opening = {**ref, "index_clause": None, "contract_months": 12}
+    event = {
+        "from": "supplier",
+        "status": "open",
+        "body": "For a 36-month agreement we require indexation.",
+        "term_sheets": [{"term_sheet_id": "opening", "terms": opening}],
+    }
+    agent = AnalyticalAgent(store=Store(tmp_path / "index.sqlite"), router=Router(enabled=False))
+    agent.start(case, {"sup:1": [event]})
+    th = agent.threads["sup:1"]
+    th.beliefs.apply_evidence(
+        [{"kind": "index_protection", "quote": "For a 36-month agreement we require indexation."}]
+    )
+    candidates = agent.candidates(case, th, opening)
+    assert any(t.get("index_clause") == clause and t["contract_months"] == 36 for t in candidates)
+    assert any(t.get("index_clause") is None and t["contract_months"] == 36 for t in candidates)
+
+
+def test_index_cost_still_uses_official_buyer_function():
+    from arena_kit.cost import cost_breakdown
+
+    case, ref, _ = sample()
+    clause = {"series": "PPI", "material_share": 0.4, "deadband_pct": 0, "base_month": "2026-08"}
+    case["buyer"]["index_paths"] = {"PPI": 0.08}
+    case["buyer"]["index_risk_pct"] = 3
+    indexed = {**ref, "index_clause": clause}
+    without = cost_breakdown(case, {**ref, "index_clause": None})
+    with_index = cost_breakdown(case, indexed)
+    assert with_index["index_clause"] > 0
+    assert with_index["index_risk"] > 0
+    assert with_index["price"] == without["price"]

@@ -76,7 +76,11 @@ def main():
         )
         raw = json.dumps(out, ensure_ascii=False)
         raw = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[image pixels omitted]", raw)
-        raw = re.sub(r"(?<![A-Za-z0-9])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{20,})", "[REDACTED_CREDENTIAL]", raw)
+        raw = re.sub(
+            r"(?<![A-Za-z0-9])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{20,})",
+            "[REDACTED_CREDENTIAL]",
+            raw,
+        )
         for secret in secrets:
             raw = raw.replace(secret, "[REDACTED_CREDENTIAL]")
         rows.append(raw)

@@ -52,6 +52,13 @@ class Beliefs:
         payment_max = p * (0.30 if self.signals["cash_short"] else 0.18) * 30 / 360
         term_min, term_max = (-p * 0.005, p * 0.040) if self.signals["wants_partnership"] else (-p * 0.020, p * 0.025)
         capacity_min, capacity_max = (1.0, 6.0) if self.signals["spare_capacity"] else (3.0, 15.0)
+        # Quality-first cases already price defects in the official buyer TCO.
+        # Use a more cautiously optimistic supplier quality-cost prior, not an
+        # extra buyer-side quality penalty. This remains an uncalibrated sensitivity.
+        self.quality_cost_max = p * (0.012 if case["buyer"].get("category_goal") == "quality_first" else 0.020)
+        # Uncalibrated supplier-side benefit per unit from index protection.
+        # It has NO effect until a quote-backed index_protection signal is applied.
+        self.index_value_max = p * 0.05
         self.particles = [
             Particle(
                 # Public should-costs have material estimation error, and a quote-based
@@ -62,9 +69,9 @@ class Beliefs:
                 rng.uniform(0, p * 0.02),
                 supplier["full_cost"] * rng.uniform(0.90, 1.10),
                 rng.uniform(capacity_min, capacity_max),
-                rng.uniform(0, p * 0.02),
+                rng.uniform(0, self.quality_cost_max),
                 1 / count,
-                extra_rng.uniform(0, p * 0.04),
+                extra_rng.uniform(0, self.index_value_max),
                 extra_rng.uniform(0, p * (0.04 if self.signals["spare_capacity"] else 0.01)),
             )
             for _ in range(count)
@@ -105,13 +112,23 @@ class Beliefs:
         # Payment is represented by b_pay only, not counted again in supplier_value.
         sup = {**self.supplier, "interest_rate": 0.0, "usual_rate": 0.0}
         cash = supplier_value(c, t, sup)
+        # Activate one continuous, relative index value only with sourced evidence.
+        # Do not add the legacy binary bonus on top of the same preference.
+        index_supported = self.signal_counts.get("index_protection") or any(
+            c.get("requires", {}).get("index_clause") == "present" for c in self.conditions
+        )
+        index_delta = (
+            particle.b_index * (self.index_protection(t) - self.index_protection(ref))
+            if index_supported and "index_clause" in c["negotiable"]
+            else 0.0
+        )
         return (
             cash
+            + index_delta
             + particle.b_pay * (ref["payment_days"] - t["payment_days"]) / 30
             + particle.b_term * (t["contract_months"] - ref["contract_months"]) / 12
             + particle.b_flex * (t["lead_time_days"] - ref["lead_time_days"]) / 7
             - particle.b_quality * max(0, (ref.get("ppm_commitment") or 0) - (t.get("ppm_commitment") or 0)) / 1000
-            + particle.b_index * (self.index_protection(t) - self.index_protection(ref))
             + particle.b_volume
             * (t["volume_per_year"] / max(1, ref["volume_per_year"]) - 1)
             * min(2, t["contract_months"] / 12)
@@ -130,6 +147,17 @@ class Beliefs:
         t = closing_terms(self.case, terms, self.supplier["standard"])
         if any(violated(t, c) for c in self.conditions):
             accept *= 0.08  # a sourced negotiating condition is strong, but not a physical law
+        # An explicit supplier requirement for index protection is a *soft*
+        # acceptance signal, not a new buyer-side must-have. In particular,
+        # offering a longer contract without any index clause remains possible
+        # but is predicted less likely to succeed (the factor is uncalibrated).
+        elif (
+            self.signal_counts.get("index_protection")
+            and "index_clause" in self.case["negotiable"]
+            and not t.get("index_clause")
+            and t["contract_months"] >= 24
+        ):
+            accept *= 0.35
         if self.capacity_reference:
             volume = closing_terms(self.case, terms, self.supplier["standard"])["volume_per_year"]
             uplift = max(0, volume / self.capacity_reference - 1)
@@ -276,6 +304,7 @@ class Beliefs:
             "capacity_limit": "b_capacity",
             "quality_cost": "b_quality",
             "price_resistance": "r",
+            "index_protection": "b_index",
         }
         for signal in signals:
             kind = signal.get("kind")
@@ -340,6 +369,9 @@ class Beliefs:
             "memory_source": self.memory_source,
             "supplier_signals": dict(self.signals),
             "signals_applied": dict(self.signal_counts),
+            "quality_prior_max_eur_per_1000ppm": round(self.quality_cost_max, 6),
+            "index_prior_max_eur_per_unit": round(self.index_value_max, 6),
+            "index_protection_active": bool(self.signal_counts.get("index_protection")),
             "tau": self.tau,
             "conditions": self.conditions,
             "concession_rate": self.concession_rate,

@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -57,6 +58,7 @@ def main(argv=None):
     ap.add_argument("--run-id", required=True, help="reuse the same ID on restart; reserved attempts count")
     ap.add_argument("--db", default="hollerau/logs/analytical.sqlite")
     ap.add_argument("--offline-llm", action="store_true", help="explicit template-only test mode")
+    ap.add_argument("--price-pressure", type=float, default=0.0, help="experimental offer-ranking reward, 0..0.4")
     args = ap.parse_args(argv)
     if (
         not 1 <= args.max_sessions <= 5
@@ -64,6 +66,8 @@ def main(argv=None):
         or len(set(args.cases)) != len(args.cases)
     ):
         ap.error("choose distinct cases, at most five and within --max-sessions")
+    if not math.isfinite(args.price_pressure) or not 0 <= args.price_pressure <= 0.4:
+        ap.error("--price-pressure must be between 0 and 0.4; no Arena session started")
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", args.run_id):
         ap.error("run-id must contain only letters, digits, underscore or hyphen")
     openai_ready = os.environ.get("LLM_PROVIDER") == "openai" and bool(os.environ.get("LLM_API_KEY"))
@@ -76,7 +80,13 @@ def main(argv=None):
     store.log(
         args.run_id,
         "experiment",
-        {"policy": POLICY_VERSION, "code_sha256": code_hash, "cases": args.cases, "max_sessions": args.max_sessions},
+        {
+            "policy": POLICY_VERSION,
+            "code_sha256": code_hash,
+            "cases": args.cases,
+            "max_sessions": args.max_sessions,
+            "price_pressure": args.price_pressure,
+        },
     )
     router = Router(enabled=not args.offline_llm)
     client = ArenaClient(retries=0)  # never retry an ambiguous session start automatically
@@ -87,7 +97,7 @@ def main(argv=None):
     for case_id in args.cases:
         # Persist BEFORE the HTTP request; an unknown outcome still consumes this allowance.
         store.reserve(args.run_id, case_id, args.max_sessions)
-        agent = AnalyticalAgent(package, store, router, args.run_id)
+        agent = AnalyticalAgent(package, store, router, args.run_id, price_pressure=args.price_pressure)
         table = LoggedTable(client, store, args.run_id, agent)
         try:
             print("START", case_id, flush=True)

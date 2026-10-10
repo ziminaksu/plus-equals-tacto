@@ -86,6 +86,7 @@ def test_coupled_index_and_duration_are_valued_together():
     p = b.particles[0]
     p.b_term = 0
     p.b_index = 10
+    b.apply_evidence([{"kind": "index_protection", "quote": "We require index protection."}])
     clause = case["term_options"]["index_clause"][1]
     short = {**ref, "contract_months": 12}
     long = {**ref, "contract_months": 36}

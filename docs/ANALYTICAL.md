@@ -1,4 +1,4 @@
-# Analytical buyer agent — bayes-v4-private
+# Analytical buyer agent — bayes-v4-integrated
 
 Python selects complete deals; Qwen extracts source-supported preferences before selection and supplies bounded prose. A selective independent reviewer can propose corrections, which Python validates and evaluates again. The original team agents remain available for comparison. This revision is local and has not been published or tested on Arena.
 
@@ -136,3 +136,9 @@ The remote branch gained supplier-informed priors, compliant-supplier prioritisa
 Dossier flags influence initial, uncalibrated ranges: cash stress widens payment value, partnership cues favour longer terms, spare capacity reduces capacity resistance, and approval steps increase pressure/repetition sensitivity. Scenario uncertainty and cautious posterior updates remain. The online response estimates shrink toward these supplier-conditioned priors. Compliant, lower-cost suppliers receive priority among threads that can still negotiate; a terminal thread does not close other actionable negotiations.
 
 For the optional OpenAI route, configure `LLM_PROVIDER=openai`, `LLM_API_KEY`, and optionally `LLM_BASE_URL`, `ANALYTICAL_SMALL_MODEL` and `ANALYTICAL_LARGE_MODEL`. Defaults are `gpt-4.1-mini` for both stages; when the IDs match no duplicate escalation call is made. Qwen-specific request fields are omitted on this route. Mock tests verify this integration without spending API credits. To select the originally requested Hugging Face Qwens explicitly, set `LLM_PROVIDER=hf` and `HF_TOKEN`.
+
+## Publication integration
+
+Before the selected Arena retest, the frozen private v4 policy was merged with the team’s supplier-evidence, quality-prior, index-protection and optional price-pressure changes. Index utility uses one continuous, source-backed term to avoid double counting; conditional acceptance evidence takes precedence over the generic index penalty. Quality-first risk weighting and the optional bounded price-pressure switch are preserved. Price pressure defaults to zero. The historical offline scores above describe the pre-merge frozen v4 source, not this combined implementation.
+
+Merged validation: 97 local tests passed, one optional hosted test skipped; analytical lint and whitespace checks passed. The legacy equal-walk-risk assertion was updated because the v4 pressure model explicitly credits compensating non-price package value. Both versions still require index protection to have source evidence.

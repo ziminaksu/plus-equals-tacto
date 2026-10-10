@@ -21,17 +21,29 @@ from .preferences import extract_explicit_conditions, violated
 from .router import Router
 from .storage import Store
 
-POLICY_VERSION = "bayes-v4-private"
+POLICY_VERSION = "bayes-v4-integrated"
 
 
 class AnalyticalAgent:
-    def __init__(self, package=None, store=None, router=None, run_id="local", risk_aversion=0.25, lookahead=True):
+    def __init__(
+        self,
+        package=None,
+        store=None,
+        router=None,
+        run_id="local",
+        risk_aversion=None,
+        lookahead=True,
+        price_pressure=0.0,
+    ):
         self.package = package
         self.store = store or Store()
         self.router = router or Router(enabled=False)
         self.run_id = run_id
         self.risk_aversion = risk_aversion
         self.lookahead = lookahead
+        if not math.isfinite(price_pressure) or not 0 <= price_pressure <= 0.4:
+            raise ValueError("price_pressure must be between 0 and 0.4")
+        self.price_pressure = price_pressure
         self.threads = {}
         self.case_id = None
         self.session_id = None
@@ -40,10 +52,46 @@ class AnalyticalAgent:
     def log(self, kind, payload, sid=None):
         self.store.log(self.run_id, kind, payload, self.case_id, sid, self.session_id)
 
+    def risk_for_case(self, case):
+        """Conservative default except for quality-first cases where tail risk can overprice quality.
+
+        The P11 audit shows the 0.25 standard-deviation surcharge ranked EUR 48.41
+        above EUR 47.64 despite the latter having lower expected cost. This
+        lower coefficient is a modelling choice, not an observed acceptance rate.
+        """
+        if self.risk_aversion is not None:
+            return self.risk_aversion
+        return 0.05 if case["buyer"].get("category_goal") == "quality_first" else 0.25
+
+    def objective(self, case, expected_cost, uncertainty):
+        return expected_cost + self.risk_for_case(case) * uncertainty
+
+    def price_pressure_bonus(self, case, terms, quote):
+        """Bounded ranking-only reward for seeking a lower price, not reported as savings.
+
+        The true Arena cost is still evaluated separately by total_cost().
+        This is an experimental negotiation preference, not an official score term.
+        """
+        if not self.price_pressure or terms["unit_price"] >= quote:
+            return 0.0
+        full = closing_terms(case, terms)
+        months = full["contract_months"]
+        years = min(months / 12 if months else 1, case["buyer"]["horizon_years"])
+        committed = full["volume_per_year"] * years
+        return self.price_pressure * (quote - terms["unit_price"]) * committed
+
     def start(self, case, threads):
         self.parked = set()
         self.case_id = case["case_id"]
-        self.log("case", {"case": case, "policy_version": POLICY_VERSION, "risk_aversion": self.risk_aversion})
+        self.log(
+            "case",
+            {
+                "case": case,
+                "policy_version": POLICY_VERSION,
+                "risk_aversion": self.risk_for_case(case),
+                "price_pressure": self.price_pressure,
+            },
+        )
         for sid, events in threads.items():
             _, terms = standing(events)
             std = _opening_standard(events)
@@ -191,6 +239,23 @@ class AnalyticalAgent:
             for value in levers.field_options(case, field, th.std):
                 packages.append({**packages[0], field: value})
         packages.extend(levers.packages(case, th.std))
+        # Even when generic cross-product search is capped, keep explicit
+        # index-protection / commitment combinations for supplier trade-offs.
+        # This does not force acceptance: official buyer TCO still prices
+        # indexed packages, and ranking must justify any extra cost.
+        if th.beliefs.signal_counts.get("index_protection") and "index_clause" in case["negotiable"]:
+            clauses = [c for c in levers.field_options(case, "index_clause", th.std) if c]
+            months = (
+                levers.field_options(case, "contract_months", th.std)
+                if "contract_months" in case["negotiable"]
+                else [packages[0].get("contract_months")]
+            )
+            for clause in clauses:
+                for duration in months:
+                    combined = {**packages[0], "index_clause": clause}
+                    if "contract_months" in case["negotiable"]:
+                        combined["contract_months"] = duration
+                    packages.append(combined)
         quote = current.get("unit_price") or th.reference["unit_price"]
         center = SimpleNamespace(
             **{
@@ -366,13 +431,14 @@ class AnalyticalAgent:
                 + pr["walk"] * fallback
                 for pr, cost, a in zip(probs, costs, anchor, strict=True)
             ]
-            objective, sd = paired_objective(values, anchor, weights, self.risk_aversion)
+            objective, sd = paired_objective(values, anchor, weights, self.risk_for_case(case))
             rows.append(
                 {
                     "terms": terms,
                     "expected_cost": self.weighted(th, values),
                     "uncertainty": sd,
-                    "objective": objective,
+                    "objective": objective - self.price_pressure_bonus(case, terms, quote),
+                    "price_pressure_bonus": self.price_pressure_bonus(case, terms, quote),
                     "deal_cost": self.weighted(th, costs),
                     "probabilities": probabilities,
                     "scenario_costs": values,
@@ -411,10 +477,10 @@ class AnalyticalAgent:
                     pr["accept"] * cost + pr["counter"] * (future_cost + fallback * 0.0003) + pr["walk"] * fallback
                     for pr, cost, future_cost in zip(row["_probs"], row["_costs"], future, strict=True)
                 ]
-                objective, sd = paired_objective(values, anchor, weights, self.risk_aversion)
+                objective, sd = paired_objective(values, anchor, weights, self.risk_for_case(case))
                 row.update(
                     expected_cost=self.weighted(th, values),
-                    objective=objective,
+                    objective=objective - row["price_pressure_bonus"],
                     uncertainty=sd,
                     scenario_costs=values,
                     planning_depth=min(4, max(1, th.planning_moves - 1)) + 1,
@@ -545,11 +611,11 @@ class AnalyticalAgent:
 
         sid = min(actionable, key=supplier_priority)
         th, events = self.threads[sid], threads[sid]
-        sheets = latest(events).get("term_sheets", [])
-        # Consider every offered package when choosing the reference for the next negotiation move.
-        current = min(
-            (x["terms"] for x in sheets), key=lambda t: total_cost(case, t, th.std, th.sup), default=th.reference
-        )
+        # Only the standing offer is executable. Indicative alternatives can
+        # inform negotiation, but must not silently become the pricing baseline.
+        _, current = standing(events)
+        if not current:
+            current = th.reference
         analysis, sources = self.interpret(case, sid, events, deadline)
         # Interpretation changes belief weights BEFORE cost scenarios and offers are evaluated.
         available = self.available(case, threads, fallback)
@@ -608,7 +674,7 @@ class AnalyticalAgent:
             [fallback] * len(th.beliefs.particles),
             th.planning_anchor,
             [p.weight for p in th.beliefs.particles],
-            self.risk_aversion,
+            self.risk_for_case(case),
         )
         if chosen["objective"] >= walk_objective and (not best or best[0] >= walk_objective):
             if len(actionable) > 1 and deadline - time.monotonic() > 3:
