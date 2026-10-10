@@ -23,11 +23,12 @@ from .feedback import event_key, learn_reply
 from .offers import equivalent_alternative
 from .planning import counter_costs, paired_objective
 from .preferences import extract_explicit_conditions, violated
+from .retrieval import retrieve
 from .router import Router
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v81-arena-objective"
+POLICY_VERSION = "astra-v82-evidence-access"
 DECISION_BUDGET_S = 35
 
 
@@ -103,6 +104,7 @@ class AnalyticalAgent:
     def start(self, case, threads):
         self.parked = set()
         self.case_id = case["case_id"]
+        self.active_case = case
         self.log(
             "case",
             {
@@ -178,6 +180,10 @@ class AnalyticalAgent:
                 feedback_seen=set(),
                 response_counts={},
                 continuation_review=None,
+                retrieval_key=None,
+                retrieval_sources={},
+                retrieved_claims=[],
+                retrieval_inventory={},
             )
             th = self.threads[sid]
             history = self.store.behavior_history(sid, case, self.session_id)
@@ -450,7 +456,13 @@ class AnalyticalAgent:
 
     def sources(self, sid, events):
         th = self.threads[sid]
-        sources = {}
+        reply_body = latest(events).get("body", "")
+        if th.retrieval_key != reply_body:
+            th.retrieval_sources, th.retrieved_claims, th.retrieval_inventory = retrieve(
+                self.package, self.active_case, sid, reply_body)
+            th.retrieval_key = reply_body
+            self.log("evidence_retrieval", th.retrieval_inventory, sid)
+        sources = dict(th.retrieval_sources)
         for index, event in enumerate(events):
             if event.get("from") != "buyer" and (index == 0 or index >= len(events) - 4):
                 ref = event.get("message_id") or str(index)
@@ -495,6 +507,7 @@ class AnalyticalAgent:
                     "objective_scope": objective_scope(case),
                     "supplier_status": latest(events).get("status"),
                     "observed_response_counts": th.response_counts,
+                    "evidence_inventory": th.retrieval_inventory,
                     "sustainability_packages": th.sustainability_candidates,
                     "past_exchanges": th.episodes,
                 },

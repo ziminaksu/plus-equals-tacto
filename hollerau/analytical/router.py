@@ -129,6 +129,9 @@ Read objective_scope: if relationship_cost_active is false, do not optimise supp
 should-cost as a price floor. Read supplier_status and observed_response_counts. The Arena objective is positive total-cost improvement over opening; no deal and accepting the opening
 offer both score zero. An expensive cash fallback must not suppress an initial credible counter. At a final
 warning, consider the improvement already secured; accepting can be the best strategy.
+Read evidence_inventory and the retrieved forecast/cost-driver sources before claiming information is
+missing. The forecast's dates need not equal the contract dates; forecasts are planning evidence, not an
+extra binding commitment. Increasing indices can support the supplier; never assume they support us.
 Respond to the supplier's concrete questions before suggesting generic cost/payment questions.
 Do not assign costs, probabilities or scores. Empty arrays are appropriate when evidence is absent."""
 
@@ -184,7 +187,11 @@ Record a concrete stop_condition. For a question, information_needed must identi
 change your chosen package or closing decision; curiosity alone is insufficient. An unchanged standing
 package is NOT acceptance of a different proposal, regardless of an 'agreed' label.
 
-NEGOTIATION: Answer the supplier's actual outstanding question first. Use fixed commitments already
+NEGOTIATION: Answer the supplier's actual outstanding question first. Consult evidence_inventory and
+retrieved sources. If a forecast exists, do not claim there is no forecast; select its verified evidence_id
+on the reply to send the actual supporting record. Its dates may differ from contract dates, so distinguish
+planning evidence from binding commitments. Read all cost-driver movements, including rises supporting
+the supplier; do not cherry-pick only favourable facts. Lookup failure means unavailable, not nonexistent. Use fixed commitments already
 in the case (e.g. annual volume) and conditional exchanges. Do not request confidential cost breakdowns
 again after refusal, or hypothetical pricing matrices after the supplier asks for concrete terms.
 After an unchanged reply, acknowledge the boundary and choose a materially different supported exchange
@@ -194,7 +201,7 @@ relationship cases compare the calibrated cost range/downside, not only unit pri
 OUTPUT: Counter uses 1-3 package_ids belonging to its action and a target_package_id from those selected.
 Other actions use package_ids=[]. Confirmation sets target_package_id to its package_id; it only establishes offer status. Optional question_id appends
 a supplied question to a counter; normally leave it empty when reply_text already asks the right question.
-Select up to 3 verified evidence_ids on counters. Their exact claims and complete priced term sheets are
+Select up to 3 verified evidence_ids on any supplier-facing message; use none on accept/walk_away. Their exact claims and complete priced term sheets are
 appended by Python. Reply_text is your actual respectful message, not an internal rationale or template
 label. It can answer questions and propose conditional exchanges, but cannot assert unsupported facts,
 make extra commitments, disclose buyer budget/urgency/weakness, or invent supplier admissions. All numeric

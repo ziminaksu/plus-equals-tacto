@@ -1,10 +1,12 @@
-# Analytical buyer agent — astra-v81-arena-objective
+# Analytical buyer agent — astra-v82-evidence-access
 
 Astra proposes complete deals and a separate Astra call selects **every final action**. Python owns arithmetic, evidence lookup, recording and validation; it cannot replace a valid Astra choice with its preferred strategy. This includes confirmation, acceptance, supplier `agreed`/`final_offer` responses, the last move and wave-cap closure. Legacy Qwen routing remains explicitly selectable. Historical evaluations below retain their original policy labels.
 
 V8 repairs outcome classification and terminal observation, reconstructs behavioural learning from raw same-context hosted exchanges, gives Astra an authored reply channel, and supplies action gain/loss comparisons before selection. See [the v8 design and limits](evaluation/v8-decision-feedback.md).
 
 V7 added independent supplier economics, original cost evidence in both model calls, completed-practice cost calibration and higher-price sustainability packages. See [the current assumptions and evaluation scope](evaluation/v7-supplier-economics.md). The former quote-implied production-cost mixture described in the historical sections below no longer drives the Astra path. Current strategy evaluation is hosted P02/P18 only; local tests are stopped.
+
+V8.2 adds bounded case-specific forecast and neutral cost-driver retrieval before both Astra calls. Requests for forecast or volume evidence include monthly rows; a retrieval inventory distinguishes missing records from failures. Verified evidence can accompany any supplier-facing message. The latest retrieval change is not yet Arena-evaluated; [v8.1 results and diagnosis](evaluation/v81-arena-results.md) record both tested pairs.
 
 ## Run and inspect
 

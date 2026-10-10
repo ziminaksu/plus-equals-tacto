@@ -146,6 +146,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             "stagnant_replies": th.stagnation,
             "previous_continuation_review": th.continuation_review,
             "observed_response_counts": th.response_counts,
+            "evidence_inventory": th.retrieval_inventory,
             "previous_practice_outcomes": th.economics.feedback[-6:],
             "opening_comparison": {"terms": complete_offer(case, th.reference),
                                    **cost_card(agent, case, th, th.reference),
@@ -153,7 +154,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         }
         board["suppliers"][sid] = supplier
         facts = {**(agent.package.facts if agent.package else {}), **case.get("facts", {})}
-        for i, claim in enumerate(th.dossier.claims):
+        for i, claim in enumerate(th.dossier.claims + th.retrieved_claims):
             if all(r in facts for r in claim.refs):
                 board["evidence"][f"{sid}:e{i}"] = {"supplier_id": sid, "text": claim.sentence,
                                                    "refs": claim.refs,
@@ -289,8 +290,8 @@ def validate_selection(board, selection):
         raise ValueError("invalid evidence selection")
     if any(e not in board["evidence"] or board["evidence"][e]["supplier_id"] != sid for e in evidence):
         raise ValueError("unverified evidence")
-    if evidence and action["kind"] != "counter":
-        raise ValueError("evidence only allowed on counter")
+    if evidence and action["kind"] in ("accept", "walk_away"):
+        raise ValueError("evidence requires a supplier-facing message")
     if selection["tone"] not in ("warm", "cooperative", "firm"):
         raise ValueError("invalid tone")
     if not isinstance(selection["rationale"], str) or not selection["rationale"].strip():
@@ -371,6 +372,11 @@ def execute(agent, case, threads, board, selection):
             th.last_terms, th.last_price = offers[0], offers[0]["unit_price"]
             th.pending = {"terms": offers[0], "offers": offers, "quote": quote, "repeats": th.repeats,
                           "event_count": len(events), "probabilities": probabilities}
+        if kind != "counter" and selection["evidence_ids"]:
+            claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
+            body += "\n\n" + "\n\n".join(claim["text"] for claim in claims)
+            for claim in claims:
+                th.used.update(claim["refs"])
         if any(not valid_offer(agent, case, th, t) for t in offers):
             raise ValueError("final offer violates constraints")
         message = {"subject": "Re: " + case["title"], "body": body,
