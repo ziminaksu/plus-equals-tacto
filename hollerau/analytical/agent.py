@@ -34,6 +34,7 @@ class AnalyticalAgent:
         risk_aversion=None,
         lookahead=True,
         price_pressure=0.0,
+        opening_probe=False,
     ):
         self.package = package
         self.store = store or Store()
@@ -44,6 +45,9 @@ class AnalyticalAgent:
         if not math.isfinite(price_pressure) or not 0 <= price_pressure <= 0.4:
             raise ValueError("price_pressure must be between 0 and 0.4")
         self.price_pressure = price_pressure
+        # Experimental first-counteroffer safeguard. Defaults off until a separate
+        # held-out evaluation shows it improves outcomes in the v4 planner.
+        self.opening_probe = bool(opening_probe)
         self.threads = {}
         self.case_id = None
         self.session_id = None
@@ -90,6 +94,7 @@ class AnalyticalAgent:
                 "policy_version": POLICY_VERSION,
                 "risk_aversion": self.risk_for_case(case),
                 "price_pressure": self.price_pressure,
+                "opening_probe": self.opening_probe,
             },
         )
         for sid, events in threads.items():
@@ -498,6 +503,69 @@ class AnalyticalAgent:
             else [continuation] * len(th.beliefs.particles)
         )
 
+    def initial_counteroffer(self, case, threads, sid, th, best, ranked):
+        """Select a bounded first counter when taking the opening scores zero.
+
+        Only the untouched executable first quote of the same supplier qualifies.
+        No hidden supplier data or outcome score enters this decision. Failing
+        safely returns None, preserving the existing v4 planner's acceptance.
+        """
+        if (
+            not self.opening_probe
+            or not best
+            or best[1] != sid
+            or th.last_terms is not None
+            or th.planning_moves < 3
+            or any(m.get("from") == "buyer" for events in threads.values() for m in events)
+        ):
+            return None
+        opening = closing_terms(case, best[3], th.std)
+        if opening != th.reference or not opening.get("unit_price"):
+            return None
+        opening_price = opening["unit_price"]
+        # Model uncertainty cannot make the *official* buyer TCO saving
+        # disappear. Use the same scoring cost function, excluding the
+        # speculative supplier relationship estimate for this opportunity gate.
+        open_cost = total_cost(case, best[3], th.std)
+        minimum_saving = max(0.01, open_cost * 0.002)
+        choices = []
+        for row in ranked:
+            terms = row["terms"]
+            probs = row["probabilities"]
+            proposed = closing_terms(case, terms, th.std)
+            if (
+                not (0.94 * opening_price <= proposed["unit_price"] <= 0.995 * opening_price)
+                or probs["accept"] < 0.15
+                or probs["walk"] > 0.05
+                or not self.valid(case, th, terms)
+                or any(violated(proposed, c) for c in th.beliefs.conditions)
+            ):
+                continue
+            saving = open_cost - total_cost(case, terms, th.std)
+            if saving >= minimum_saving:
+                # Arena scores an untouched-opening acceptance at zero.
+                # A positive-probability, cost-improving counter is therefore
+                # worth considering, but its deal remains uncertain.
+                choices.append((saving * probs["accept"], saving, row))
+        if not choices:
+            self.log(
+                "opening_probe",
+                {"selected": False, "reason": "no bounded, positive-saving first counter",
+                 "opening_cost": open_cost, "candidate_count": len(ranked)},
+                sid,
+            )
+            return None
+        _, saving, chosen = max(choices, key=lambda item: (item[0], item[1]))
+        self.log(
+            "opening_probe",
+            {"selected": True, "opening_cost": open_cost, "estimated_saving": saving,
+             "accept_probability": chosen["probabilities"]["accept"],
+             "walk_probability": chosen["probabilities"]["walk"],
+             "terms": chosen["terms"]},
+            sid,
+        )
+        return chosen
+
     def review_plan(self, case, sid, th, sources, ranked, best, current, fallback, deadline):
         if (
             not ranked
@@ -699,7 +767,10 @@ class AnalyticalAgent:
                 self.parked.add(sid)
                 self.log("park", {"reason": "check remaining suppliers before accepting"}, sid)
                 return self._decide(case, threads, started, deadline)
-            return self.accept(best, "available deal dominates estimated continuation")
+            probe = self.initial_counteroffer(case, threads, sid, th, best, ranked)
+            if probe is None:
+                return self.accept(best, "available deal dominates estimated continuation")
+            chosen = probe
         claims = [c for c in th.dossier.claims if not set(c.refs) & th.used][:2]
         facts = {**(self.package.facts if self.package else {}), **case.get("facts", {})}
         claims = [c for c in claims if all(r in facts for r in c.refs)]
