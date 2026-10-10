@@ -179,10 +179,10 @@ class Router:
         self.cache = {}
         self.large_failures = 0
         self.review_cache = {}
-        self.primary = primary or ("qwen" if key is not None else os.environ.get("ANALYTICAL_PRIMARY", "astra"))
+        self.primary = primary or ("qwen" if key is not None or self.provider == "openai" else os.environ.get("ANALYTICAL_PRIMARY", "astra"))
         if self.primary not in ("astra", "qwen"):
             raise ValueError("ANALYTICAL_PRIMARY must be astra or qwen")
-        self.reviewer = reviewer or ("primary" if key is not None else os.environ.get("STRATEGIC_REVIEWER", "astra"))
+        self.reviewer = reviewer or ("primary" if key is not None or self.provider == "openai" else os.environ.get("STRATEGIC_REVIEWER", "astra"))
         if self.reviewer not in ("primary", "astra"):
             raise ValueError("STRATEGIC_REVIEWER must be primary or astra")
         self.review_model = ASTRA if self.reviewer == "astra" else self.large
