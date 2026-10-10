@@ -144,40 +144,6 @@ def data_anchors(case, th, current):
     return out[:24]
 
 
-def step_packages(case, th, last):
-    """Counters after our first offer: our last price + 0.4 % (at least a cent) with at most one lever
-    moved one option toward the supplier. A frozen price got a final offer after three messages, a
-    jump of 0.10 at once wasted the margin (P08); small paired steps keep the supplier stepping."""
-    if not last:
-        return []
-    price = max(round(last["unit_price"] * 1.004 + 0.004, 2), round(last["unit_price"] + 0.01, 2))
-    opts, fields = case.get("term_options", {}), case["negotiable"]
-    out = [({**last, "unit_price": price}, "price step only")]
-
-    def nxt(values, cur, toward_lower):
-        values = sorted(v for v in values if v is not None)
-        cand = [v for v in values if (v < cur if toward_lower else v > cur)] if cur is not None else []
-        return (max(cand) if toward_lower else min(cand)) if cand else None
-
-    if "payment_days" in fields and (d := nxt(opts.get("payment_days", []), last.get("payment_days"), True)):
-        out.append(({**last, "payment_days": d, "unit_price": price}, f"price step + payment {d} days"))
-    if "contract_months" in fields and (m := nxt(opts.get("contract_months", []), last.get("contract_months"), False)):
-        out.append(({**last, "contract_months": m, "unit_price": price}, f"price step + {m} months"))
-    if "index_clause" in fields:
-        clauses = [c for c in opts.get("index_clause", []) if c]
-        cur = last.get("index_clause")
-        if clauses and cur is None:
-            widest = max(clauses, key=lambda c: c.get("deadband_pct") or 0)
-            out.append(({**last, "index_clause": widest, "unit_price": price}, "price step + index clause"))
-        elif cur:
-            narrower = [c for c in clauses if (c.get("deadband_pct") or 0) < (cur.get("deadband_pct") or 0)]
-            if narrower:
-                c = max(narrower, key=lambda c: c.get("deadband_pct") or 0)
-                out.append(({**last, "index_clause": c, "unit_price": price},
-                            f"price step + deadband {c.get('deadband_pct')} %"))
-    return out
-
-
 def build_board(agent, case, threads, source_map, history_map, closing_only=False):
     """Expose feasible actions, not a Python-selected winner. No guessed probability pruning."""
     board = {
@@ -387,12 +353,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                             board["packages"][paired]["paired_with"] = base_id
         for terms, origin in data_anchors(case, th, current):
             add_package(terms, origin)
-        steps = [pid for terms, origin in step_packages(case, th, th.last_terms)
-                 if (pid := add_package(terms, "next step: " + origin))]
-        if steps:  # after our first offer: paced steps only (one lever + a small price step)
-            board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
-                                                  "package_ids": steps, "max_packages": 3}
-        elif keys:
+        if keys:
             board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                   "package_ids": list(keys.values()), "max_packages": 3}
     add_action_consequences(agent, board)
