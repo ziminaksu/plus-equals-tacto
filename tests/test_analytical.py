@@ -542,3 +542,20 @@ def test_quality_first_risk_coefficient_replays_p11_audit_ordering():
     assert conservative.objective(case, 816023.3833769511, 28040.13183758494) > (
         conservative.objective(case, 816553.0164572278, 20423.696360588096)
     )
+
+
+def test_quality_cost_requires_explicit_cost_evidence():
+    sources = {
+        "quote": "We offer a quality commitment of 6400 ppm.",
+        "note": "A tighter quality target requires additional investment.",
+    }
+    analysis = {
+        "interpretations": [],
+        "ambiguities": [],
+        "signals": [
+            {"kind": "quality_cost", "source_id": "quote", "quote": sources["quote"]},
+            {"kind": "quality_cost", "source_id": "note", "quote": sources["note"]},
+        ],
+    }
+    result = Router.validate(analysis, sources, ["ppm_commitment"])
+    assert [x["source_id"] for x in result["signals"]] == ["note"]
