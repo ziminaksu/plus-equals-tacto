@@ -453,8 +453,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                 def price_of(pid):
                     return board["packages"][pid]["terms"].get("unit_price") or float("inf")
                 if not th.last_terms:
+                    # relationship goals penalise squeezing the supplier: a shallower anchor (P02 won at 97 %)
+                    depth = 0.98 if case["buyer"].get("category_goal") in ("stabilise", "secure_supply") else 0.95
                     first = [pid for pid in allowed if "data anchor" in (board["packages"][pid].get("origin") or "")
-                             and price_of(pid) <= ask * 0.95]
+                             and price_of(pid) <= ask * depth]
                     allowed = first or allowed
                 else:
                     cap = min(th.last_terms.get("unit_price", ask) * 1.012, ask - 0.01)
