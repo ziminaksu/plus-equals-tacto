@@ -549,6 +549,16 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     opening = [add_package({**v, "unit_price": t}, "data anchor: opening window")
                                for t in targets for v in variants[:3] or [current or th.reference]]
                     allowed = list(dict.fromkeys(pid for pid in opening if pid)) or allowed
+                    if relationship:
+                        # With a margin penalty the cheapest opening is the one with the lowest expected TOTAL
+                        # (it includes the supplier-margin estimate), not a fixed share of the ask (free Gemini
+                        # P02: 94 % = 348.70, agreed at 349.50, relationship cost EUR 120 k, 0.19; best 361-362).
+                        def total(pid):
+                            v = board["packages"][pid].get("expected_total_eur")
+                            return v if isinstance(v, (int, float)) else float("inf")
+                        pool = [pid for pid in keys.values() if price_of(pid) <= ask * 0.99
+                                and "data anchor" in (board["packages"][pid].get("origin") or "")]
+                        allowed = sorted(pool, key=total)[:3] or allowed
                 else:
                     # A concession schedule instead of free step sizes: a quarter of the gap while many moves
                     # remain, a third later, half at the end (P11 crawled +0.04-0.09 to a final; P07 +0.01).
