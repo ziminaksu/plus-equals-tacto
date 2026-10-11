@@ -586,6 +586,47 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
     return board
 
 
+def normalize_selection(board, selection):
+    """Chat models (gpt-5-mini, Gemini) keep the commercial choice but slip on bookkeeping: packages
+    attached to an accept, a package or question of another action, an out-of-range risk value (Azure
+    P08/P18: 'packages only allowed on counter' at the closing move, twice in a row). Remove only what the
+    chosen action cannot carry; the action, its packages and the reply stay as the model chose them."""
+    if not isinstance(selection, dict):
+        return selection
+    action = board["actions"].get(selection.get("action_id"))
+    if not action:
+        return selection
+    sel = dict(selection)
+    sid, kind = action["supplier_id"], action["kind"]
+    ids = [p for p in dict.fromkeys(sel.get("package_ids") or []) if isinstance(p, str)]
+    sel["package_ids"] = [p for p in ids if p in action.get("package_ids", [])][:3] if kind == "counter" else []
+    qid = sel.get("question_id") or ""
+    q = board["questions"].get(qid)
+    sel["question_id"] = qid if q and q["supplier_id"] == sid and kind == "counter" else ""
+    ev = [e for e in dict.fromkeys(sel.get("evidence_ids") or []) if e in board["evidence"]
+          and board["evidence"][e]["supplier_id"] == sid]
+    sel["evidence_ids"] = [] if kind in ("accept", "walk_away") else ev[:3]
+    if sel.get("tone") not in ("warm", "cooperative", "firm"):
+        sel["tone"] = "cooperative"
+    review = sel.get("continuation_review")
+    if isinstance(review, dict):
+        review = dict(review)
+        nums = [review.get("walkout_probability_low"), review.get("walkout_probability_high")]
+        if all(isinstance(x, (int, float)) for x in nums):
+            low, high = sorted(min(1.0, max(0.0, float(x))) for x in nums)
+            review["walkout_probability_low"], review["walkout_probability_high"] = low, high
+        target = review.get("target_package_id") or ""
+        if kind == "counter" and sel["package_ids"] and target not in sel["package_ids"]:
+            target = sel["package_ids"][0]
+        elif kind == "confirm":
+            target = action.get("package_id", target)
+        elif kind != "counter" and (target not in board["packages"] or board["packages"][target]["supplier_id"] != sid):
+            target = ""
+        review["target_package_id"] = target
+        sel["continuation_review"] = review
+    return sel
+
+
 def validate_selection(board, selection):
     if not isinstance(selection, dict) or set(selection) != {
         "action_id", "package_ids", "question_id", "evidence_ids", "tone", "rationale",

@@ -718,7 +718,7 @@ The application appends the exact offer and verified arguments separately."""
 
     def final_decision(self, board, deadline):
         """Final authority; one bounded correction of invalid output, never an HTTP retry."""
-        from .director import FinalDecisionUnavailable, validate_selection
+        from .director import FinalDecisionUnavailable, normalize_selection, validate_selection
 
         data = board
         chat = bool(os.environ.get("ASTRA_BASE_URL"))
@@ -730,7 +730,7 @@ The application appends the exact offer and verified arguments separately."""
                 # A network failure or refusal is not retried and never authorizes a substitute.
                 raise FinalDecisionUnavailable("Final Astra request unavailable; no action authorized") from None
             if chat:
-                result = strip_bare_numbers(result)
+                result = normalize_selection(board, strip_bare_numbers(result))
             record = self.calls[-1]
             record["returned_decision"] = copy.deepcopy(result)
             record["validation_attempt"] = attempt + 1
@@ -744,8 +744,11 @@ The application appends the exact offer and verified arguments separately."""
                 record["final_validation"] = type(exc).__name__
                 record["validation_reason"] = reason
                 if attempt == 0 and deadline - time.monotonic() >= (6 if chat else 10):
+                    chosen = board["actions"].get((result or {}).get("action_id") if isinstance(result, dict) else None)
                     data = {**board, "validation_feedback": {
                         "invalid_decision": result, "reason": reason,
+                        # the exact menu of the chosen action (Azure P11: counter packages outside its list twice)
+                        "allowed_package_ids_for_this_action": (chosen or {}).get("package_ids", []),
                         "instruction": "Correct this validation error and return a complete valid decision. "
                                        "No action has been sent. Keep all buyer constraints and evidence rules.",
                     }}
