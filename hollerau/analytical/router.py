@@ -306,7 +306,7 @@ class Router:
         )
         self.transport = transport
         self.client = httpx.Client(transport=transport, timeout=12)
-        self._schema_rejected = False
+        self._schema_rejected = set()  # providers (base URLs) that refused json_schema
         self.calls = []
         self.cache = {}
         self.large_failures = 0
@@ -434,9 +434,16 @@ class Router:
             left = stop_at - time.monotonic()
             if left < 2:
                 break
+            # "hf:<model>" entries go to the Hugging Face router with HF_TOKEN: a second provider when the
+            # first one is rate-limited or overloaded (Gemini free tier: 429/503 at peak hours)
+            m_base, m_key, m_name = base, self.review_key, model
+            if model.startswith("hf:"):
+                if not os.environ.get("HF_TOKEN"):
+                    continue
+                m_base, m_key, m_name = "https://router.huggingface.co/v1", os.environ["HF_TOKEN"], model[3:]
             try:
-                return self._chat_once(base, model, system, data, left if i == len(models) - 1 else min(left, 9),
-                                       role, schema)
+                return self._chat_once(m_base, m_name, system, data, left if i == len(models) - 1 else min(left, 9),
+                                       role, schema, key=m_key)
             except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as exc:
                 last_exc = exc
                 status = getattr(getattr(exc, "response", None), "status_code", None)
@@ -444,7 +451,8 @@ class Router:
                     raise
         raise last_exc or TimeoutError("no Astra model answered in time")
 
-    def _chat_once(self, base, model, system, data, remaining, role, schema):
+    def _chat_once(self, base, model, system, data, remaining, role, schema, key=None):
+        key = key or self.review_key
         record = {"model": model, "provider": base.split("/")[2], "role": role, "status": "started"}
         self.calls.append(record)
         start = time.monotonic()
@@ -454,7 +462,7 @@ class Router:
         try:
             response = self.client.post(
                 f"{base}/chat/completions",
-                headers={"Authorization": "Bearer " + self.review_key, "api-key": self.review_key},  # api-key: Azure OpenAI
+                headers={"Authorization": "Bearer " + key, "api-key": key},  # api-key: Azure OpenAI
                 timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
                                       write=remaining / 20, read=remaining * 0.8),
                 json={
@@ -466,7 +474,7 @@ class Router:
                     ],
                     "response_format": (
                         {"type": "json_schema", "json_schema": {"name": role, "schema": schema}}
-                        if schema and not self._schema_rejected else {"type": "json_object"}
+                        if schema and base not in self._schema_rejected else {"type": "json_object"}
                     ),
                     # reasoning models (gpt-5*, o*) take max_completion_tokens and an effort, not max_tokens
                     **({"max_completion_tokens": 8192, "reasoning_effort": os.environ.get("ASTRA_EFFORT", "low")}
@@ -474,11 +482,12 @@ class Router:
                 },
             )
             record["http_status"] = response.status_code
-            if response.status_code == 400 and schema and not self._schema_rejected:
+            if response.status_code == 400 and schema and base not in self._schema_rejected:
                 # the provider rejected the schema format: plain JSON mode from now on, schema stays in the text
-                self._schema_rejected = True
+                self._schema_rejected.add(base)
                 record["status"] = "schema_rejected"
-                return self._chat_once(base, model, system, data, remaining - (time.monotonic() - start), role, schema)
+                return self._chat_once(base, model, system, data, remaining - (time.monotonic() - start), role, schema,
+                                       key=key)
             response.raise_for_status()
             result = response.json()
             record["usage"] = result.get("usage", {})

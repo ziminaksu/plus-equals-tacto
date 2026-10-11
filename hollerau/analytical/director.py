@@ -862,6 +862,13 @@ def compact_board(board, keep=24):
         return v if isinstance(v, (int, float)) else float("inf")
 
     chosen = []
+    # every counter action keeps up to four of its own allowed packages first (Gemini P05: the 24 cheapest
+    # were all from two suppliers, the third lost its counter action and the board offered only accepts)
+    for action in board["actions"].values():
+        if action.get("kind") == "counter":
+            own = sorted(action["package_ids"], key=lambda p: pk[p]["terms"].get("unit_price") or 0)
+            step = max(1, len(own) // 4)
+            chosen += [pid for pid in own[::step][:4] if pid not in chosen]
     for marker, limit in (("next step", 6), ("ladder", 4), ("data anchor", 6), ("current/previous", 3),
                           ("Astra proposal", 3), ("indicative", 2)):
         group = sorted((pid for pid in pk if marker in (pk[pid].get("origin") or "")), key=total)[:limit]
@@ -871,7 +878,6 @@ def compact_board(board, keep=24):
             break
         if pid not in chosen:
             chosen.append(pid)
-    chosen = chosen[:keep]
     small = copy.deepcopy(board)
     small["packages"] = {pid: {k: v for k, v in pk[pid].items()
                                if k not in ("versus_opening", "public_cost_scenario")} for pid in chosen}
