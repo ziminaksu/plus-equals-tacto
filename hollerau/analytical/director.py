@@ -561,6 +561,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             ahead = {sid for sid in live if contacts[sid] > floor + 1}
             board["actions"] = {k: v for k, v in board["actions"].items()
                                 if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
+            # No close while a supplier has never heard from us: asking it costs nothing (free Gemini P05:
+            # accepted 32.50 after two rounds, a third supplier untouched - 0.37 vs 0.875 with all three).
+            untried = [sid for sid in open_ones if contacts[sid] == 0]
+            if untried and not closing_only:
+                board["actions"] = {k: v for k, v in board["actions"].items()
+                                    if v["kind"] != "accept"
+                                    or latest(threads[v["supplier_id"]]).get("status") == "final_offer"}
 
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
