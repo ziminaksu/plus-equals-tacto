@@ -541,7 +541,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     refs = [p for p in (getattr(th.dossier, "reference_prices", {}) or {}).values() if p]
                     if case["buyer"].get("current_unit_price"):
                         refs.append(case["buyer"]["current_unit_price"])
-                    lo, hi, points = (0.94, 0.98, (0.94, 0.96)) if relationship else (0.82, 0.92, (0.86, 0.90))
+                    # at temperature 0 the model always took the mildest point of a wider window (P18 at 90 %:
+                    # 0.42); the records opened deep and followed the schedule (P11 86 % -> 45.00, 0.79; P18 85 %).
+                    # Relationship goals: P02's record was 361-362 = 97-98 % with the index/payment variants.
+                    lo, hi, points = (0.95, 0.98, (0.96, 0.98)) if relationship else (0.82, 0.88, (0.86,))
                     targets = sorted({round(ask * f, 2) for f in points}
                                      | {round(p, 2) for p in refs if ask * lo <= p <= ask * hi})
                     opening = [add_package({**v, "unit_price": t}, "data anchor: opening window")
@@ -559,17 +562,6 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     # same price with another lever setting is the same step (keeps trade-offs open)
                     near = [pid for pid in keys.values() if abs(price_of(pid) - target) <= max(0.01, target * 0.003)]
                     allowed = list(dict.fromkeys(([step] if step else []) + near)) or allowed
-            if ask and case["buyer"].get("category_goal") in ("stabilise", "secure_supply"):
-                # With a margin penalty the best move is the package of lowest expected TOTAL cost (it includes
-                # the supplier-margin estimate), on every counter - not a share of the ask nor a schedule
-                # (free Gemini P02: 333.86 then 351.05 agreed, relationship cost EUR 124 k, 0.21; the board's
-                # cheapest total was 356.15 / 14 days / no index).
-                def total(pid):
-                    v = board["packages"][pid].get("expected_total_eur")
-                    return v if isinstance(v, (int, float)) else float("inf")
-                floor_p = (th.last_terms or {}).get("unit_price", 0)
-                pool = [pid for pid in keys.values() if floor_p < price_of(pid) < ask]
-                allowed = sorted(pool, key=total)[:3] or allowed
             # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
             # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
             # supplier at 2376 ppm - it stood at 47.00; without a chargeback the price reached 45.50).
