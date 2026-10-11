@@ -148,11 +148,6 @@ def data_anchors(case, th, current):
         # worth something to the supplier (P07 best closed at 36 months; P10 sat at 24 months and 0.67).
         best["contract_months"] = max(long_enough)
     variants = [best]
-    need_lead = case["buyer"].get("need_lead_time_days")
-    on_time = [d for d in opts.get("lead_time_days", []) if need_lead and d <= need_lead]
-    if "lead_time_days" in fields and on_time and (best.get("lead_time_days") or 0) > max(on_time):
-        # every day late costs late_cost_per_day (P10: 56 days against a need of 42 = EUR 33,600, ~0.06)
-        variants.append({**best, "lead_time_days": max(on_time)})
     if "index_clause" in fields:
         clauses = opts.get("index_clause", [])
         if None in clauses:
@@ -539,10 +534,12 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     return board["packages"][pid]["terms"].get("unit_price") or float("inf")
                 if not th.last_terms:
                     # relationship goals penalise squeezing the supplier: a shallower anchor (P02 won at 97 %)
-                    depth = 0.98 if case["buyer"].get("category_goal") in ("stabilise", "secure_supply") else 0.95
+                    depth = 0.98 if case["buyer"].get("category_goal") in ("stabilise", "secure_supply") else 0.92
                     # ...but not so deep that the supplier reads it as no deal (free Gemini P07: 4.59 = 80 % of
                     # 5.70, then +0.02 steps; it sent a final 5.66 at once; the best run opened at 92 %)
-                    floor = 0.94 if depth > 0.95 else 0.88
+                    # window from the best runs: P07 opened at 92 %, P11 at 90 % (43.50 of 48.40); Gemini
+                    # otherwise takes the mildest allowed anchor and then crawls (P11 at 95 %: 46.50 final)
+                    floor = 0.94 if depth > 0.95 else 0.85
                     first = [pid for pid in allowed if "data anchor" in (board["packages"][pid].get("origin") or "")
                              and ask * floor <= price_of(pid) <= ask * depth]
                     allowed = first or allowed
