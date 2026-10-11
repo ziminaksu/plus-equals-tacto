@@ -826,6 +826,31 @@ def execute(agent, case, threads, board, selection):
     return decision
 
 
+def board_fallback(case, board):
+    """A move from the current board when the model cannot answer (rate limit, invalid twice): every
+    Python rule (urgency, pacing, no push after a big step) already shaped this menu. Only accepts left:
+    the cheapest standing offer. Otherwise the first counter action with its middle-priced package."""
+    acts = list(board.get("actions", {}).values())
+    counters = [a for a in acts if a["kind"] == "counter" and a.get("package_ids")]
+    accepts = [a for a in acts if a["kind"] == "accept"]
+    if accepts and not counters:
+        def standing_cost(a):
+            st = board["suppliers"].get(a["supplier_id"], {}).get("standing") or {}
+            return st.get("expected_total_eur") or float("inf")
+        best = min(accepts, key=standing_cost)
+        return {"supplier_id": best["supplier_id"],
+                "message": {"action": {"type": "accept", "term_sheet_id": best["term_sheet_id"]}}}
+    if not counters:
+        return None
+    action = counters[0]
+    pids = sorted(action["package_ids"], key=lambda p: board["packages"][p]["terms"].get("unit_price") or 0)
+    terms = board["packages"][pids[len(pids) // 2]]["terms"]
+    return {"supplier_id": action["supplier_id"],
+            "message": {"subject": "Re: " + case["title"],
+                        "body": "Thank you for your reply. Please consider the attached complete package.",
+                        "term_sheets": [{"terms": terms}]}}
+
+
 def compact_board(board, keep=24):
     """A smaller board for chat providers / free tiers (ASTRA_BASE_URL or ASTRA_COMPACT=1): the full one
     ran ~36 k tokens, 68 % of it 70+ package cards. Keeps the cheapest packages plus data anchors, steps
@@ -906,6 +931,7 @@ def decide(agent, case, threads, deadline, closing_only=False):
         board = compact_board(board)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")
+    agent.last_board = board  # the offline move picks from this menu if the model cannot answer
     board_event_id = agent.log("final_board", board)
     try:
         choice = agent.router.final_decision(board, budget.final_deadline())

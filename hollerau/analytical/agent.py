@@ -767,6 +767,7 @@ class AnalyticalAgent:
         started = time.monotonic()
         deadline = min(started + DECISION_BUDGET_S, self.move_deadline or float("inf"))
         self.decision_deadline = deadline
+        self.last_board = None  # never fall back on a menu from an earlier turn
         if self.case_id != case["case_id"]:
             self.start(case, threads)
         self.turn += 1
@@ -786,7 +787,13 @@ class AnalyticalAgent:
             # A free chat model (ASTRA_BASE_URL) that slips on the answer shape must not cost the whole case.
             if not infra and os.environ.get("ASTRA_SAFE") != "1" and not os.environ.get("ASTRA_BASE_URL"):
                 raise
-            decision = self.offline_move(case, threads)
+            board = getattr(self, "last_board", None)
+            decision = None
+            if board is not None and os.environ.get("ASTRA_SAFE") == "1":
+                from .director import board_fallback
+                decision = board_fallback(case, board)
+            decision = decision or self.offline_move(case, threads)
+            self.last_board = None
             self.log("decision", {"action": decision, "reason": "Astra unreachable; offline fallback",
                                   "llm_calls": self.router.calls})
             self.router.calls = []

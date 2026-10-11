@@ -9,6 +9,7 @@ set -a; source .env; set +a
 export OPENAI_API_KEY="$LLM_API_KEY"
 unset ASTRA_BASE_URL ASTRA_MODEL
 export ASTRA_SAFE=1  # normalize bookkeeping slips; an invalid answer becomes the offline move, not a lost case
+export ASTRA_COMPACT=1  # a smaller board: the RFQ board hit the tokens-per-minute limit (429)
 run_id="gpt6-$case_id-$(date +%H%M%S)"
 # caffeinate: an idle-sleeping Mac froze a session until it expired (free Gemini P05, score 0)
 caffeinate -i uv run tacto-bayes --run-id "$run_id" --max-sessions 1 --cases "case:$case_id" --primary astra --reviewer astra \

@@ -379,6 +379,14 @@ class Router:
             record["preparation_seconds"] = round(time.monotonic() - start, 3)
             record["network_budget_seconds"] = round(max(0, request_deadline - time.monotonic()), 3)
             response = asyncio.run(self._astra_request(payload, request_deadline))
+            if response.status_code == 429 and os.environ.get("ASTRA_SAFE") == "1":
+                # a tokens-per-minute limit, not a refusal (gpt-6 P05: three 429s in a row, each became an
+                # offline move): wait what the API asks, once, if the move budget still allows a full answer
+                wait = min(float(response.headers.get("retry-after") or 3), 6.0)
+                if request_deadline - time.monotonic() - wait >= 12:
+                    record["rate_limited_wait_seconds"] = wait
+                    time.sleep(wait)
+                    response = asyncio.run(self._astra_request(payload, request_deadline))
             record["http_status"] = response.status_code
             if response.is_error:
                 try:
