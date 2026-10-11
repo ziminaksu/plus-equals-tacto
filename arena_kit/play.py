@@ -207,6 +207,7 @@ def play(table, case_id, agent, deadline=None):
             fetch_documents(table, m)
     slowest = 0.0  # the longest round so far: decision + the supplier's reply
     rejected = 0  # accepts the arena refused in a row (stale offer id)
+    failures = 0  # decisions that raised in a row
     while live_threads(threads):
         t0 = time.monotonic()
         cap = deadline() if callable(deadline) else deadline
@@ -223,7 +224,29 @@ def play(table, case_id, agent, deadline=None):
                     log.warning("%s: thread refresh failed: %s", case_id, e.detail)
                 if not live_threads(threads):
                     break
-            decision = agent.decide(case, threads)
+            try:
+                decision = agent.decide(case, threads)
+                failures = 0
+            except Exception as e:
+                # One failed move must not abandon the case (wave test: P05 lost on a single expired budget).
+                # Let the arena answer by timeout, look again and decide anew - at most three times in a row.
+                failures += 1
+                if failures > 3 or not hasattr(table, "refresh"):
+                    raise
+                log.warning("%s: decision failed (%s: %s) - waiting for the thread to move", case_id,
+                            type(e).__name__, e)
+                before = sum(len(ev) for ev in threads.values())
+                for _ in range(15):
+                    time.sleep(5)
+                    try:
+                        table.refresh(threads)
+                    except ArenaError:
+                        pass
+                    if sum(len(ev) for ev in threads.values()) > before or not live_threads(threads):
+                        break
+                if hasattr(agent, "move_deadline"):
+                    agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
+                continue
         if (took := time.monotonic() - t0) > MOVE_LIMIT_S * 0.75:
             log.warning("decision took %.1fs - the limit is %ss per message", took, MOVE_LIMIT_S)
         sid, msg = decision["supplier_id"], decision["message"]
