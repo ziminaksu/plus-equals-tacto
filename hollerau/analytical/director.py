@@ -417,7 +417,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         # A message without a term sheet gets a "hold" and burns a round (P18: two or three in a row
         # led straight to a final offer or a walk-out). One standalone question per thread at most;
         # further questions ride along with a counter.
-        standalone_ok = remaining >= 3 and not getattr(th, "standalone_questions", 0)
+        # With rival suppliers a bare reply reads as a demand without an offer (free Gemini P05: "we hold a
+        # competing offer at 34.00", no term sheet - the supplier walked away at once).
+        standalone_ok = (remaining >= 3 and not getattr(th, "standalone_questions", 0)
+                         and len(live_threads(threads)) == 1)
         if standalone_ok:
             board["actions"][f"{sid}:reply"] = {"supplier_id": sid, "kind": "reply"}
         for kind, body in questions(case, source, history):
