@@ -1,0 +1,421 @@
+{
+  "experiment": {
+    "base_commit": "fec0e969f0dc7c6ab0d43e57ca3a1ee2e190bc12",
+    "source_sha256": "0c154f0ee8f4847352dd47e77aa78df654a9432c6a0fb14072f3037edb517859",
+    "max_sessions": 2,
+    "case": "case:P18",
+    "deployment": "gpt-5-mini",
+    "fallback_providers": false,
+    "arms": {
+      "control": "ASTRA_TRADE_MENU=0",
+      "trade": "ASTRA_TRADE_MENU=1"
+    },
+    "memory_hashes": {
+      "control": "f512936b55a267d8dbe326362ef60350c689acfe6351ea75ab9a09cf6108cdea",
+      "trade": "f512936b55a267d8dbe326362ef60350c689acfe6351ea75ab9a09cf6108cdea"
+    }
+  },
+  "results": {
+    "control": {
+      "attempts": [
+        [
+          "completed",
+          "d32cdf8c38b1a91e"
+        ]
+      ],
+      "events": 65,
+      "decisions": 5,
+      "fallback_decisions": 0,
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 14.807,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1834,
+            "prompt_tokens": 14977,
+            "total_tokens": 16811
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 10.368,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1273,
+            "prompt_tokens": 28101,
+            "total_tokens": 29374
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 13.819,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1961,
+            "prompt_tokens": 15520,
+            "total_tokens": 17481
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 15.371,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1504,
+            "prompt_tokens": 30297,
+            "total_tokens": 31801
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 15.277,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 2204,
+            "prompt_tokens": 16062,
+            "total_tokens": 18266
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 14.148,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1496,
+            "prompt_tokens": 31445,
+            "total_tokens": 32941
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 11.315,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1484,
+            "prompt_tokens": 16951,
+            "total_tokens": 18435
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 13.558,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1330,
+            "prompt_tokens": 31416,
+            "total_tokens": 32746
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 11.112,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 988,
+            "prompt_tokens": 16997,
+            "total_tokens": 17985
+          }
+        }
+      ],
+      "result": {
+        "score": 0.587026467569271,
+        "deal": true,
+        "cost_breakdown": {
+          "price": 246480.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": -1643.2,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 6654.96,
+          "index_risk": 1109.16,
+          "relationship": 0.0
+        },
+        "terms": {
+          "payment_days": 90,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 0.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.2
+        }
+      },
+      "boards_with_trades": 0,
+      "failure_types": [],
+      "selected_non_price_trades": [],
+      "opening_terms": [
+        {
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": null,
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        },
+        {
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": {
+              "series": "AS-14404",
+              "material_share": 0.45,
+              "deadband_pct": 5,
+              "base_month": "2026-08"
+            },
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        },
+        {
+          "terms": {
+            "unit_price": 5.26,
+            "index_clause": null,
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        }
+      ],
+      "buyer_total_cost_eur": 252600.92
+    },
+    "trade": {
+      "attempts": [
+        [
+          "completed",
+          "25d746d49a0521c0"
+        ]
+      ],
+      "events": 65,
+      "decisions": 5,
+      "fallback_decisions": 0,
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 12.137,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1612,
+            "prompt_tokens": 14977,
+            "total_tokens": 16589
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 13.439,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1428,
+            "prompt_tokens": 28162,
+            "total_tokens": 29590
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 15.96,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 2310,
+            "prompt_tokens": 15644,
+            "total_tokens": 17954
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 12.711,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1428,
+            "prompt_tokens": 30661,
+            "total_tokens": 32089
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 13.687,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1401,
+            "prompt_tokens": 16059,
+            "total_tokens": 17460
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 13.74,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1339,
+            "prompt_tokens": 31849,
+            "total_tokens": 33188
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "negotiator",
+          "status": "ok",
+          "seconds": 12.897,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1629,
+            "prompt_tokens": 15922,
+            "total_tokens": 17551
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 20.439,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 1466,
+            "prompt_tokens": 32071,
+            "total_tokens": 33537
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "role": "final_decision",
+          "status": "ok",
+          "seconds": 11.646,
+          "http_status": 200,
+          "usage": {
+            "completion_tokens": 946,
+            "prompt_tokens": 17031,
+            "total_tokens": 17977
+          }
+        }
+      ],
+      "result": {
+        "score": 0.6317868408410361,
+        "deal": true,
+        "cost_breakdown": {
+          "price": 241740.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 0.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 6526.98,
+          "index_risk": 1087.83,
+          "relationship": 0.0
+        },
+        "terms": {
+          "payment_days": 60,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 0.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.1
+        }
+      },
+      "boards_with_trades": 2,
+      "failure_types": [],
+      "selected_non_price_trades": [
+        {
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": null,
+            "payment_days": 60,
+            "contract_months": 36
+          },
+          "expected_total_eur": 248850.0
+        }
+      ],
+      "opening_terms": [
+        {
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": null,
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        },
+        {
+          "terms": {
+            "unit_price": 5.25,
+            "index_clause": {
+              "series": "AS-14404",
+              "material_share": 0.45,
+              "deadband_pct": 5,
+              "base_month": "2026-08"
+            },
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        },
+        {
+          "terms": {
+            "unit_price": 5.26,
+            "index_clause": null,
+            "payment_days": 90,
+            "contract_months": 36
+          }
+        }
+      ],
+      "buyer_total_cost_eur": 249354.81
+    }
+  },
+  "score_delta": 0.044760373271765075,
+  "buyer_cost_reduction_eur": 3246.11,
+  "limitations": [
+    "One session per arm; exploratory, not a statistically established improvement.",
+    "Initial offer terms identical, but supplier first replies differed before the trade menu was used.",
+    "Starting memory is this checkout snapshot, not necessarily Ksu\u2019s latest private memory.",
+    "Only P18 was tested; the feature remains opt-in."
+  ],
+  "all_model_calls_succeeded": true
+}
