@@ -829,6 +829,12 @@ def execute(agent, case, threads, board, selection):
             offers = [p["terms"] for p in picked
                       if (p.get("direct_cost_eur") or float("inf")) <= cheapest * 1.01] or [picked[0]["terms"]]
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
+            # One or two verified arguments per e-mail: each counted argument buys a step, arguments of one
+            # kind count once ("duplicate"), so the rest is kept for later moves; volume first on the opening
+            # (P07 probes: forecasts + one argument per message + management ask -> 5.40 vs 5.51 with all at once)
+            if not th.last_terms:
+                claims.sort(key=lambda c: c.get("kind") not in ("forecast", "share_of_business", "volume"))
+            claims = claims[:2]
             if not th.last_terms:  # first counter: the punctual-payment commitment rides along (P11 probe +0.08)
                 punctual = next((e for e in board["evidence"].values()
                                  if e["supplier_id"] == sid and e.get("kind") == "punctual_payment"), None)
@@ -836,6 +842,12 @@ def execute(agent, case, threads, board, selection):
                     claims = (claims + [punctual])[-3:] if len(claims) >= 3 else claims + [punctual]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
+            buyer_sent = sum(1 for m in events if m.get("from") == "buyer")
+            if buyer_sent == 1 and not qid and not getattr(th, "escalated", False):
+                # the second counter asks for the decision-maker: the largest single concession in the P07 probes
+                question = ("Please take this package to your management for approval - a consolidated, "
+                            "multi-year commitment from us is a significant account for you.")
+                th.escalated = True
             # Escalating to the supplier's approver: management moved for a longer contract plus the
             # share-of-business prospect (P18 0.563) and not without it (0.509) - attach it if unused.
             if qid and board["questions"][qid]["kind"] == "approval_route":
