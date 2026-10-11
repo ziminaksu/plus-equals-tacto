@@ -266,3 +266,19 @@ def test_new_ksu_contract_and_note_claims_keep_their_source_ids():
     assert claims['volume_focus'].refs == ['doc:volume']
     assert claims['approval_threshold'].refs == ['doc:committee']
     assert 'multi-year commitment' not in claims['approval_threshold'].sentence
+
+
+@pytest.mark.parametrize('outside,expected', [(0, {'accept', 'walk_away'}), (1e12, {'accept'})])
+def test_two_agreements_override_concession_rule_and_preserve_outside_option(monkeypatch, outside, expected):
+    agent, case, threads, sid = setup(reply=False)
+    quote = copy.deepcopy(threads[sid][0])
+    for i, status in enumerate(('agreed', 'open', 'agreed', 'open')):
+        reply = copy.deepcopy(quote)
+        reply['status'] = status
+        reply['term_sheets'][0]['term_sheet_id'] = f'current:{i}'
+        reply['term_sheets'][0]['terms']['unit_price'] *= 1.06 - i * 0.02
+        threads[sid].extend([{'from': 'buyer', 'body': 'Please review the complete package.'}, reply])
+    monkeypatch.setattr(agent, 'alternatives', lambda case: outside)
+    board = board_for(agent, case, threads)
+    assert {a['kind'] for a in board['actions'].values()} == expected
+    assert not board['suppliers'][sid]['continuation_comparison']['review_before_early_close']

@@ -1,7 +1,7 @@
 # Stability and record consistency — 11 October 2026
 
-Policy: `ksu-stability-contract-v2`. Built on Ksu's latest `6be741d` and the capped
-GPT-6 branch at `9434b8b`. Runtime source fingerprint: `9643308bfc9755ea7f5c18e93b1e16da84ae3a33e5ae36635b618a558cd9af54`.
+Policy: `ksu-stability-contract-v2`. Built on Ksu's latest `08c5d10` and the capped
+GPT-6 branch at `9434b8b`. Runtime source fingerprint: `e3bba95c47f8f5244c67782dbcea7313dfb91a45910972f3a901e8e69c500a75`.
 
 ## What changed
 
@@ -10,6 +10,12 @@ contract-index, calculation-walkthrough, volume-focus and pricing-committee clai
 and opening priority. Two added checks cover source IDs and faithful rendering.
 The committee request refers to the proposed terms rather than promising a
 multi-year commitment regardless of the actual package.
+
+Her following `08c5d10` closing guards are also integrated. Walking away is excluded
+when a valid standing offer beats the estimated outside option; after two agreed
+replies the supplier is restricted to closing actions. The earlier concession rule
+can no longer remove acceptance in that situation, and walking away remains possible
+when the outside option is better. Two further checks cover those interactions.
 
 - Supplier refreshes share a six-second total deadline, including rate limiting.
   Changed threads refresh concurrently. Closed suppliers are removed immediately;
@@ -34,7 +40,7 @@ multi-year commitment regardless of the actual package.
 
 ## Verification
 
-**204 passed, 1 skipped** in the full local suite. The single skip is the deliberately
+**206 passed, 1 skipped** in the full local suite. The single skip is the deliberately
 unconfigured hosted Arena test. The local HTTP contract simulator is included; its
 results establish protocol behavior, not negotiation quality. Focused lint, Python
 compilation and whitespace checks passed. GitHub runs the same full suite; merging

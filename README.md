@@ -47,6 +47,10 @@ Nothing the model writes can introduce a number that is not on the board.
 
 ## Reliability
 
+Ksu’s later closing guards stop bargaining after two agreements and prevent
+walking away from a valid deal that beats the estimated outside option. When the
+outside option is better, walking away remains possible. These are policy choices.
+
 The runner bounds recovery and records failures explicitly. It cannot guarantee a deal:
 
 - **Current offers:** changed supplier threads refresh concurrently within a shared total deadline.

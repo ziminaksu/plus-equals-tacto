@@ -113,7 +113,10 @@ to the final decision; it cannot masquerade as successful proposer advice.
 
 When at least three moves and a useful counter/question remain, confirmation or
 acceptance must name an actual available alternative and explain why it is rejected.
-This requires comparison, not continued negotiation. Reconsider a previous stop
+This requires comparison, not continued negotiation. Ksu's later closing guards
+exclude walk-away when the valid standing offer beats the estimated outside option
+and restrict a supplier to closing actions after two agreed replies. A better
+outside option remains available. These are strategy rules, not Arena requirements. Reconsider a previous stop
 condition against new evidence before making a promise to finalize. Confirmation
 requests are explicitly nonbinding.
 

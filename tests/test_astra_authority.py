@@ -336,6 +336,7 @@ def test_wave_runner_never_uses_python_closing_move(monkeypatch):
     for event in threads[sid]:
         event.pop("attachments", None)
     monkeypatch.setattr(runner, "closing_move", lambda *a: pytest.fail("Python closing bypass"))
+    monkeypatch.setattr(agent, "alternatives", lambda case: 0)
     agent.router.final_decision = lambda board, deadline: selection(f"{sid}:walk")
     table = SimpleNamespace(open=lambda cid: (case, threads), close=lambda s, m: m,
                             session_id="current-live-session")

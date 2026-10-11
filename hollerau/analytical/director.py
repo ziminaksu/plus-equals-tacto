@@ -258,6 +258,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                               "must_haves": case["buyer"].get("must_haves", [])},
         "policy_rules": ["Close after final_offer; this is a strategy guard, not a buyer constraint.",
                          "At most one standalone question per supplier; additional questions accompany a counter.",
+                         "Walk-away is excluded when a valid standing deal beats the estimated outside option.",
+                         "After two agreed replies, retain closing actions for that supplier; "
+                         "a better outside option remains available.",
                          "Anchor grids and the 24-anchor limit are heuristics; the offer menu is not exhaustive.",
                          "Response probabilities and economic scenarios are estimates, not verified supplier facts."],
         "candidate_generation": {"attempted": 0, "duplicates": 0, "rejected": [],
@@ -409,7 +412,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                                  "term_sheet_id": current_sheet["term_sheet_id"]}
         # walk_away ends the WHOLE case, every thread (P05: walking away from one RFQ supplier threw
         # away another's 27.50 = ~0.87). Offer it only when this is the last live supplier.
-        if len(live_threads(threads)) == 1:
+        standing_total = (supplier.get("standing") or {}).get("expected_total_eur")
+        fallback_total = board.get("fallback_estimated_cost_eur")
+        # never walk away from a live offer that beats our alternative (Azure P02: walked away from an agreed
+        # 359.67 after pushing it four times - score 0 instead of ~0.68)
+        beats_alternative = standing_total is not None and (
+            not isinstance(fallback_total, (int, float)) or standing_total < fallback_total)  # no alternative = 0
+        if len(live_threads(threads)) == 1 and not beats_alternative:
             board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
         if latest(events).get("status") == "final_offer":
             standing_cost = supplier.get("standing", {}).get("expected_total_eur")
@@ -671,9 +680,19 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         prices = [min(t["terms"].get("unit_price") or float("inf") for t in m["term_sheets"])
                   for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
         moving = len(prices) >= 2 and prices[-2] and (prices[-2] - prices[-1]) / prices[-2] >= 0.005
+        agreed = sum(1 for m in threads[sid] if m.get("from") != "buyer" and m.get("status") == "agreed")
         if (moving and latest(threads[sid]).get("status") == "open" and moves_left(case, threads[sid]) >= 5
-                and f"{sid}:counter" in board["actions"]):
+                and agreed < 2 and f"{sid}:counter" in board["actions"]):
             board["actions"].pop(f"{sid}:accept", None)
+
+    # Two "agreed" replies anywhere in a thread: stop bargaining, but preserve a better outside option.
+    # (Azure P02: an "open" between agreed replies reset the old two-in-a-row rule; it pushed on and walked).
+    if not closing_only:
+        for sid in live:
+            agreed = sum(1 for m in threads[sid] if m.get("from") != "buyer" and m.get("status") == "agreed")
+            if agreed >= 2 and f"{sid}:accept" in board["actions"]:
+                board["actions"] = {k: v for k, v in board["actions"].items()
+                                    if v["supplier_id"] != sid or v["kind"] in ("accept", "walk_away")}
 
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)

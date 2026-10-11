@@ -2,7 +2,7 @@
 
 **Current policy:** `ksu-stability-contract-v2`, based on Ksu's argument pacing,
 commercial concessions, management escalation and the contract/note evidence added
-in `6be741d`. The current changes are checked
+in `6be741d`, plus the closing guards from `08c5d10`. The current changes are checked
 with automated contract tests, not a new paid Arena batch.
 
 **Measured evidence:** the preceding ten-case Azure batch averaged **0.624269**,
@@ -75,7 +75,10 @@ not a completed improvement.
 4. The final model selects supplier, action, packages, evidence and a conditional
    plan. With useful moves remaining, early confirmation/acceptance must compare
    an actual available counter or question. The model can still close; no code
-   forces continued negotiation. A prior stop condition is advisory.
+   forces continued negotiation. A prior stop condition is advisory. Ksu's closing
+   policies exclude walking away from a valid deal that beats the estimated outside
+   option and stop bargaining after two agreements. A better outside option remains
+   selectable; these are menu policies based on estimates, not universal supplier laws.
 5. Validate IDs, constraints, cited facts and the rendered message. Render every
    approved package and at most two model-selected claims. Existing evidence-backed
    automatic attachments may add another claim. Confirmation explicitly asks for
