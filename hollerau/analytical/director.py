@@ -561,6 +561,17 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             ahead = {sid for sid in live if contacts[sid] > floor + 1}
             board["actions"] = {k: v for k, v in board["actions"].items()
                                 if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
+            # A supplier that has just cut its price by 5 % or more is at its limit: one more push made it
+            # walk away (free Gemini P05: 33.00 -> 30.00, we sent 28.20, it withdrew and we closed at 34.00).
+            # Keep accepting it or working the others; no further counter to it.
+            def last_step(sid):
+                prices = [min(t["terms"].get("unit_price") or float("inf") for t in m["term_sheets"])
+                          for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
+                return (prices[-2] - prices[-1]) / prices[-2] if len(prices) >= 2 and prices[-2] else 0.0
+            limit = {sid for sid in open_ones if last_step(sid) >= 0.05}
+            if limit:
+                board["actions"] = {k: v for k, v in board["actions"].items()
+                                    if v["supplier_id"] not in limit or v["kind"] in ("accept", "walk_away")}
             # No close while a supplier has never heard from us: asking it costs nothing (free Gemini P05:
             # accepted 32.50 after two rounds, a third supplier untouched - 0.37 vs 0.875 with all three).
             untried = [sid for sid in open_ones if contacts[sid] == 0]
