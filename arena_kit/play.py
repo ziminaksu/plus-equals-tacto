@@ -165,6 +165,9 @@ def fetch_documents(table, message):
                 # A slow attachment must not consume the entire supplier-response window.
                 att["read_error"] = "timeout"
                 log.warning("attachment unavailable within move budget: continuing with received terms")
+            except Exception as e:  # an unreadable/broken document must not end the case
+                att["read_error"] = type(e).__name__
+                log.warning("attachment %s unreadable (%s): continuing with received terms", att.get("name"), e)
     return message
 
 
@@ -223,8 +226,8 @@ def play(table, case_id, agent, deadline=None):
             if len(threads) > 1 and hasattr(table, "refresh"):
                 try:
                     table.refresh(threads)
-                except ArenaError as e:
-                    log.warning("%s: thread refresh failed: %s", case_id, e.detail)
+                except Exception as e:  # a refresh is advisory: the move goes on with what we have
+                    log.warning("%s: thread refresh failed: %s", case_id, e)
                 if getattr(table, "done", None) is not None:
                     return finish(table.done)
                 if not live_threads(threads):
@@ -247,7 +250,7 @@ def play(table, case_id, agent, deadline=None):
                     time.sleep(min(5, max(0, cap - time.time())) if cap else 5)
                     try:
                         table.refresh(threads)
-                    except ArenaError:
+                    except Exception:
                         pass
                     if getattr(table, "done", None) is not None:
                         return finish(table.done)
@@ -260,6 +263,11 @@ def play(table, case_id, agent, deadline=None):
                 continue
         if (took := time.monotonic() - t0) > MOVE_LIMIT_S * 0.75:
             log.warning("decision took %.1fs - the limit is %ss per message", took, MOVE_LIMIT_S)
+        if (not isinstance(decision, dict) or decision.get("supplier_id") not in threads
+                or not isinstance(decision.get("message"), dict)):
+            # reviewed by DeepSeek-V4.1: a malformed decision or an unknown supplier id crashed below
+            log.warning("%s: malformed decision %r - falling back to closing_move", case_id, str(decision)[:200])
+            decision = closing_move(case, threads)
         sid, msg = decision["supplier_id"], decision["message"]
         try:
             if msg.get("action"):
@@ -293,8 +301,8 @@ def play(table, case_id, agent, deadline=None):
             return finish(reply["result"])
         if hasattr(agent, "move_deadline"):
             agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
-        rejected = 0
         threads[sid] += [{**msg, "from": "buyer"}, fetch_documents(table, reply)]
+        rejected = 0  # a stale accept earlier in the case must not count against a later one
         slowest = max(slowest, time.monotonic() - t0)
         log.info("%s %s %s", sid, reply.get("status"), standing(threads[sid])[1])
     return finish(table.result())

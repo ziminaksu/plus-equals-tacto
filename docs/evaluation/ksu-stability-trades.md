@@ -47,3 +47,12 @@ below the 0.654 historical P18 best cited in Ksu’s earlier report.
 
 Full screened results, model usage, selected trades and fingerprints:
 `azure-p18-trade-comparison-20261011.json`. No replacement sessions were started.
+
+## Integration after the comparison
+
+The team moved Ksu's branch to `main` and added recovery changes in `4980923` while
+these two sessions were running. Those changes and her judge-facing README are
+preserved by a merge. The new outer fallback handler also receives the deadline
+checks, so it cannot bypass them. Thirteen focused checks pass after integration.
+The recorded Arena scores belong to the frozen pre-merge commit in the JSON
+manifest; the merged source has not been rerun on Arena.
