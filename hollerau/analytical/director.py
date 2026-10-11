@@ -533,8 +533,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                 if not th.last_terms:
                     # relationship goals penalise squeezing the supplier: a shallower anchor (P02 won at 97 %)
                     depth = 0.98 if case["buyer"].get("category_goal") in ("stabilise", "secure_supply") else 0.95
+                    # ...but not so deep that the supplier reads it as no deal (free Gemini P07: 4.59 = 80 % of
+                    # 5.70, then +0.02 steps; it sent a final 5.66 at once; the best run opened at 92 %)
+                    floor = 0.94 if depth > 0.95 else 0.88
                     first = [pid for pid in allowed if "data anchor" in (board["packages"][pid].get("origin") or "")
-                             and price_of(pid) <= ask * depth]
+                             and ask * floor <= price_of(pid) <= ask * depth]
                     allowed = first or allowed
                 else:
                     # +1.2 % or a quarter of the gap, whichever is larger (P08: a 4.84 opening capped at
@@ -543,7 +546,9 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     cap = min(max(last_p * 1.012, last_p + (ask - last_p) / 4), ask - 0.01)
                     # strictly above our last price: a repeated or lower price reads as "no move" and draws a
                     # final offer (free Gemini P08: re-sent 4.84 plus 4.75/4.79, supplier closed at 5.38)
-                    paced = [pid for pid in allowed if last_p + 0.005 < price_of(pid) <= cap]
+                    # a visible move: at least a sixth of a large gap (P07: +0.02 steps on a 1.09 gap drew a final)
+                    least = last_p + max(0.005, (ask - last_p) / 6 if ask - last_p > last_p * 0.08 else 0.005)
+                    paced = [pid for pid in allowed if least <= price_of(pid) <= cap]
                     allowed = paced or allowed
             # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
             # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
