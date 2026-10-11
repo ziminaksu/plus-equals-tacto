@@ -532,28 +532,35 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
             if ask:
                 def price_of(pid):
                     return board["packages"][pid]["terms"].get("unit_price") or float("inf")
+                relationship = case["buyer"].get("category_goal") in ("stabilise", "secure_supply")
+                variants = [board["packages"][pid]["terms"] for pid in allowed
+                            if "data anchor" in (board["packages"][pid].get("origin") or "")]
                 if not th.last_terms:
-                    # relationship goals penalise squeezing the supplier: a shallower anchor (P02 won at 97 %)
-                    depth = 0.98 if case["buyer"].get("category_goal") in ("stabilise", "secure_supply") else 0.92
-                    # ...but not so deep that the supplier reads it as no deal (free Gemini P07: 4.59 = 80 % of
-                    # 5.70, then +0.02 steps; it sent a final 5.66 at once; the best run opened at 92 %)
-                    # window from the best runs: P07 opened at 92 %, P11 at 90 % (43.50 of 48.40); Gemini
-                    # otherwise takes the mildest allowed anchor and then crawls (P11 at 95 %: 46.50 final)
-                    floor = 0.94 if depth > 0.95 else 0.85
-                    first = [pid for pid in allowed if "data anchor" in (board["packages"][pid].get("origin") or "")
-                             and ask * floor <= price_of(pid) <= ask * depth]
-                    allowed = first or allowed
+                    # A narrow opening window instead of a free pick among ten anchors (free Gemini P07 opened at
+                    # 4.59, 5.40 and 5.57 in three runs = 0.58-0.78): 86 % and 90 % of the ask plus our own order /
+                    # current prices inside 82-92 % (best runs: P18 85 %, P07 83-92 %, P11 90 %). Relationship
+                    # goals: 94 % / 96 % plus own prices inside 94-98 %.
+                    refs = [p for p in (getattr(th.dossier, "reference_prices", {}) or {}).values() if p]
+                    if case["buyer"].get("current_unit_price"):
+                        refs.append(case["buyer"]["current_unit_price"])
+                    lo, hi, points = (0.94, 0.98, (0.94, 0.96)) if relationship else (0.82, 0.92, (0.86, 0.90))
+                    targets = sorted({round(ask * f, 2) for f in points}
+                                     | {round(p, 2) for p in refs if ask * lo <= p <= ask * hi})
+                    opening = [add_package({**v, "unit_price": t}, "data anchor: opening window")
+                               for t in targets for v in variants[:3] or [current or th.reference]]
+                    allowed = list(dict.fromkeys(pid for pid in opening if pid)) or allowed
                 else:
-                    # +1.2 % or a quarter of the gap, whichever is larger (P08: a 4.84 opening capped at
-                    # +1.2 % per step never reached the supplier's 5.3-5.5 range and it closed at 5.58, 0.38)
+                    # A concession schedule instead of free step sizes: a quarter of the gap while many moves
+                    # remain, a third later, half at the end (P11 crawled +0.04-0.09 to a final; P07 +0.01).
                     last_p = th.last_terms.get("unit_price", ask)
-                    cap = min(max(last_p * 1.012, last_p + (ask - last_p) / 4), ask - 0.01)
-                    # strictly above our last price: a repeated or lower price reads as "no move" and draws a
-                    # final offer (free Gemini P08: re-sent 4.84 plus 4.75/4.79, supplier closed at 5.38)
-                    # a visible move: at least a sixth of a large gap (P07: +0.02 steps on a 1.09 gap drew a final)
-                    least = last_p + max(0.005, (ask - last_p) / 6 if ask - last_p > last_p * 0.08 else 0.005)
-                    paced = [pid for pid in allowed if least <= price_of(pid) <= cap]
-                    allowed = paced or allowed
+                    left = moves_left(case, events)
+                    share = 0.25 if left >= 6 else 0.34 if left >= 4 else 0.5
+                    target = round(min(max(last_p + (ask - last_p) * share, last_p * 1.004), ask - 0.01), 2)
+                    step = add_package({**th.last_terms, "unit_price": target},
+                                       "scheduled step: share of the gap") if target > last_p else None
+                    # same price with another lever setting is the same step (keeps trade-offs open)
+                    near = [pid for pid in keys.values() if abs(price_of(pid) - target) <= max(0.01, target * 0.003)]
+                    allowed = list(dict.fromkeys(([step] if step else []) + near)) or allowed
             # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
             # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
             # supplier at 2376 ppm - it stood at 47.00; without a chargeback the price reached 45.50).
@@ -564,8 +571,12 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     cb, ppm = t.get("chargeback_eur_per_complaint") or 0, t.get("ppm_commitment") or 0
                     return cb == 0 or ppm * min(cb, case["buyer"].get("cost_per_defect", cb)) >= 0.25 * real_ppm * cb
                 allowed = [pid for pid in allowed if cb_ok(pid)] or allowed
-            board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
-                                                  "package_ids": allowed, "max_packages": 3}
+            # "agreed" twice in a row: pushing again only burns moves (free Gemini P07: six counters after an
+            # agreed 5.60, the supplier repeated it every time) - accept or work other suppliers
+            replies = [m.get("status") for m in events if m.get("from") != "buyer"]
+            if replies[-2:] != ["agreed", "agreed"] and allowed:
+                board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
+                                                      "package_ids": allowed, "max_packages": 3}
     # RFQ round-robin: keep bargaining with a supplier only while every other open supplier is at most one
     # message behind - each must see the best rival offer (free Gemini P05: it bargained only with one of
     # three, 0.67, while the three-way run reached 0.875). Accepting stays possible at any time.
