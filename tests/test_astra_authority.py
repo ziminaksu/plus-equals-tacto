@@ -156,7 +156,9 @@ def test_historical_alternative_survives_repetition_and_is_not_executable():
     agent.threads[sid].episodes = episodes
     board = board_for(agent, case, threads)
     assert f"{sid}:revisit_history" in board["actions"]
-    assert len([a for a in board["actions"].values() if a["kind"] == "accept"]) == 1
+    # only the live offer is ever acceptable (and not yet while the supplier is still moving, many moves left)
+    accepts = [a for a in board["actions"].values() if a["kind"] == "accept"]
+    assert len(accepts) <= 1 and all(a["supplier_id"] == sid for a in accepts)
 
 
 @pytest.mark.parametrize("corruption", ["unknown_action", "unknown_package", "empty_counter", "accept_package",

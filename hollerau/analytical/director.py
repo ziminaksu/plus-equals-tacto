@@ -608,6 +608,17 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                         if v["kind"] != "accept" or latest(threads[v["supplier_id"]]).get("status") == "final_offer"}
             board["actions"] = acts or board["actions"]
 
+    elif len(live) == 1 and not closing_only:
+        # One supplier, still open, still moving and many moves left: its last step was not its limit
+        # (gpt-6 P07: accepted 5.44 at move 3 of 10 after 5.58 -> 5.48 -> 5.44; best run closed at 5.40).
+        sid = live[0]
+        prices = [min(t["terms"].get("unit_price") or float("inf") for t in m["term_sheets"])
+                  for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
+        moving = len(prices) >= 2 and prices[-2] and (prices[-2] - prices[-1]) / prices[-2] >= 0.005
+        if (moving and latest(threads[sid]).get("status") == "open" and moves_left(case, threads[sid]) >= 5
+                and f"{sid}:counter" in board["actions"]):
+            board["actions"].pop(f"{sid}:accept", None)
+
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
     add_playbooks(board)
