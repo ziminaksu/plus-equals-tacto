@@ -29,11 +29,14 @@ class LoggedTable(RemoteTable):
         self.store, self.run, self.agent = store, run, agent
         self.case_id = None
         self.standing_ids = {}
+        self.live_ids = {}
         self.offer_terms = {}
 
     def remember_standing(self, supplier_id, events):
         sheet = standing_sheet(events)
         self.standing_ids[supplier_id] = sheet.get("term_sheet_id") if sheet else None
+        # every sheet of the latest e-mail is acceptable (alternatives included)
+        self.live_ids[supplier_id] = {x.get("term_sheet_id") for x in ((events[-1].get("term_sheets") or []) if events else [])}
         for event in events:
             for ts in event.get("term_sheets") or []:
                 if ts.get("term_sheet_id"):
@@ -78,7 +81,8 @@ class LoggedTable(RemoteTable):
         if action.get("type") == "accept":
             # The server validates the ID atomically on accept. A redundant read here
             # could itself exceed the move window; only received standing IDs are chosen.
-            if not action.get("term_sheet_id") or action["term_sheet_id"] != self.standing_ids.get(supplier_id):
+            if not action.get("term_sheet_id") or (action["term_sheet_id"] != self.standing_ids.get(supplier_id)
+                                                   and action["term_sheet_id"] not in self.live_ids.get(supplier_id, set())):
                 raise ValueError("accept requires the received server-confirmed standing offer ID")
         active = getattr(self.agent.threads.get(supplier_id), "active_plan", None)
         if active:

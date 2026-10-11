@@ -271,6 +271,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         source = source_map.get(sid, {})
         history = history_map.get(sid, [])
         current_sheet = standing_sheet(events)
+        # Several sheets in the supplier's last e-mail: the acceptable one is the cheapest valid in total cost,
+        # not simply the first (free Gemini P10: accepted 33.70 / 42 days over 31.80 / 56 days in the same final).
+        options = [x for x in latest(events).get("term_sheets") or []
+                   if x.get("term_sheet_id") and agent.valid(case, th, x["terms"])]
+        if len(options) > 1:
+            current_sheet = min(options, key=lambda x: cost_card(agent, case, th, x["terms"]).get(
+                "expected_total_eur") or float("inf"))
         current = current_sheet["terms"] if current_sheet else th.reference
         remaining = moves_left(case, events)
         supplier = {
@@ -751,8 +758,9 @@ def execute(agent, case, threads, board, selection):
     if latest(events).get("status") == "final_offer" and kind not in ("accept", "walk_away"):
         raise ValueError("cannot negotiate after supplier final_offer")
     if kind == "accept":
-        live_sheet = standing_sheet(events)
-        if not live_sheet or live_sheet["term_sheet_id"] != action["term_sheet_id"]:
+        live_sheet = next((x for x in latest(events).get("term_sheets") or []
+                           if x.get("term_sheet_id") == action["term_sheet_id"]), None)
+        if not live_sheet:
             raise ValueError("stale standing offer")
         if not agent.valid(case, th, live_sheet["terms"]):
             raise ValueError("invalid standing offer")
