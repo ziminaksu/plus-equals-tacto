@@ -234,12 +234,15 @@ class Beliefs:
 
     def learn_choice(self, event_id, chosen, alternatives):
         """A clearly echoed package is noisy evidence about relative preferences."""
-        if event_id in self.choice_seen or len(alternatives) < 2:
+        # identical sheets (e.g. our packages repeated in one e-mail) carry no preference signal and left
+        # max() empty: wave test 06:55 crashed a session in learn_choice
+        others = [t for t in alternatives if t != chosen]
+        if event_id in self.choice_seen or not others:
             return False
         self.choice_seen.add(event_id)
         for p in self.particles:
             chosen_value = self.value(chosen, p)
-            other_value = max(self.value(t, p) for t in alternatives if t != chosen)
+            other_value = max(self.value(t, p) for t in others)
             p.weight *= max(0.1, sigmoid((chosen_value - other_value) / (self.tau * 0.5))) ** 0.5
         self.normalise()
         return True
