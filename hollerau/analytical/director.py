@@ -142,9 +142,17 @@ def data_anchors(case, th, current):
     if "effective_date" in fields and opts.get("effective_date"):
         best["effective_date"] = max(opts["effective_date"])  # the current price for longer (P01: +5 months)
     months = 12 * case["buyer"]["horizon_years"]
-    if "contract_months" in fields and months in opts.get("contract_months", []):
-        best["contract_months"] = months  # cover the horizon, no more
+    long_enough = [m for m in opts.get("contract_months", []) if m and m >= months]
+    if "contract_months" in fields and long_enough:
+        # A commitment beyond the horizon neither costs nor earns us anything (arena_kit.cost._years) but is
+        # worth something to the supplier (P07 best closed at 36 months; P10 sat at 24 months and 0.67).
+        best["contract_months"] = max(long_enough)
     variants = [best]
+    need_lead = case["buyer"].get("need_lead_time_days")
+    on_time = [d for d in opts.get("lead_time_days", []) if need_lead and d <= need_lead]
+    if "lead_time_days" in fields and on_time and (best.get("lead_time_days") or 0) > max(on_time):
+        # every day late costs late_cost_per_day (P10: 56 days against a need of 42 = EUR 33,600, ~0.06)
+        variants.append({**best, "lead_time_days": max(on_time)})
     if "index_clause" in fields:
         clauses = opts.get("index_clause", [])
         if None in clauses:
@@ -153,8 +161,9 @@ def data_anchors(case, th, current):
         if banded:
             variants.append({**best, "index_clause": max(banded, key=lambda c: c.get("deadband_pct") or 0)})
     out, seen = [], set()
-    for v in variants:
-        for price in sorted(prices):
+    # prices outside, variants inside: the 24-package cap must keep every variant, not only the first
+    for price in sorted(prices, reverse=True):
+        for v in variants:
             terms = {**v, "unit_price": price}
             key = json.dumps(terms, sort_keys=True)
             if key not in seen:
