@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-11",
+  "base_commit": "6693dd8290814c6432c4a865650bb4044f4a6cac",
+  "spending": {
+    "limit_usd": 1.0,
+    "accounted_usd": 0.499877,
+    "unknown_outcome_reserve_usd": 0.0,
+    "remaining_usd": 0.500123,
+    "blocked": false
+  },
+  "capacity_rejected_starts": 1,
+  "actual_sessions_started": 2,
+  "billing_failed_attempt": {
+    "session_id": "d7b60e113642cdb0",
+    "evaluated_source_sha256": "3367322391e238a19ac9395667354b1e8998c175a1d9142a73cbf33b73463138",
+    "source_unchanged_during_session": true,
+    "successful_model_generations": 0,
+    "provider_rejections": [
+      {
+        "status": 429,
+        "code": "credit_balance_exhausted"
+      }
+    ],
+    "result": {
+      "score": 0.252113428815217,
+      "deal": true,
+      "c_open": 295173.23,
+      "c_deal": 276889.47,
+      "end_reason": null
+    },
+    "decision_authorities": [
+      "python_fallback",
+      "budget_close"
+    ]
+  },
+  "funded_attempt": {
+    "case_id": "case:P18",
+    "session_id": "3ce86a74d9247d21",
+    "evaluated_source_sha256": "ee2919944cd5d9ef371a03e50755d3f963dcf79022aefebee7882e92565cee78",
+    "source_unchanged_during_session": true,
+    "model": "gpt-6-astra",
+    "decisions": 3,
+    "successful_decision_calls": 4,
+    "billing_preflight_calls": 1,
+    "validation_corrections": 1,
+    "fallback_decisions": 0,
+    "timeouts": 0,
+    "decision_authorities": [
+      "astra",
+      "astra",
+      "astra"
+    ],
+    "result": {
+      "score": 0.4669610418692489,
+      "deal": true,
+      "c_open": 295173.23,
+      "c_deal": 261308.3,
+      "terms": {
+        "payment_days": 90,
+        "lead_time_days": 14,
+        "volume_per_year": 23700,
+        "contract_months": 36,
+        "effective_date": "2027-01-01",
+        "index_clause": {
+          "series": "AS-14404",
+          "material_share": 0.45,
+          "deadband_pct": 5.0,
+          "base_month": "2026-08"
+        },
+        "incoterm": "DAP",
+        "tooling_eur": 0.0,
+        "ppm_commitment": 70,
+        "chargeback_eur_per_complaint": 0.0,
+        "unit_price": 5.5
+      }
+    },
+    "decision_input_tokens": 31431,
+    "decision_output_tokens": 2121,
+    "call_seconds": [
+      10.885,
+      14.81,
+      12.781,
+      8.656
+    ],
+    "moves_remaining_before_accept": 8
+  },
+  "comparison": {
+    "earlier_azure_p18_score": 0.5089436358311327,
+    "improvement_demonstrated": false,
+    "caveat": "One stochastic session with multiple code/model changes; no causal quality claim."
+  },
+  "post_run_fix": "Permit an ask to repeat its identical action question_id, without changing its action, reply or terms. Different questions still fail validation. Verified by free regression, not another Arena run.",
+  "validation": {
+    "focused_checks_passed": 23,
+    "local_negotiation_simulations": 0
+  },
+  "interpretation": "Funded Astra completed without timeouts or fallback but scored below the earlier Azure run. A bookkeeping rejection triggered one paid correction that changed ask to confirm; the agent then accepted with eight moves remaining. Approximately USD 0.50 is accounted conservatively, not an invoice or remaining account balance. No further paid calls after this run.",
+  "subsequent_integration": {
+    "upstream_commit": "a8705b9d7585c63abf9eb32cd76092ed426d550d",
+    "change": "Ksu spreads selected verified arguments across emails and adds a management-approval request on the second counter. Preserved unchanged by merge.",
+    "arena_tested": false,
+    "validation": "23 focused checks rerun on the merged source."
+  }
+}

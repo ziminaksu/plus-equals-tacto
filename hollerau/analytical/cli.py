@@ -205,7 +205,19 @@ def main(argv=None):
     ap.add_argument("--primary", choices=["astra", "qwen"], default=os.environ.get("ANALYTICAL_PRIMARY", "astra"))
     ap.add_argument("--reviewer", choices=["astra", "primary"], default=os.environ.get("STRATEGIC_REVIEWER", "astra"))
     ap.add_argument("--price-pressure", type=float, default=0.0, help="experimental offer-ranking reward, 0..0.4")
+    ap.add_argument("--max-spend-usd", type=float, help="enable one-call GPT-6 mode with a shared spending cap")
+    ap.add_argument("--spend-ledger", type=Path, help="reuse this ledger across every case in the improvement round")
+    ap.add_argument("--openai-model", choices=["gpt-6-astra", "gpt-6-sol"], default="gpt-6-astra")
     args = ap.parse_args(argv)
+    if args.max_spend_usd is not None:
+        if not math.isfinite(args.max_spend_usd) or args.max_spend_usd <= 0 or not args.spend_ledger:
+            ap.error("a positive cap and --spend-ledger are both required")
+        if args.primary != "astra" or os.environ.get("ASTRA_BASE_URL") or args.offline_llm:
+            ap.error("budget mode uses direct OpenAI final decisions; remove ASTRA_BASE_URL")
+        os.environ.update(LLM_MAX_SPEND_USD=str(args.max_spend_usd), LLM_SPEND_LEDGER=str(args.spend_ledger),
+                          BUDGET_OPENAI_MODEL=args.openai_model)
+    elif args.spend_ledger:
+        ap.error("--spend-ledger requires --max-spend-usd")
     if (
         not 1 <= args.max_sessions <= 5
         or len(args.cases) > args.max_sessions
@@ -244,15 +256,32 @@ def main(argv=None):
             "price_pressure": args.price_pressure,
             "primary": args.primary,
             "reviewer": args.reviewer,
+            "spending_cap_usd": args.max_spend_usd,
+            "spending_ledger": str(args.spend_ledger) if args.spend_ledger else None,
+            "budget_model": args.openai_model if args.max_spend_usd is not None else None,
         },
     )
     router = Router(enabled=not args.offline_llm, primary=args.primary, reviewer=args.reviewer)
+    if router.spend:
+        try:
+            router.check_budget_connection()
+        except Exception:
+            store.log(args.run_id, "billing_check_failed", {"llm_calls": router.calls,
+                                                           "spending": router.spend.snapshot()})
+            router.close()
+            store.close()
+            ap.error("OpenAI billing/budget check failed; no Arena session started. Inspect the private run log.")
+        store.log(args.run_id, "billing_check", {"llm_calls": router.calls, "spending": router.spend.snapshot()})
+        router.calls = []
     client = ArenaClient(retries=0)  # never retry an ambiguous session start automatically
     available = {c["case_id"] for c in hosted(client.cases("practice"))}
     if not set(args.cases) <= available:
         ap.error("one or more cases are not hosted practice cases")
     rows = []
     for case_id in args.cases:
+        if router.spend and (router.spend.snapshot()["blocked"] or router.spend.snapshot()["remaining_usd"] <= 0):
+            print("STOP spending allowance exhausted; no new Arena session.", flush=True)
+            break
         if stop_file.exists():
             store.log(args.run_id, "batch_stopped", {"before_case": case_id,
                                                     "reason": "stop file present; no new reservation"})

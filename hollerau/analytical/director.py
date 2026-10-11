@@ -211,8 +211,8 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                  "approval-route question so the desk takes it to its pricing committee/boss, and "
                                  "keep the price where it is. Accept only after the approver has answered or a "
                                  "final offer arrives.",
-            "rfq_competition": "Several packages in one e-mail must cost us about the same (different terms, "
-                               "not a price ladder - Python drops any that cost more than 1 % above the cheapest). "
+            "rfq_competition": "Select one package normally; alternatives should trade different terms at "
+                               "comparable expected TOTAL cost, not disclose a price ladder. Every selected package is sent. "
                                "walk_away ends the WHOLE case for every supplier; with several live "
                                "suppliers it is not on the menu - simply stop answering a supplier you do not "
                                "need and close with the best one. With several suppliers, competition is the lever: cite a rival's live offer "
@@ -689,7 +689,9 @@ def normalize_selection(board, selection):
     sel = dict(selection)
     sid, kind = action["supplier_id"], action["kind"]
     ids = [p for p in dict.fromkeys(sel.get("package_ids") or []) if isinstance(p, str)]
-    sel["package_ids"] = [p for p in ids if p in action.get("package_ids", [])][:3] if kind == "counter" else []
+    # Never silently change the commercial menu. An invalid counter must be
+    # corrected by the model; dropping an option leaves its prose/plan misleading.
+    sel["package_ids"] = ids if kind == "counter" else []
     qid = sel.get("question_id") or ""
     q = board["questions"].get(qid)
     sel["question_id"] = qid if q and q["supplier_id"] == sid and kind == "counter" else ""
@@ -753,8 +755,11 @@ def validate_selection(board, selection):
     elif ids:
         raise ValueError("packages only allowed on counter")
     qid = selection["question_id"]
+    # An ask already identifies its question in the action. Repeating that exact
+    # ID is harmless; rejecting it caused a paid repair to change the strategy.
+    same_ask = action["kind"] == "ask" and qid == action.get("question_id")
     if qid and (qid not in board["questions"] or board["questions"][qid]["supplier_id"] != sid
-                or action["kind"] != "counter"):
+                or (action["kind"] != "counter" and not same_ask)):
         raise ValueError("question belongs to another supplier or action")
     evidence = selection["evidence_ids"]
     if not isinstance(evidence, list) or len(evidence) > 3 or len(set(evidence)) != len(evidence):
@@ -830,13 +835,15 @@ def execute(agent, case, threads, board, selection):
             th.asked_confirmations.add(json.dumps(offers[0], sort_keys=True))
             th.pending = {"kind": "quote_confirmation", "request": action, "event_count": len(events)}
         else:
-            # Alternatives in ONE e-mail must cost us about the same; a price ladder shows the supplier how
-            # far we go (free Gemini P05: 28.80/30.60/32.40 sent, the supplier answered 32.50).
             picked = [board["packages"][pid] for pid in selection["package_ids"]]
-            cheapest = min((p.get("direct_cost_eur") or float("inf")) for p in picked)
-            offers = [p["terms"] for p in picked
-                      if (p.get("direct_cost_eur") or float("inf")) <= cheapest * 1.01] or [picked[0]["terms"]]
+            offers = [p["terms"] for p in picked]
             claims = [board["evidence"][eid] for eid in selection["evidence_ids"]]
+            # One or two verified arguments per e-mail: each counted argument buys a step, arguments of one
+            # kind count once ("duplicate"), so the rest is kept for later moves; volume first on the opening
+            # (P07 probes: forecasts + one argument per message + management ask -> 5.40 vs 5.51 with all at once)
+            if not th.last_terms:
+                claims.sort(key=lambda c: c.get("kind") not in ("forecast", "share_of_business", "volume"))
+            claims = claims[:2]
             if not th.last_terms:  # first counter: the punctual-payment commitment rides along (P11 probe +0.08)
                 punctual = next((e for e in board["evidence"].values()
                                  if e["supplier_id"] == sid and e.get("kind") == "punctual_payment"), None)
@@ -844,6 +851,12 @@ def execute(agent, case, threads, board, selection):
                     claims = (claims + [punctual])[-3:] if len(claims) >= 3 else claims + [punctual]
             qid = selection["question_id"]
             question = board["questions"][qid]["body"] if qid else ""
+            buyer_sent = sum(1 for m in events if m.get("from") == "buyer")
+            if buyer_sent == 1 and not qid and not getattr(th, "escalated", False):
+                # the second counter asks for the decision-maker: the largest single concession in the P07 probes
+                question = ("Please take this package to your management for approval - a consolidated, "
+                            "multi-year commitment from us is a significant account for you.")
+                th.escalated = True
             # Escalating to the supplier's approver: management moved for a longer contract plus the
             # share-of-business prospect (P18 0.563) and not without it (0.509) - attach it if unused.
             if qid and board["questions"][qid]["kind"] == "approval_route":
@@ -988,7 +1001,7 @@ def decide(agent, case, threads, deadline, closing_only=False):
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
         # With several live suppliers every second counts: each unanswered thread times out after a minute
         # (Azure P05: two suppliers walked on timeouts while the proposer and final call ran in turn).
-        if budget.can_propose() and len(live_threads(threads)) == 1:
+        if budget.can_propose() and len(live_threads(threads)) == 1 and not getattr(agent.router, "spend", None):
             before = time.monotonic()
             analysis, _ = agent.interpret(case, sid, threads[sid], budget.proposer_deadline())
             availability[sid] = {"status": "unavailable" if analysis.get("fallback") else
@@ -1000,7 +1013,8 @@ def decide(agent, case, threads, deadline, closing_only=False):
         else:
             # Do not carry stale model proposals across a changed reply when skipped.
             agent.threads[sid].analyst_candidates = []
-            availability[sid] = {"status": "skipped_insufficient_budget", "budget": budget.snapshot()}
+            availability[sid] = {"status": "single_final_call" if getattr(agent.router, "spend", None)
+                                 else "skipped_insufficient_budget", "budget": budget.snapshot()}
     else:
         availability = {sid: {"status": "not_needed_closing"} for sid in availability}
     before = time.monotonic()
@@ -1008,8 +1022,8 @@ def decide(agent, case, threads, deadline, closing_only=False):
     board["model_availability"] = availability
     board["timing"] = {**timings, "board_seconds": round(time.monotonic() - before, 3),
                        "before_final": budget.snapshot()}
-    if os.environ.get("ASTRA_COMPACT") == "1" or (
-            os.environ.get("ASTRA_BASE_URL") and os.environ.get("ASTRA_COMPACT") != "0"):
+    if not getattr(agent.router, "spend", None) and (os.environ.get("ASTRA_COMPACT") == "1" or (
+            os.environ.get("ASTRA_BASE_URL") and os.environ.get("ASTRA_COMPACT") != "0")):
         board = compact_board(board)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")

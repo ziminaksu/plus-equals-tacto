@@ -29,6 +29,7 @@ from .playbook import feasible_seed
 from .preferences import extract_explicit_conditions, violated
 from .retrieval import retrieve
 from .router import Router
+from .spending import SpendLimitReached
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
@@ -825,6 +826,14 @@ class AnalyticalAgent:
             if self.final_authority:
                 return astra_decide(self, case, threads, deadline, self.closing_only)
             return self._decide(case, threads, started, deadline)
+        except SpendLimitReached:
+            # No more bargaining or paid retries once the round's cap is reserved.
+            # Close a received valid offer; label this separately from a model choice.
+            decision = closing_move(case, threads)
+            self.log("decision", {"authority": "budget_close", "action": decision,
+                                  "spending": self.router.spend.snapshot(), "llm_calls": self.router.calls})
+            self.router.calls = []
+            return decision
         except FinalDecisionUnavailable:
             if time.monotonic() >= deadline:
                 raise FinalDecisionUnavailable("Move deadline expired; no fallback sent") from None
