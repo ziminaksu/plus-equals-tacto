@@ -457,6 +457,9 @@ class Router:
                 status = getattr(getattr(exc, "response", None), "status_code", None)
                 if status not in (None, 408, 429, 500, 502, 503, 504):
                     raise
+            except (ValueError, KeyError, IndexError, TypeError) as exc:
+                # a truncated or unparsable answer from one model: try the next one (DeepSeek-V4.1 review)
+                last_exc = exc
         raise last_exc or TimeoutError("no Astra model answered in time")
 
     def _chat_once(self, base, model, system, data, remaining, role, schema, key=None):

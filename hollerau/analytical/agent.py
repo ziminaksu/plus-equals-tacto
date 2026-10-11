@@ -250,13 +250,19 @@ class AnalyticalAgent:
                                    if e.get("from") != "buyer"), {})
             safe_reply = {k: reply[k] for k in ("message_id", "from", "body", "status", "term_sheets",
                                                "standing_offer_id") if k in reply}
-            learned = learn_reply(case, th, request, safe_reply,
-                                  event_key(self.session_id, request, safe_reply),
-                                  previous_status=previous_reply.get("status"), repeats=th.repeats)
-            if learned:
-                self.log("observation", learned, sid)
-                self.log("coefficients", th.beliefs.snapshot(), sid)
-            observe_plan(self, case, sid, safe_reply, learned)
+            try:
+                learned = learn_reply(case, th, request, safe_reply,
+                                      event_key(self.session_id, request, safe_reply),
+                                      previous_status=previous_reply.get("status"), repeats=th.repeats)
+                if learned:
+                    self.log("observation", learned, sid)
+                    self.log("coefficients", th.beliefs.snapshot(), sid)
+                observe_plan(self, case, sid, safe_reply, learned)
+            except Exception as exc:
+                # learning is advisory: a failure here must not cost the move (wave test: learn_choice crash)
+                if os.environ.get("ASTRA_SAFE") != "1":
+                    raise
+                self.log("observation_failed", {"error": f"{type(exc).__name__}: {str(exc)[:200]}"}, sid)
             th.pending = None
 
     def receive_terminal(self, case, threads, sid, request, reply):
@@ -764,6 +770,46 @@ class AnalyticalAgent:
         return None
 
     def decide(self, case, threads):
+        """With ASTRA_SAFE=1 a move is never lost to an exception: any failure inside the turn (learning,
+        board, model, execution) becomes the best available fallback move, still inside the move window."""
+        if os.environ.get("ASTRA_SAFE") != "1":
+            return AnalyticalAgent._decide_turn(self, case, threads)
+        try:
+            return AnalyticalAgent._decide_turn(self, case, threads)
+        except Exception as exc:
+            deadline = self.move_deadline or float("inf")
+            if time.monotonic() >= deadline:
+                raise
+            decision = None
+            for make in (lambda: AnalyticalAgent._board_move(self, case), lambda: self.offline_move(case, threads),
+                         lambda: closing_move(case, threads)):
+                try:
+                    decision = make()
+                except Exception:
+                    decision = None
+                if decision:
+                    break
+            if not decision:
+                raise
+            try:
+                self.log("decision", {"authority": "python_fallback", "action": decision,
+                                      "reason": f"turn failed ({type(exc).__name__}: {str(exc)[:200]}); fallback",
+                                      "llm_calls": self.router.calls})
+            except Exception:
+                pass
+            self.router.calls = []
+            self.last_board = None
+            self.decision_deadline = None
+            return decision
+
+    def _board_move(self, case):
+        board = getattr(self, "last_board", None)
+        if board is None:
+            return None
+        from .director import board_fallback
+        return board_fallback(case, board)
+
+    def _decide_turn(self, case, threads):
         started = time.monotonic()
         deadline = min(started + DECISION_BUDGET_S, self.move_deadline or float("inf"))
         self.decision_deadline = deadline

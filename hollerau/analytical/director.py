@@ -898,12 +898,17 @@ def board_fallback(case, board):
             st = board["suppliers"].get(a["supplier_id"], {}).get("standing") or {}
             return st.get("expected_total_eur") or float("inf")
         best = min(accepts, key=standing_cost)
+        if not best.get("term_sheet_id"):
+            return None
         return {"supplier_id": best["supplier_id"],
                 "message": {"action": {"type": "accept", "term_sheet_id": best["term_sheet_id"]}}}
     if not counters:
         return None
     action = counters[0]
-    pids = sorted(action["package_ids"], key=lambda p: board["packages"][p]["terms"].get("unit_price") or 0)
+    pids = [p for p in action["package_ids"] if isinstance((board["packages"].get(p) or {}).get("terms"), dict)]
+    if not pids:
+        return None
+    pids.sort(key=lambda p: board["packages"][p]["terms"].get("unit_price") or 0)
     terms = board["packages"][pids[len(pids) // 2]]["terms"]
     return {"supplier_id": action["supplier_id"],
             "message": {"subject": "Re: " + case["title"],
