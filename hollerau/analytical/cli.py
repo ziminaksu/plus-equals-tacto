@@ -81,8 +81,7 @@ class LoggedTable(RemoteTable):
         if action.get("type") == "accept":
             # The server validates the ID atomically on accept. A redundant read here
             # could itself exceed the move window; only received standing IDs are chosen.
-            if not action.get("term_sheet_id") or (action["term_sheet_id"] != self.standing_ids.get(supplier_id)
-                                                   and action["term_sheet_id"] not in self.live_ids.get(supplier_id, set())):
+            if not action.get("term_sheet_id") or action["term_sheet_id"] != self.standing_ids.get(supplier_id):
                 raise ValueError("accept requires the received server-confirmed standing offer ID")
         active = getattr(self.agent.threads.get(supplier_id), "active_plan", None)
         if active:

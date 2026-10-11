@@ -266,13 +266,11 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         source = source_map.get(sid, {})
         history = history_map.get(sid, [])
         current_sheet = standing_sheet(events)
-        # Several sheets in the supplier's last e-mail: the acceptable one is the cheapest valid in total cost,
-        # not simply the first (free Gemini P10: accepted 33.70 / 42 days over 31.80 / 56 days in the same final).
-        options = [x for x in latest(events).get("term_sheets") or []
-                   if x.get("term_sheet_id") and agent.valid(case, th, x["terms"])]
-        if len(options) > 1:
-            current_sheet = min(options, key=lambda x: cost_card(agent, case, th, x["terms"]).get(
-                "expected_total_eur") or float("inf"))
+        # Only the standing sheet can be accepted: the arena refuses an alternative id with 422 "not a standing
+        # offer" (free Gemini P18 crashed on offer:70740-4-a). A cheaper alternative is countered with its own
+        # terms below, so the supplier can make it the standing offer.
+        alternatives = [x for x in (latest(events).get("term_sheets") or [])[1:]
+                        if x.get("terms") and agent.valid(case, th, x["terms"])]
         current = current_sheet["terms"] if current_sheet else th.reference
         remaining = moves_left(case, events)
         supplier = {
@@ -549,16 +547,6 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     opening = [add_package({**v, "unit_price": t}, "data anchor: opening window")
                                for t in targets for v in variants[:3] or [current or th.reference]]
                     allowed = list(dict.fromkeys(pid for pid in opening if pid)) or allowed
-                    if relationship:
-                        # With a margin penalty the cheapest opening is the one with the lowest expected TOTAL
-                        # (it includes the supplier-margin estimate), not a fixed share of the ask (free Gemini
-                        # P02: 94 % = 348.70, agreed at 349.50, relationship cost EUR 120 k, 0.19; best 361-362).
-                        def total(pid):
-                            v = board["packages"][pid].get("expected_total_eur")
-                            return v if isinstance(v, (int, float)) else float("inf")
-                        pool = [pid for pid in keys.values() if price_of(pid) <= ask * 0.99
-                                and "data anchor" in (board["packages"][pid].get("origin") or "")]
-                        allowed = sorted(pool, key=total)[:3] or allowed
                 else:
                     # A concession schedule instead of free step sizes: a quarter of the gap while many moves
                     # remain, a third later, half at the end (P11 crawled +0.04-0.09 to a final; P07 +0.01).
@@ -571,6 +559,17 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     # same price with another lever setting is the same step (keeps trade-offs open)
                     near = [pid for pid in keys.values() if abs(price_of(pid) - target) <= max(0.01, target * 0.003)]
                     allowed = list(dict.fromkeys(([step] if step else []) + near)) or allowed
+            if ask and case["buyer"].get("category_goal") in ("stabilise", "secure_supply"):
+                # With a margin penalty the best move is the package of lowest expected TOTAL cost (it includes
+                # the supplier-margin estimate), on every counter - not a share of the ask nor a schedule
+                # (free Gemini P02: 333.86 then 351.05 agreed, relationship cost EUR 124 k, 0.21; the board's
+                # cheapest total was 356.15 / 14 days / no index).
+                def total(pid):
+                    v = board["packages"][pid].get("expected_total_eur")
+                    return v if isinstance(v, (int, float)) else float("inf")
+                floor_p = (th.last_terms or {}).get("unit_price", 0)
+                pool = [pid for pid in keys.values() if floor_p < price_of(pid) < ask]
+                allowed = sorted(pool, key=total)[:3] or allowed
             # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
             # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
             # supplier at 2376 ppm - it stood at 47.00; without a chargeback the price reached 45.50).
@@ -583,6 +582,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                 allowed = [pid for pid in allowed if cb_ok(pid)] or allowed
             # "agreed" twice in a row: pushing again only burns moves (free Gemini P07: six counters after an
             # agreed 5.60, the supplier repeated it every time) - accept or work other suppliers
+            # the supplier's own cheaper alternative from its last e-mail: proposing exactly it costs nothing
+            if current_sheet and latest(events).get("status") == "open":
+                base_cost = cost_card(agent, case, th, current).get("expected_total_eur") or float("inf")
+                for alt in alternatives:
+                    if (cost_card(agent, case, th, alt["terms"]).get("expected_total_eur") or float("inf")) < base_cost:
+                        pid = add_package(complete_offer(case, alt["terms"]),
+                                          "supplier's own alternative: propose it to make it binding")
+                        if pid and pid not in allowed:
+                            allowed = allowed[:2] + [pid]
             replies = [m.get("status") for m in events if m.get("from") != "buyer"]
             if replies[-2:] != ["agreed", "agreed"] and allowed:
                 board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
@@ -776,9 +784,8 @@ def execute(agent, case, threads, board, selection):
     if latest(events).get("status") == "final_offer" and kind not in ("accept", "walk_away"):
         raise ValueError("cannot negotiate after supplier final_offer")
     if kind == "accept":
-        live_sheet = next((x for x in latest(events).get("term_sheets") or []
-                           if x.get("term_sheet_id") == action["term_sheet_id"]), None)
-        if not live_sheet:
+        live_sheet = standing_sheet(events)
+        if not live_sheet or live_sheet["term_sheet_id"] != action["term_sheet_id"]:
             raise ValueError("stale standing offer")
         if not agent.valid(case, th, live_sheet["terms"]):
             raise ValueError("invalid standing offer")
