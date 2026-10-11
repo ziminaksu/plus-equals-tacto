@@ -18,7 +18,7 @@ from .budget import TurnBudget
 from .communication import describe_complete, render_reply, reply_facts
 from .decision_record import phase, record_decision, validate_plan
 from .deliberation import add_action_consequences, economics_context, objective_scope
-from .playbook import add_playbooks, anchor_packages, feasible_seed
+from .playbook import add_playbooks, feasible_seed
 
 
 class FinalDecisionUnavailable(RuntimeError):
@@ -967,7 +967,8 @@ def decide(agent, case, threads, deadline, closing_only=False):
     board["model_availability"] = availability
     board["timing"] = {**timings, "board_seconds": round(time.monotonic() - before, 3),
                        "before_final": budget.snapshot()}
-    if os.environ.get("ASTRA_BASE_URL") or os.environ.get("ASTRA_COMPACT"):
+    if os.environ.get("ASTRA_COMPACT") == "1" or (
+            os.environ.get("ASTRA_BASE_URL") and os.environ.get("ASTRA_COMPACT") != "0"):
         board = compact_board(board)
     if not board["actions"]:
         raise FinalDecisionUnavailable("No remaining valid action")

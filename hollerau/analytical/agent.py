@@ -778,6 +778,8 @@ class AnalyticalAgent:
                 return astra_decide(self, case, threads, deadline, self.closing_only)
             return self._decide(case, threads, started, deadline)
         except FinalDecisionUnavailable:
+            if time.monotonic() >= deadline:
+                raise FinalDecisionUnavailable("Move deadline expired; no fallback sent") from None
             # Only when Astra could not be REACHED (out of credits, HTTP 429/5xx, no connection): an
             # unanswered case scores 0 (round 1: P04/P05/P07 crashed on 429 credit_balance_exhausted).
             # An invalid Astra answer or an expired move budget still sends nothing (team rule).
@@ -793,8 +795,11 @@ class AnalyticalAgent:
                 from .director import board_fallback
                 decision = board_fallback(case, board)
             decision = decision or self.offline_move(case, threads)
+            if time.monotonic() >= deadline:
+                raise FinalDecisionUnavailable("Fallback missed move deadline; not sent") from None
             self.last_board = None
-            self.log("decision", {"action": decision, "reason": "Astra unreachable; offline fallback",
+            self.log("decision", {"authority": "python_fallback", "action": decision,
+                                  "reason": "Model unavailable or invalid; offline fallback",
                                   "llm_calls": self.router.calls})
             self.router.calls = []
             return decision

@@ -12,6 +12,7 @@ import httpx
 
 from .contracts import decision_schema, decode_conditions, final_schema
 from .discovery import validate_quote_request
+from .http_deadline import bounded_post
 from .preferences import validate_conditions
 from .prompt_context import compact_context
 
@@ -460,11 +461,10 @@ class Router:
         if schema:
             instructions += "\n\nReturn exactly one JSON object that matches this JSON schema:\n" + json.dumps(schema)
         try:
-            response = self.client.post(
+            response = bounded_post(
                 f"{base}/chat/completions",
+                deadline=start + remaining, transport=self.transport,
                 headers={"Authorization": "Bearer " + key, "api-key": key},  # api-key: Azure OpenAI
-                timeout=httpx.Timeout(connect=remaining / 10, pool=remaining / 20,
-                                      write=remaining / 20, read=remaining * 0.8),
                 json={
                     "model": model,
                     "messages": [
@@ -482,7 +482,8 @@ class Router:
                 },
             )
             record["http_status"] = response.status_code
-            if response.status_code == 400 and schema and base not in self._schema_rejected:
+            if (response.status_code == 400 and schema and base not in self._schema_rejected
+                    and any(word in response.text.lower() for word in ("json_schema", "response_format"))):
                 # the provider rejected the schema format: plain JSON mode from now on, schema stays in the text
                 self._schema_rejected.add(base)
                 record["status"] = "schema_rejected"
@@ -491,6 +492,8 @@ class Router:
             response.raise_for_status()
             result = response.json()
             record["usage"] = result.get("usage", {})
+            if result["choices"][0].get("finish_reason") != "stop":
+                raise ValueError("Chat completion was not complete")
             text = result["choices"][0]["message"].get("content") or ""
             obj = decode_conditions(parse_object(text))
             record["status"] = "ok"
