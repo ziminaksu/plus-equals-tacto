@@ -805,12 +805,13 @@ class AnalyticalAgent:
             return decision
         except DecisionBudgetExpired:
             board = getattr(self, "last_board", None)
-            if self.final_authority and os.environ.get("ASTRA_SAFE") == "1" and board is not None:
+            if (self.final_authority and os.environ.get("ASTRA_SAFE") == "1" and board is not None
+                    and time.monotonic() < deadline):
                 # seconds left, no model answer: a move from the current board beats silence (wave test 06:58:
                 # P05 under load ran out of budget, nothing was sent and the runner abandoned the whole case)
                 from .director import board_fallback
                 decision = board_fallback(case, board)
-                if decision:
+                if decision and time.monotonic() < deadline:
                     self.last_board = None
                     self.log("decision", {"authority": "python_fallback", "action": decision,
                                           "reason": "move budget exhausted; board fallback",

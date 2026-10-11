@@ -450,7 +450,7 @@ class Router:
             try:
                 # the primary gets the time a reasoning model needs (gpt-5-mini: 12-15 s), keeping ~10 s for one
                 # backup; later entries share what is left in 9-second slices
-                slot = left if i == len(models) - 1 else (max(9, left - 10) if i == 0 else min(left, 9))
+                slot = left if i == len(models) - 1 else min(left, max(9, left - 10) if i == 0 else 9)
                 return self._chat_once(m_base, m_name, system, data, slot, role, schema, key=m_key)
             except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as exc:
                 last_exc = exc

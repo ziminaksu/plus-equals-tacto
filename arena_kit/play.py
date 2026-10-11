@@ -99,6 +99,7 @@ class RemoteTable:
         seen = self.__dict__.setdefault("_seen", set())
         state = self.client.session(self.session_id)
         if state.get("status") == "ended":
+            self.done = state.get("result") or {"deal": False, "end_reason": state.get("end_reason")}
             return []
         new = []
         for sid, info in (state.get("threads") or {}).items():
@@ -209,6 +210,8 @@ def play(table, case_id, agent, deadline=None):
     rejected = 0  # accepts the arena refused in a row (stale offer id)
     failures = 0  # decisions that raised in a row
     while live_threads(threads):
+        if getattr(table, "done", None) is not None:
+            return finish(table.done)
         t0 = time.monotonic()
         cap = deadline() if callable(deadline) else deadline
         if cap and time.time() > cap - max(CLOSE_BEFORE_CAP_S, slowest + ROUND_MARGIN_S):
@@ -222,6 +225,8 @@ def play(table, case_id, agent, deadline=None):
                     table.refresh(threads)
                 except ArenaError as e:
                     log.warning("%s: thread refresh failed: %s", case_id, e.detail)
+                if getattr(table, "done", None) is not None:
+                    return finish(table.done)
                 if not live_threads(threads):
                     break
             try:
@@ -237,13 +242,19 @@ def play(table, case_id, agent, deadline=None):
                             type(e).__name__, e)
                 before = sum(len(ev) for ev in threads.values())
                 for _ in range(15):
-                    time.sleep(5)
+                    if cap and time.time() >= cap:
+                        return finish(table.result())
+                    time.sleep(min(5, max(0, cap - time.time())) if cap else 5)
                     try:
                         table.refresh(threads)
                     except ArenaError:
                         pass
+                    if getattr(table, "done", None) is not None:
+                        return finish(table.done)
                     if sum(len(ev) for ev in threads.values()) > before or not live_threads(threads):
                         break
+                if sum(len(ev) for ev in threads.values()) == before and live_threads(threads):
+                    raise RuntimeError("Recovery found no new supplier state; refusing a stale retry") from e
                 if hasattr(agent, "move_deadline"):
                     agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
                 continue
@@ -282,6 +293,7 @@ def play(table, case_id, agent, deadline=None):
             return finish(reply["result"])
         if hasattr(agent, "move_deadline"):
             agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
+        rejected = 0
         threads[sid] += [{**msg, "from": "buyer"}, fetch_documents(table, reply)]
         slowest = max(slowest, time.monotonic() - t0)
         log.info("%s %s %s", sid, reply.get("status"), standing(threads[sid])[1])

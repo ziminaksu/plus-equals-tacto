@@ -80,3 +80,17 @@ def test_expired_model_error_cannot_trigger_fallback(monkeypatch):
     with pytest.raises(FinalDecisionUnavailable, match='deadline expired'):
         AnalyticalAgent.decide(agent, {'case_id': 'test'}, {})
     assert agent.decision_deadline is None
+
+
+def test_provider_slot_never_exceeds_remaining_budget(monkeypatch):
+    import hollerau.analytical.router as module
+    monkeypatch.setenv('ASTRA_MODEL', 'primary,backup')
+    router = Router(review_key='test')
+    slots = []
+    monkeypatch.setattr(module.time, 'monotonic', lambda: 10)
+    def call(*args, **kwargs):
+        slots.append(args[4])
+        return {}
+    monkeypatch.setattr(router, '_chat_once', call)
+    router._call_astra_chat('https://example.test', '', {}, 3, 'final_decision', None)
+    assert slots == [3]

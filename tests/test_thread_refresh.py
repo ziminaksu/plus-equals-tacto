@@ -30,3 +30,15 @@ def test_refresh_appends_timeout_offers_and_closures_once():
     assert len(threads["c"]) == 1
     assert len(new) == 3
     assert table.refresh(threads) == []  # nothing is appended twice
+
+
+def test_refresh_preserves_server_terminal_result():
+    class EndedClient:
+        def session(self, sid):
+            return {'status': 'ended', 'result': {'deal': True, 'score': 0.7}}
+        def thread(self, *args):
+            raise AssertionError('must not read stale threads after session end')
+    table = RemoteTable(EndedClient())
+    table.session_id = 's'
+    assert table.refresh({}) == []
+    assert table.done == {'deal': True, 'score': 0.7}

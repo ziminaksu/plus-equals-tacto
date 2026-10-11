@@ -19,6 +19,7 @@ from .communication import describe_complete, render_reply, reply_facts
 from .decision_record import phase, record_decision, validate_plan
 from .deliberation import add_action_consequences, economics_context, objective_scope
 from .playbook import add_playbooks, feasible_seed
+from .trade_menu import trade_candidates
 
 
 class FinalDecisionUnavailable(RuntimeError):
@@ -562,6 +563,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                     # same price with another lever setting is the same step (keeps trade-offs open)
                     near = [pid for pid in keys.values() if abs(price_of(pid) - target) <= max(0.01, target * 0.003)]
                     allowed = list(dict.fromkeys(([step] if step else []) + near)) or allowed
+                    if step and os.environ.get("ASTRA_TRADE_MENU") == "1":
+                        ceiling = board["packages"][step]["expected_total_eur"]
+                        trades = trade_candidates(board["packages"], sid, th.last_terms, ceiling)
+                        for pid in trades:
+                            board["packages"][pid]["strategy_option"] = "non-price exchange; supplier value uncertain"
+                        board["packages"][step]["strategy_option"] = "scheduled price concession"
+                        allowed = list(dict.fromkeys(allowed + trades))
             # A chargeback costs the supplier at its REAL defect rate but saves us only at the committed one
             # (free Gemini P11: asked EUR 300/complaint at 300 ppm = ~1.4 k EUR for us, ~11 k EUR for a
             # supplier at 2376 ppm - it stood at 47.00; without a chargeback the price reached 45.50).
@@ -926,6 +934,8 @@ def compact_board(board, keep=24):
     # were all from two suppliers, the third lost its counter action and the board offered only accepts)
     for action in board["actions"].values():
         if action.get("kind") == "counter":
+            chosen += [pid for pid in action["package_ids"]
+                       if pk[pid].get("strategy_option") and pid not in chosen]
             own = sorted(action["package_ids"], key=lambda p: pk[p]["terms"].get("unit_price") or 0)
             step = max(1, len(own) // 4)
             chosen += [pid for pid in own[::step][:4] if pid not in chosen]
