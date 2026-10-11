@@ -460,7 +460,9 @@ class Router:
                         {"type": "json_schema", "json_schema": {"name": role, "schema": schema}}
                         if schema and not self._schema_rejected else {"type": "json_object"}
                     ),
-                    "max_tokens": 4096,
+                    # reasoning models (gpt-5*, o*) take max_completion_tokens and an effort, not max_tokens
+                    **({"max_completion_tokens": 8192, "reasoning_effort": os.environ.get("ASTRA_EFFORT", "low")}
+                       if re.match(r"(gpt-5|o\d)", model) else {"max_tokens": 4096}),
                 },
             )
             record["http_status"] = response.status_code
