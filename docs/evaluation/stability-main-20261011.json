@@ -2,10 +2,10 @@
   "date": "2026-10-11",
   "policy": "ksu-stability-contract-v2",
   "base_commit": "9434b8bba2d7565ae6b9e23481b253c28f8a1670",
-  "ksu_upstream_commit": "a8705b9d7585c63abf9eb32cd76092ed426d550d",
-  "source_manifest_sha256": "92a6475dae2d138ecb6c5a10df20e87ffec6cfeaf87025071a228b3918670982",
+  "ksu_upstream_commit": "6be741d468a397d4e6db8afc4c565429df9c026a",
+  "source_manifest_sha256": "9643308bfc9755ea7f5c18e93b1e16da84ae3a33e5ae36635b618a558cd9af54",
   "validation": {
-    "full_suite_passed": 202,
+    "full_suite_passed": 204,
     "full_suite_skipped": 1,
     "skipped_reason": "Hosted Arena integration deliberately disabled; local HTTP contract integration enabled.",
     "focused_lint": "passed",
@@ -37,6 +37,14 @@
     "Earlier frozen run reports and private records remain unchanged.",
     "Current schema 2 identifies independent costs, selected confirmation package and continuation context.",
     "Call records now contain actual transport token settings; experiment metadata no longer invents one universal cap.",
-    "Entire checkpoint contains authentic scoped Codex events with secrets and hidden benchmark fields redacted."
-  ]
+    "Entire checkpoint contains authentic scoped Codex events with secrets and hidden benchmark fields redacted.",
+    "Ksu pushed 6be741d during verification. Contract/note arguments and opening priority were integrated; a blanket multi-year commitment was replaced by the proposed terms. Two integration regressions added."
+  ],
+  "upstream_reported_result": {
+    "commit": "6be741d468a397d4e6db8afc4c565429df9c026a",
+    "case": "P18",
+    "score": 0.721,
+    "source": "Ksu commit message",
+    "independently_verified": false
+  }
 }

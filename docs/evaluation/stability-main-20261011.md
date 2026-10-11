@@ -1,9 +1,15 @@
 # Stability and record consistency — 11 October 2026
 
-Policy: `ksu-stability-contract-v2`. Built on Ksu's `a8705b9` and the capped
-GPT-6 branch at `9434b8b`. Runtime source fingerprint: `92a6475dae2d138ecb6c5a10df20e87ffec6cfeaf87025071a228b3918670982`.
+Policy: `ksu-stability-contract-v2`. Built on Ksu's latest `6be741d` and the capped
+GPT-6 branch at `9434b8b`. Runtime source fingerprint: `9643308bfc9755ea7f5c18e93b1e16da84ae3a33e5ae36635b618a558cd9af54`.
 
 ## What changed
+
+Ksu pushed `6be741d` during final verification. The merged code preserves her new
+contract-index, calculation-walkthrough, volume-focus and pricing-committee claims
+and opening priority. Two added checks cover source IDs and faithful rendering.
+The committee request refers to the proposed terms rather than promising a
+multi-year commitment regardless of the actual package.
 
 - Supplier refreshes share a six-second total deadline, including rate limiting.
   Changed threads refresh concurrently. Closed suppliers are removed immediately;
@@ -28,7 +34,7 @@ GPT-6 branch at `9434b8b`. Runtime source fingerprint: `92a6475dae2d138ecb6c5a10
 
 ## Verification
 
-**202 passed, 1 skipped** in the full local suite. The single skip is the deliberately
+**204 passed, 1 skipped** in the full local suite. The single skip is the deliberately
 unconfigured hosted Arena test. The local HTTP contract simulator is included; its
 results establish protocol behavior, not negotiation quality. Focused lint, Python
 compilation and whitespace checks passed. GitHub runs the same full suite; merging
@@ -46,7 +52,8 @@ paid model request was used for this revision.
 | [Full Azure batch](azure-all-cases-20261011.md) | 0.624269 mean; 9/10 deals | Includes the P05 no-deal |
 | Previous Azure P18 | 0.508944 | Separate exploratory attempt |
 | [Funded GPT-6 P18](budget-recovery-20261011.md) | 0.466961 | No demonstrated improvement |
-| This revision | No live score | Free engineering verification only |
+| Ksu’s later P18 report in `6be741d` | 0.721 | Contributor-reported scripted probe; not independently rerun here |
+| This combined revision | No live score | Free engineering verification only |
 
 The unchanged shared $1 ledger accounts for **$0.499877**, leaving **$0.500123**
 of the authorized improvement allowance, with no unknown-outcome reservation.

@@ -1,13 +1,16 @@
 # How the negotiation system works
 
 **Current policy:** `ksu-stability-contract-v2`, based on Ksu's argument pacing,
-commercial concessions and management escalation. The current changes are checked
+commercial concessions, management escalation and the contract/note evidence added
+in `6be741d`. The current changes are checked
 with automated contract tests, not a new paid Arena batch.
 
 **Measured evidence:** the preceding ten-case Azure batch averaged **0.624269**,
 with nine deals and one P05 no-deal. The subsequent capped GPT-6 P18 run scored
 **0.466961**. These are separate code/configuration snapshots; neither measures
-this revision. The README's **0.808 historical best mean** combines different
+this revision. Ksu subsequently reported **0.721 on P18** in commit `6be741d`;
+we integrated that evidence path without rerunning or independently verifying
+the score. The README's **0.808 historical best mean** combines different
 versions and attempts. See [Azure results](evaluation/azure-all-cases-20261011.md),
 [capped GPT-6 results](evaluation/budget-recovery-20261011.md), and
 [this revision's verification](evaluation/stability-main-20261011.md).

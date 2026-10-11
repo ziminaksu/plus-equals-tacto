@@ -233,3 +233,36 @@ def test_missed_move_does_not_pair_new_id_with_previous_timeout_terms():
     table.session_id = 's'
     result = table.missed('a', ArenaError(409, 'move expired'))
     assert result['term_sheets'] == [] and result['state_uncertain']
+
+
+def test_new_ksu_contract_priority_preserves_both_approved_claims():
+    agent, case, threads, sid = setup(reply=False)
+    board = board_for(agent, case, threads)
+    board['evidence'] = {
+        'volume': {'supplier_id': sid, 'kind': 'forecast', 'refs': [], 'text': 'Forecast argument.'},
+        'contract': {'supplier_id': sid, 'kind': 'contract_index', 'refs': [], 'text': 'Contract argument.'}}
+    pid = board['actions'][f'{sid}:counter']['package_ids'][0]
+    choice = selection(f'{sid}:counter', [pid], evidence=['volume', 'contract'])
+    message = execute(agent, case, threads, board, choice)['message']
+    assert message['body'].index('Contract argument.') < message['body'].index('Forecast argument.')
+    assert message['term_sheets'][0]['terms'] == board['packages'][pid]['terms']
+
+
+def test_new_ksu_contract_and_note_claims_keep_their_source_ids():
+    from hollerau.intel import build
+    notes = {'doc:calculation': 'The owner offered to walk through our calculation of hourly rates and material.',
+             'doc:volume': 'Our sales director says we focus on customers with volume.',
+             'doc:committee': 'The key account manager explained that larger changes need the pricing committee.'}
+    facts = {k: {} for k in notes}
+    facts['ctr:example#3.2'] = {'supplier': 'sup:test', 'type': 'index', 'series': 'PPI-EXAMPLE', 'material_share': 0.8}
+    def query(sql, params):
+        return ([{'id': k, 'date': '2026-10-10', 'kind': 'meeting_note'} for k in notes]
+                if 'FROM documents' in sql else [])
+    package = SimpleNamespace(facts=facts, db=True, query=query, document=lambda k: notes[k])
+    dossier = build({'buyer': {}}, 'sup:test', package)
+    claims = {c.kind: c for c in dossier.claims}
+    assert claims['contract_index'].refs == ['ctr:example#3.2']
+    assert claims['calculation_offer'].refs == ['doc:calculation']
+    assert claims['volume_focus'].refs == ['doc:volume']
+    assert claims['approval_threshold'].refs == ['doc:committee']
+    assert 'multi-year commitment' not in claims['approval_threshold'].sentence

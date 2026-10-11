@@ -12,6 +12,7 @@ where the category goal asks for it, the cost of squeezing a supplier below a su
 | Historical best per case (reported, mixed versions) | **0.808** mean over 10 cases; not a matched evaluation of current code |
 | Latest recorded full Azure batch | **0.624269** mean, **9/10 deals**; P05 no deal ([record](docs/evaluation/azure-all-cases-20261011.md)) |
 | Latest funded GPT-6 P18 | **0.466961**, below prior Azure P18 **0.508944**; **$0.499877** conservative whole-round spend ([record](docs/evaluation/budget-recovery-20261011.md)) |
+| Ksu’s newer P18 result (reported in `6be741d`) | **0.721**; contract/note evidence integrated, not independently rerun here |
 | Decision model | Azure launcher: **gpt-5-mini**, configured backups; capped OpenAI launcher: **gpt-6-astra**, no provider fallback |
 | Live Final launcher | `./tools/final_azure.sh` – up to 10 parallel sessions; Azure costs are separate from the OpenAI spending ledger |
 
@@ -65,7 +66,7 @@ The runner bounds recovery and records failures explicitly. It cannot guarantee 
 
 ## Results
 
-Historical best practice scores reported by the team across different runs and versions
+Historical best practice snapshot reported by the team before `6be741d`, across different runs and versions
 (score = share of possible cost improvement captured, 1.0 = arena optimum):
 
 | P01 | P02 | P03 | P04 | P05 | P07 | P08 | P10 | P11 | P18 | **Mean** |

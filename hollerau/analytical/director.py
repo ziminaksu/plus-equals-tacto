@@ -865,7 +865,9 @@ def _execute(agent, case, threads, board, selection):
             # kind count once ("duplicate"), so the rest is kept for later moves; volume first on the opening
             # (P07 probes: forecasts + one argument per message + management ask -> 5.40 vs 5.51 with all at once)
             if not th.last_terms:
-                claims.sort(key=lambda c: c.get("kind") not in ("forecast", "share_of_business", "volume"))
+                first = ("contract_index", "price_already_raised", "index_peak", "calculation_offer",
+                         "forecast", "share_of_business", "volume", "volume_focus")
+                claims.sort(key=lambda c: first.index(c.get("kind")) if c.get("kind") in first else len(first))
             # The schema/validator limits selection to two before approval. Never
             # silently discard a selected argument after the prose has been written.
             if not th.last_terms:  # first counter: the punctual-payment commitment rides along (P11 probe +0.08)
