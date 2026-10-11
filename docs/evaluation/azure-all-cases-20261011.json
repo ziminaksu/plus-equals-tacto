@@ -1,0 +1,1787 @@
+{
+  "experiment": {
+    "commit": "80c3f6d0b20b7821ffbf8f6bca16fbc1fb31a6a0",
+    "source_sha256": "27a5debeb464e0c9e31cc0f45a19a0cc12c5bd40a11de1517d17e436cd81c481",
+    "cases": [
+      "case:P01",
+      "case:P02",
+      "case:P03",
+      "case:P04",
+      "case:P05",
+      "case:P07",
+      "case:P08",
+      "case:P10",
+      "case:P11",
+      "case:P18"
+    ],
+    "max_sessions": 10,
+    "parallel": 2,
+    "deployment": "gpt-5-mini",
+    "fallback_providers": false,
+    "trade_menu": true,
+    "initial_memory_sha256": "f512936b55a267d8dbe326362ef60350c689acfe6351ea75ab9a09cf6108cdea",
+    "started_at": 1791697213.665555,
+    "policy": "One fresh start per case, no replacements. Stop launching on source change, credential failure or no successful final model calls in a finished case."
+  },
+  "completion": {
+    "results": [
+      {
+        "case": "case:P01",
+        "exit_code": 0,
+        "finished_at": 1791697414.604736
+      },
+      {
+        "case": "case:P02",
+        "exit_code": 0,
+        "finished_at": 1791697424.105536
+      },
+      {
+        "case": "case:P03",
+        "exit_code": 0,
+        "finished_at": 1791697637.297663
+      },
+      {
+        "case": "case:P04",
+        "exit_code": 0,
+        "finished_at": 1791697524.232212
+      },
+      {
+        "case": "case:P05",
+        "exit_code": 0,
+        "finished_at": 1791697817.545537
+      },
+      {
+        "case": "case:P07",
+        "exit_code": 0,
+        "finished_at": 1791697849.506148
+      },
+      {
+        "case": "case:P08",
+        "exit_code": 0,
+        "finished_at": 1791698010.458213
+      },
+      {
+        "case": "case:P10",
+        "exit_code": 0,
+        "finished_at": 1791697949.817492
+      },
+      {
+        "case": "case:P11",
+        "exit_code": 0,
+        "finished_at": 1791698203.534991
+      },
+      {
+        "case": "case:P18",
+        "exit_code": 0,
+        "finished_at": 1791698223.736786
+      }
+    ],
+    "source_unchanged": true,
+    "finished_at": 1791698223.932191
+  },
+  "aggregate": {
+    "attempts": 10,
+    "mean_score_including_no_deals": 0.624268882474627,
+    "valid_deals": 9,
+    "decisions": 49,
+    "fallback_decisions": 1,
+    "logged_model_calls": 86,
+    "failed_model_calls": 5,
+    "failure_roles": {
+      "negotiator": 4,
+      "final_decision": 1
+    },
+    "reported_tokens": 1952419,
+    "decisions_with_packages_removed": 14
+  },
+  "results": {
+    "P01": {
+      "status": "completed",
+      "session_id": "7b5e8e83d0ab3539",
+      "score": 0.7480944091667776,
+      "deal": true,
+      "buyer_cost_eur": 1111165.32,
+      "decisions": 5,
+      "fallbacks": 0,
+      "calls": 9,
+      "failed_calls": 1,
+      "selected_trades": [],
+      "boards_with_trades": 1,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.7480944091667776,
+        "deal": true,
+        "terms": {
+          "payment_days": 14,
+          "lead_time_days": 42,
+          "volume_per_year": 8150,
+          "contract_months": 12,
+          "effective_date": "2027-04-01",
+          "index_clause": null,
+          "incoterm": "FCA",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 900,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 137.3
+        },
+        "cost_breakdown": {
+          "price": 1082682.4,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 11067.42,
+          "freight": 15485.0,
+          "late_delivery": 0.0,
+          "quality": 1584.36,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 346.15
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 16.2,
+          "usage": {
+            "completion_tokens": 2033,
+            "prompt_tokens": 11451,
+            "total_tokens": 13484
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 15.515,
+          "usage": {
+            "completion_tokens": 1557,
+            "prompt_tokens": 28033,
+            "total_tokens": 29590
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.339,
+          "usage": {
+            "completion_tokens": 1447,
+            "prompt_tokens": 12057,
+            "total_tokens": 13504
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.689,
+          "usage": {
+            "completion_tokens": 1354,
+            "prompt_tokens": 30331,
+            "total_tokens": 31685
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.334,
+          "usage": {
+            "completion_tokens": 1846,
+            "prompt_tokens": 12386,
+            "total_tokens": 14232
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.691,
+          "usage": {
+            "completion_tokens": 1411,
+            "prompt_tokens": 30734,
+            "total_tokens": 32145
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ReadTimeout",
+          "http_status": null,
+          "seconds": 16.939,
+          "usage": {}
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.297,
+          "usage": {
+            "completion_tokens": 1761,
+            "prompt_tokens": 30705,
+            "total_tokens": 32466
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 8.275,
+          "usage": {
+            "completion_tokens": 915,
+            "prompt_tokens": 16083,
+            "total_tokens": 16998
+          }
+        }
+      ],
+      "all_logged_call_count": 9,
+      "all_logged_failed_calls": 1,
+      "decisions_with_packages_removed": 0,
+      "case_type": "price_increase",
+      "category_goal": "stabilise"
+    },
+    "P02": {
+      "status": "completed",
+      "session_id": "b13901d7dd4cfc27",
+      "score": 0.6301347906297836,
+      "deal": true,
+      "buyer_cost_eur": 2253028.44,
+      "decisions": 6,
+      "fallbacks": 0,
+      "calls": 12,
+      "failed_calls": 1,
+      "selected_trades": [],
+      "boards_with_trades": 0,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.6301347906297836,
+        "deal": true,
+        "terms": {
+          "payment_days": 45,
+          "lead_time_days": 35,
+          "volume_per_year": 6110,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "CU-NOTATION",
+            "material_share": 0.2,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 250,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 356.12
+        },
+        "cost_breakdown": {
+          "price": 2175893.2,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 7252.98,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 1191.45,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 17407.15,
+          "relationship": 51283.66
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.022,
+          "usage": {
+            "completion_tokens": 1555,
+            "prompt_tokens": 15014,
+            "total_tokens": 16569
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.215,
+          "usage": {
+            "completion_tokens": 1505,
+            "prompt_tokens": 27980,
+            "total_tokens": 29485
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ReadTimeout",
+          "http_status": null,
+          "seconds": 16.744,
+          "usage": {}
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.67,
+          "usage": {
+            "completion_tokens": 1508,
+            "prompt_tokens": 30547,
+            "total_tokens": 32055
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.524,
+          "usage": {
+            "completion_tokens": 1761,
+            "prompt_tokens": 15883,
+            "total_tokens": 17644
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.208,
+          "usage": {
+            "completion_tokens": 1392,
+            "prompt_tokens": 30807,
+            "total_tokens": 32199
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.15,
+          "usage": {
+            "completion_tokens": 1797,
+            "prompt_tokens": 15629,
+            "total_tokens": 17426
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.694,
+          "usage": {
+            "completion_tokens": 1361,
+            "prompt_tokens": 30280,
+            "total_tokens": 31641
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.037,
+          "usage": {
+            "completion_tokens": 1627,
+            "prompt_tokens": 15615,
+            "total_tokens": 17242
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 15.522,
+          "usage": {
+            "completion_tokens": 1367,
+            "prompt_tokens": 29763,
+            "total_tokens": 31130
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.992,
+          "usage": {
+            "completion_tokens": 1554,
+            "prompt_tokens": 15796,
+            "total_tokens": 17350
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.493,
+          "usage": {
+            "completion_tokens": 870,
+            "prompt_tokens": 30018,
+            "total_tokens": 30888
+          }
+        }
+      ],
+      "all_logged_call_count": 12,
+      "all_logged_failed_calls": 1,
+      "decisions_with_packages_removed": 3,
+      "case_type": "price_increase",
+      "category_goal": "stabilise"
+    },
+    "P03": {
+      "status": "completed",
+      "session_id": "108f8e254206e12d",
+      "score": 0.9503026231849457,
+      "deal": true,
+      "buyer_cost_eur": 3925804.58,
+      "decisions": 5,
+      "fallbacks": 0,
+      "calls": 10,
+      "failed_calls": 0,
+      "selected_trades": [
+        {
+          "unit_price": 420.68,
+          "payment_days": 60,
+          "contract_months": 36,
+          "volume_per_year": 4580
+        }
+      ],
+      "boards_with_trades": 1,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.9503026231849457,
+        "deal": true,
+        "terms": {
+          "payment_days": 90,
+          "lead_time_days": 49,
+          "volume_per_year": 4580,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 350,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 430.96
+        },
+        "cost_breakdown": {
+          "price": 3947593.6,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": -26317.29,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 2000.54,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 2527.73
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.662,
+          "usage": {
+            "completion_tokens": 2035,
+            "prompt_tokens": 13628,
+            "total_tokens": 15663
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.9,
+          "usage": {
+            "completion_tokens": 1352,
+            "prompt_tokens": 27680,
+            "total_tokens": 29032
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.202,
+          "usage": {
+            "completion_tokens": 1631,
+            "prompt_tokens": 13961,
+            "total_tokens": 15592
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.21,
+          "usage": {
+            "completion_tokens": 1518,
+            "prompt_tokens": 29394,
+            "total_tokens": 30912
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.674,
+          "usage": {
+            "completion_tokens": 1544,
+            "prompt_tokens": 14294,
+            "total_tokens": 15838
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.254,
+          "usage": {
+            "completion_tokens": 1377,
+            "prompt_tokens": 30240,
+            "total_tokens": 31617
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.952,
+          "usage": {
+            "completion_tokens": 1362,
+            "prompt_tokens": 31117,
+            "total_tokens": 32479
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.459,
+          "usage": {
+            "completion_tokens": 1321,
+            "prompt_tokens": 15224,
+            "total_tokens": 16545
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 18.575,
+          "usage": {
+            "completion_tokens": 1386,
+            "prompt_tokens": 31189,
+            "total_tokens": 32575
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.637,
+          "usage": {
+            "completion_tokens": 968,
+            "prompt_tokens": 16383,
+            "total_tokens": 17351
+          }
+        }
+      ],
+      "all_logged_call_count": 10,
+      "all_logged_failed_calls": 0,
+      "decisions_with_packages_removed": 2,
+      "case_type": "renewal",
+      "category_goal": "stabilise"
+    },
+    "P04": {
+      "status": "completed",
+      "session_id": "a7a1a2216dfcacbf",
+      "score": 0.8098066042011054,
+      "deal": true,
+      "buyer_cost_eur": 196970.0,
+      "decisions": 3,
+      "fallbacks": 0,
+      "calls": 5,
+      "failed_calls": 0,
+      "selected_trades": [
+        {
+          "unit_price": 4.27,
+          "payment_days": 60,
+          "contract_months": 36
+        }
+      ],
+      "boards_with_trades": 1,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.8098066042011054,
+        "deal": true,
+        "terms": {
+          "payment_days": 60,
+          "lead_time_days": 7,
+          "volume_per_year": 20000,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 150,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 4.91
+        },
+        "cost_breakdown": {
+          "price": 196400.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 0.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 570.0,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.957,
+          "usage": {
+            "completion_tokens": 1823,
+            "prompt_tokens": 9423,
+            "total_tokens": 11246
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.824,
+          "usage": {
+            "completion_tokens": 1244,
+            "prompt_tokens": 25860,
+            "total_tokens": 27104
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.557,
+          "usage": {
+            "completion_tokens": 1624,
+            "prompt_tokens": 9846,
+            "total_tokens": 11470
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.581,
+          "usage": {
+            "completion_tokens": 1374,
+            "prompt_tokens": 27562,
+            "total_tokens": 28936
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.795,
+          "usage": {
+            "completion_tokens": 988,
+            "prompt_tokens": 14671,
+            "total_tokens": 15659
+          }
+        }
+      ],
+      "all_logged_call_count": 5,
+      "all_logged_failed_calls": 0,
+      "decisions_with_packages_removed": 1,
+      "case_type": "renewal",
+      "category_goal": "routine"
+    },
+    "P05": {
+      "status": "completed",
+      "session_id": "6b18000ef6ffaafd",
+      "score": 0.0,
+      "deal": false,
+      "buyer_cost_eur": null,
+      "decisions": 7,
+      "fallbacks": 1,
+      "calls": 7,
+      "failed_calls": 1,
+      "selected_trades": [
+        {
+          "unit_price": 27.09,
+          "payment_days": 60,
+          "lead_time_days": 28
+        }
+      ],
+      "boards_with_trades": 1,
+      "final_decision_failures": 1,
+      "result": {
+        "score": 0.0,
+        "deal": false,
+        "terms": null,
+        "cost_breakdown": null,
+        "must_haves_ok": null
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 19.224,
+          "usage": {
+            "completion_tokens": 1370,
+            "prompt_tokens": 39005,
+            "total_tokens": 40375
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.929,
+          "usage": {
+            "completion_tokens": 1467,
+            "prompt_tokens": 40506,
+            "total_tokens": 41973
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.645,
+          "usage": {
+            "completion_tokens": 1220,
+            "prompt_tokens": 41825,
+            "total_tokens": 43045
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ReadTimeout",
+          "http_status": null,
+          "seconds": 3.359,
+          "usage": {}
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.297,
+          "usage": {
+            "completion_tokens": 1059,
+            "prompt_tokens": 43660,
+            "total_tokens": 44719
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 9.072,
+          "usage": {
+            "completion_tokens": 799,
+            "prompt_tokens": 22759,
+            "total_tokens": 23558
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 9.241,
+          "usage": {
+            "completion_tokens": 1049,
+            "prompt_tokens": 14426,
+            "total_tokens": 15475
+          }
+        }
+      ],
+      "all_logged_call_count": 7,
+      "all_logged_failed_calls": 1,
+      "decisions_with_packages_removed": 1,
+      "case_type": "rfq",
+      "category_goal": "leverage"
+    },
+    "P07": {
+      "status": "completed",
+      "session_id": "2a69cdcad5b34543",
+      "score": 0.6591491003357707,
+      "deal": true,
+      "buyer_cost_eur": 330526.8,
+      "decisions": 5,
+      "fallbacks": 0,
+      "calls": 10,
+      "failed_calls": 1,
+      "selected_trades": [
+        {
+          "unit_price": 4.94,
+          "payment_days": 60,
+          "contract_months": 36
+        },
+        {
+          "unit_price": 4.94,
+          "payment_days": 45,
+          "contract_months": 36
+        }
+      ],
+      "boards_with_trades": 3,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.6591491003357707,
+        "deal": true,
+        "terms": {
+          "payment_days": 45,
+          "lead_time_days": 5,
+          "volume_per_year": 30000,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 80,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.49
+        },
+        "cost_breakdown": {
+          "price": 329400.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 1098.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 28.8,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.947,
+          "usage": {
+            "completion_tokens": 1601,
+            "prompt_tokens": 13769,
+            "total_tokens": 15370
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.037,
+          "usage": {
+            "completion_tokens": 1614,
+            "prompt_tokens": 28767,
+            "total_tokens": 30381
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.647,
+          "usage": {
+            "completion_tokens": 1214,
+            "prompt_tokens": 29610,
+            "total_tokens": 30824
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ReadTimeout",
+          "http_status": null,
+          "seconds": 17.002,
+          "usage": {}
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.161,
+          "usage": {
+            "completion_tokens": 1293,
+            "prompt_tokens": 30634,
+            "total_tokens": 31927
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.644,
+          "usage": {
+            "completion_tokens": 1509,
+            "prompt_tokens": 14265,
+            "total_tokens": 15774
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.554,
+          "usage": {
+            "completion_tokens": 1412,
+            "prompt_tokens": 30969,
+            "total_tokens": 32381
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.256,
+          "usage": {
+            "completion_tokens": 1787,
+            "prompt_tokens": 14291,
+            "total_tokens": 16078
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.075,
+          "usage": {
+            "completion_tokens": 1579,
+            "prompt_tokens": 31041,
+            "total_tokens": 32620
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.55,
+          "usage": {
+            "completion_tokens": 848,
+            "prompt_tokens": 17696,
+            "total_tokens": 18544
+          }
+        }
+      ],
+      "all_logged_call_count": 10,
+      "all_logged_failed_calls": 1,
+      "decisions_with_packages_removed": 2,
+      "case_type": "bundling",
+      "category_goal": "routine"
+    },
+    "P08": {
+      "status": "completed",
+      "session_id": "eb1d17b130481bb2",
+      "score": 0.648288125017976,
+      "deal": true,
+      "buyer_cost_eur": 1022062.18,
+      "decisions": 4,
+      "fallbacks": 0,
+      "calls": 7,
+      "failed_calls": 1,
+      "selected_trades": [
+        {
+          "unit_price": 5.3,
+          "index_clause": null,
+          "payment_days": 60,
+          "contract_months": 36
+        }
+      ],
+      "boards_with_trades": 1,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.648288125017976,
+        "deal": true,
+        "terms": {
+          "payment_days": 90,
+          "lead_time_days": 10,
+          "volume_per_year": 94800,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 0.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 50,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.26
+        },
+        "cost_breakdown": {
+          "price": 997296.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": -6648.64,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 26926.99,
+          "index_risk": 4487.83,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 15.13,
+          "usage": {
+            "completion_tokens": 2135,
+            "prompt_tokens": 14427,
+            "total_tokens": 16562
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.88,
+          "usage": {
+            "completion_tokens": 1249,
+            "prompt_tokens": 27708,
+            "total_tokens": 28957
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.931,
+          "usage": {
+            "completion_tokens": 1863,
+            "prompt_tokens": 15187,
+            "total_tokens": 17050
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.826,
+          "usage": {
+            "completion_tokens": 1369,
+            "prompt_tokens": 30435,
+            "total_tokens": 31804
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ReadTimeout",
+          "http_status": null,
+          "seconds": 17.002,
+          "usage": {}
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 22.844,
+          "usage": {
+            "completion_tokens": 1684,
+            "prompt_tokens": 30996,
+            "total_tokens": 32680
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 7.508,
+          "usage": {
+            "completion_tokens": 805,
+            "prompt_tokens": 17481,
+            "total_tokens": 18286
+          }
+        }
+      ],
+      "all_logged_call_count": 7,
+      "all_logged_failed_calls": 1,
+      "decisions_with_packages_removed": 2,
+      "case_type": "raw_material",
+      "category_goal": "leverage"
+    },
+    "P10": {
+      "status": "completed",
+      "session_id": "d10a0b7e2e827650",
+      "score": 0.5780733017301243,
+      "deal": true,
+      "buyer_cost_eur": 1583587.2,
+      "decisions": 3,
+      "fallbacks": 0,
+      "calls": 5,
+      "failed_calls": 0,
+      "selected_trades": [],
+      "boards_with_trades": 0,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.5780733017301243,
+        "deal": true,
+        "terms": {
+          "payment_days": 30,
+          "lead_time_days": 42,
+          "volume_per_year": 23400,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 300,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 33.5
+        },
+        "cost_breakdown": {
+          "price": 1567800.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 10452.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 5335.2,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.201,
+          "usage": {
+            "completion_tokens": 1535,
+            "prompt_tokens": 11713,
+            "total_tokens": 13248
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.256,
+          "usage": {
+            "completion_tokens": 1499,
+            "prompt_tokens": 27176,
+            "total_tokens": 28675
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.338,
+          "usage": {
+            "completion_tokens": 1301,
+            "prompt_tokens": 11995,
+            "total_tokens": 13296
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.765,
+          "usage": {
+            "completion_tokens": 1111,
+            "prompt_tokens": 29632,
+            "total_tokens": 30743
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 7.944,
+          "usage": {
+            "completion_tokens": 1040,
+            "prompt_tokens": 15592,
+            "total_tokens": 16632
+          }
+        }
+      ],
+      "all_logged_call_count": 5,
+      "all_logged_failed_calls": 0,
+      "decisions_with_packages_removed": 2,
+      "case_type": "capacity",
+      "category_goal": "secure_supply"
+    },
+    "P11": {
+      "status": "completed",
+      "session_id": "c81b1a08618d1de0",
+      "score": 0.7098962346486538,
+      "deal": true,
+      "buyer_cost_eur": 750082.5,
+      "decisions": 6,
+      "fallbacks": 0,
+      "calls": 12,
+      "failed_calls": 0,
+      "selected_trades": [],
+      "boards_with_trades": 0,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.7098962346486538,
+        "deal": true,
+        "terms": {
+          "payment_days": 60,
+          "lead_time_days": 56,
+          "volume_per_year": 15900,
+          "contract_months": 12,
+          "effective_date": "2027-01-01",
+          "index_clause": null,
+          "incoterm": "FCA",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 300,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 45.5
+        },
+        "cost_breakdown": {
+          "price": 723450.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 0.0,
+          "freight": 24486.0,
+          "late_delivery": 0.0,
+          "quality": 2146.5,
+          "tooling": 0.0,
+          "index_clause": 0.0,
+          "index_risk": 0.0,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.676,
+          "usage": {
+            "completion_tokens": 1544,
+            "prompt_tokens": 11260,
+            "total_tokens": 12804
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 11.097,
+          "usage": {
+            "completion_tokens": 1226,
+            "prompt_tokens": 26077,
+            "total_tokens": 27303
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.071,
+          "usage": {
+            "completion_tokens": 1305,
+            "prompt_tokens": 26842,
+            "total_tokens": 28147
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 9.463,
+          "usage": {
+            "completion_tokens": 1230,
+            "prompt_tokens": 11524,
+            "total_tokens": 12754
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.187,
+          "usage": {
+            "completion_tokens": 1578,
+            "prompt_tokens": 28453,
+            "total_tokens": 30031
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 9.29,
+          "usage": {
+            "completion_tokens": 1223,
+            "prompt_tokens": 12315,
+            "total_tokens": 13538
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.227,
+          "usage": {
+            "completion_tokens": 1526,
+            "prompt_tokens": 29737,
+            "total_tokens": 31263
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 8.345,
+          "usage": {
+            "completion_tokens": 1028,
+            "prompt_tokens": 12668,
+            "total_tokens": 13696
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.107,
+          "usage": {
+            "completion_tokens": 1601,
+            "prompt_tokens": 30571,
+            "total_tokens": 32172
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.308,
+          "usage": {
+            "completion_tokens": 1379,
+            "prompt_tokens": 12434,
+            "total_tokens": 13813
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.323,
+          "usage": {
+            "completion_tokens": 1265,
+            "prompt_tokens": 30307,
+            "total_tokens": 31572
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.436,
+          "usage": {
+            "completion_tokens": 1045,
+            "prompt_tokens": 16070,
+            "total_tokens": 17115
+          }
+        }
+      ],
+      "all_logged_call_count": 12,
+      "all_logged_failed_calls": 0,
+      "decisions_with_packages_removed": 0,
+      "case_type": "quality",
+      "category_goal": "quality_first"
+    },
+    "P18": {
+      "status": "completed",
+      "session_id": "8fdb1a41c5582a0e",
+      "score": 0.5089436358311327,
+      "deal": true,
+      "buyer_cost_eur": 258263.64,
+      "decisions": 5,
+      "fallbacks": 0,
+      "calls": 9,
+      "failed_calls": 0,
+      "selected_trades": [
+        {
+          "unit_price": 5.25,
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5,
+            "base_month": "2026-08"
+          },
+          "payment_days": 60,
+          "contract_months": 36
+        },
+        {
+          "unit_price": 5.25,
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5,
+            "base_month": "2026-08"
+          },
+          "payment_days": 45,
+          "contract_months": 36
+        },
+        {
+          "unit_price": 5.25,
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5,
+            "base_month": "2026-08"
+          },
+          "payment_days": 30,
+          "contract_months": 36
+        }
+      ],
+      "boards_with_trades": 3,
+      "final_decision_failures": 0,
+      "result": {
+        "score": 0.5089436358311327,
+        "deal": true,
+        "terms": {
+          "payment_days": 60,
+          "lead_time_days": 14,
+          "volume_per_year": 23700,
+          "contract_months": 36,
+          "effective_date": "2027-01-01",
+          "index_clause": {
+            "series": "AS-14404",
+            "material_share": 0.45,
+            "deadband_pct": 5.0,
+            "base_month": "2026-08"
+          },
+          "incoterm": "DAP",
+          "tooling_eur": 0.0,
+          "ppm_commitment": 70,
+          "chargeback_eur_per_complaint": 0.0,
+          "unit_price": 5.4
+        },
+        "cost_breakdown": {
+          "price": 255960.0,
+          "uncovered_need": 0.0,
+          "fallback_risk": 0.0,
+          "payment_terms": 0.0,
+          "freight": 0.0,
+          "late_delivery": 0.0,
+          "quality": 0.0,
+          "tooling": 0.0,
+          "index_clause": 1151.82,
+          "index_risk": 1151.82,
+          "relationship": 0.0
+        },
+        "must_haves_ok": true
+      },
+      "model_calls": [
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 9.494,
+          "usage": {
+            "completion_tokens": 1222,
+            "prompt_tokens": 14977,
+            "total_tokens": 16199
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.015,
+          "usage": {
+            "completion_tokens": 1684,
+            "prompt_tokens": 28148,
+            "total_tokens": 29832
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 14.674,
+          "usage": {
+            "completion_tokens": 1942,
+            "prompt_tokens": 15596,
+            "total_tokens": 17538
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 10.991,
+          "usage": {
+            "completion_tokens": 1247,
+            "prompt_tokens": 30673,
+            "total_tokens": 31920
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.672,
+          "usage": {
+            "completion_tokens": 1586,
+            "prompt_tokens": 15998,
+            "total_tokens": 17584
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 15.194,
+          "usage": {
+            "completion_tokens": 1456,
+            "prompt_tokens": 31333,
+            "total_tokens": 32789
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "negotiator",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 13.588,
+          "usage": {
+            "completion_tokens": 1679,
+            "prompt_tokens": 17001,
+            "total_tokens": 18680
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 12.399,
+          "usage": {
+            "completion_tokens": 1524,
+            "prompt_tokens": 32830,
+            "total_tokens": 34354
+          }
+        },
+        {
+          "model": "gpt-5-mini",
+          "provider": "ge62quq-5983-resource.openai.azure.com",
+          "role": "final_decision",
+          "status": "ok",
+          "http_status": 200,
+          "seconds": 8.811,
+          "usage": {
+            "completion_tokens": 1081,
+            "prompt_tokens": 17505,
+            "total_tokens": 18586
+          }
+        }
+      ],
+      "all_logged_call_count": 9,
+      "all_logged_failed_calls": 0,
+      "decisions_with_packages_removed": 1,
+      "case_type": "raw_material",
+      "category_goal": "leverage"
+    }
+  },
+  "limitations": [
+    "One attempt per case; no replacement sessions and no matched control batch.",
+    "Historical best scores are selected best-of-many outcomes, not controls.",
+    "The optional trade menu was enabled for every case; this batch cannot isolate its causal effect.",
+    "Each case started with an identical memory snapshot, then learned only within its own copy.",
+    "A successful model response or a completed process is not proof of a good deal.",
+    "Reported tokens omit any usage not returned for failed requests; no billing cost is inferred."
+  ]
+}

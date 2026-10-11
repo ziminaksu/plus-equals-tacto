@@ -54,5 +54,23 @@ The team moved Ksu's branch to `main` and added recovery changes in `4980923` wh
 these two sessions were running. Those changes and her judge-facing README are
 preserved by a merge. The new outer fallback handler also receives the deadline
 checks, so it cannot bypass them. Thirteen focused checks pass after integration.
-The recorded Arena scores belong to the frozen pre-merge commit in the JSON
-manifest; the merged source has not been rerun on Arena.
+The paired P18 Arena scores above belong to the frozen pre-merge commit in the JSON
+manifest.
+
+## Full practice batch after integration
+
+The merged source at `80c3f6d` was then tested once on all ten hosted practice cases,
+using Azure `gpt-5-mini`, the optional trade menu, and identical initial memory copies.
+The source stayed frozen. Mean score including the no-deal result: **0.624269**;
+valid deals: **9/10**. Five of 86 model calls timed out, with one Python fallback.
+There were no replacement sessions.
+
+P05 ended without a deal after an offer expired and the model walked away while
+referring to a rival that was no longer available. P18 scored 0.508944 despite nine
+successful model calls. Fourteen decisions lost selected packages in the execution
+filter, sometimes leaving the email inconsistent with the actual offers.
+
+The batch does not establish a rating improvement. The trade option stays off by
+default. Detailed results and prioritized structural fixes are in
+[the full-batch diagnosis](azure-all-cases-20261011.md), with screened numerical
+evidence in `azure-all-cases-20261011.json`.
