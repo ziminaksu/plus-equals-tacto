@@ -722,6 +722,7 @@ The application appends the exact offer and verified arguments separately."""
 
         data = board
         chat = bool(os.environ.get("ASTRA_BASE_URL"))
+        safe = chat or os.environ.get("ASTRA_SAFE") == "1"  # stability guards (run scripts set it)
         for attempt in range(2):
             try:
                 result = self.call_astra(FINAL_DIRECTOR, data, deadline, role="final_decision",
@@ -730,7 +731,9 @@ The application appends the exact offer and verified arguments separately."""
                 # A network failure or refusal is not retried and never authorizes a substitute.
                 raise FinalDecisionUnavailable("Final Astra request unavailable; no action authorized") from None
             if chat:
-                result = normalize_selection(board, strip_bare_numbers(result))
+                result = strip_bare_numbers(result)
+            if safe:
+                result = normalize_selection(board, result)
             record = self.calls[-1]
             record["returned_decision"] = copy.deepcopy(result)
             record["validation_attempt"] = attempt + 1

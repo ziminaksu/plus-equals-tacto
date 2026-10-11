@@ -784,7 +784,7 @@ class AnalyticalAgent:
             infra = last.get("status") in INFRA_ERRORS and (
                 last.get("http_status") in (None, 408, 429) or (last.get("http_status") or 0) >= 500)
             # A free chat model (ASTRA_BASE_URL) that slips on the answer shape must not cost the whole case.
-            if not infra and not os.environ.get("ASTRA_BASE_URL"):
+            if not infra and os.environ.get("ASTRA_SAFE") != "1" and not os.environ.get("ASTRA_BASE_URL"):
                 raise
             decision = self.offline_move(case, threads)
             self.log("decision", {"action": decision, "reason": "Astra unreachable; offline fallback",
