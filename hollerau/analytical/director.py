@@ -407,7 +407,13 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                                                  "term_sheet_id": current_sheet["term_sheet_id"]}
         # walk_away ends the WHOLE case, every thread (P05: walking away from one RFQ supplier threw
         # away another's 27.50 = ~0.87). Offer it only when this is the last live supplier.
-        if len(live_threads(threads)) == 1:
+        standing_total = (supplier.get("standing") or {}).get("expected_total_eur")
+        fallback_total = board.get("fallback_estimated_cost_eur")
+        # never walk away from a live offer that beats our alternative (Azure P02: walked away from an agreed
+        # 359.67 after pushing it four times - score 0 instead of ~0.68)
+        beats_alternative = standing_total is not None and (
+            not isinstance(fallback_total, (int, float)) or standing_total < fallback_total)  # no alternative = 0
+        if len(live_threads(threads)) == 1 and not beats_alternative:
             board["actions"][f"{sid}:walk"] = {"supplier_id": sid, "kind": "walk_away"}
         if latest(events).get("status") == "final_offer":
             standing_cost = supplier.get("standing", {}).get("expected_total_eur")
@@ -661,6 +667,15 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         if (moving and latest(threads[sid]).get("status") == "open" and moves_left(case, threads[sid]) >= 5
                 and f"{sid}:counter" in board["actions"]):
             board["actions"].pop(f"{sid}:accept", None)
+
+    # Two "agreed" replies anywhere in a thread: the supplier has said yes twice - only accepting is left
+    # (Azure P02: an "open" between agreed replies reset the old two-in-a-row rule; it pushed on and walked).
+    if not closing_only:
+        for sid in live:
+            agreed = sum(1 for m in threads[sid] if m.get("from") != "buyer" and m.get("status") == "agreed")
+            if agreed >= 2 and f"{sid}:accept" in board["actions"]:
+                board["actions"] = {k: v for k, v in board["actions"].items()
+                                    if v["supplier_id"] != sid or v["kind"] == "accept"}
 
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
