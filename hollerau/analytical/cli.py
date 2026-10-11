@@ -14,7 +14,7 @@ import httpx
 from arena_kit.cli import load_env
 from arena_kit.client import ArenaClient, ArenaError
 from arena_kit.data import DataPackage
-from arena_kit.play import RemoteTable, hosted, play
+from arena_kit.play import REFRESH_BUDGET_S, RemoteTable, hosted, play
 
 from .agent import DECISION_BUDGET_S, POLICY_VERSION, AnalyticalAgent
 from .director import standing_sheet
@@ -35,7 +35,7 @@ class LoggedTable(RemoteTable):
     def remember_standing(self, supplier_id, events):
         sheet = standing_sheet(events)
         self.standing_ids[supplier_id] = sheet.get("term_sheet_id") if sheet else None
-        # every sheet of the latest e-mail is acceptable (alternatives included)
+        # Track received sheets for exact-term comparison; only the standing ID is acceptable.
         self.live_ids[supplier_id] = {x.get("term_sheet_id") for x in ((events[-1].get("term_sheets") or []) if events else [])}
         for event in events:
             for ts in event.get("term_sheets") or []:
@@ -58,8 +58,14 @@ class LoggedTable(RemoteTable):
         if active:
             self.agent.log("decision_dispatch", {"decision_id": active["decision_id"],
                                                  "status": "dispatch_attempt", "message": message}, supplier_id)
+        self.store.log(self.run, "send_attempt", message, self.case_id, supplier_id, self.session_id)
+        try:
+            result = super().send(supplier_id, message)
+        except Exception as exc:
+            self.store.log(self.run, "send_unconfirmed", {"error_type": type(exc).__name__},
+                           self.case_id, supplier_id, self.session_id)
+            raise
         self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
-        result = super().send(supplier_id, message)
         if "result" not in result:
             self.remember_standing(supplier_id, [result])
         self.agent.move_deadline = time.monotonic() + DECISION_BUDGET_S
@@ -87,15 +93,22 @@ class LoggedTable(RemoteTable):
         if active:
             self.agent.log("decision_dispatch", {"decision_id": active["decision_id"],
                                                  "status": "dispatch_attempt", "message": message}, supplier_id)
-        self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
+        self.store.log(self.run, "send_attempt", message, self.case_id, supplier_id, self.session_id)
         try:
-            result = super().close(supplier_id, message)
-        except ArenaError as e:
-            retry = self.reissued_accept(supplier_id, message, e)
-            if not retry:
-                raise
-            self.store.log(self.run, "sent", retry, self.case_id, supplier_id, self.session_id)
-            result = super().close(supplier_id, retry)
+            try:
+                result = super().close(supplier_id, message)
+            except ArenaError as e:
+                retry = self.reissued_accept(supplier_id, message, e)
+                if not retry:
+                    raise
+                self.store.log(self.run, "send_attempt", retry, self.case_id, supplier_id, self.session_id)
+                result = super().close(supplier_id, retry)
+                message = retry
+        except Exception as exc:
+            self.store.log(self.run, "send_unconfirmed", {"error_type": type(exc).__name__},
+                           self.case_id, supplier_id, self.session_id)
+            raise
+        self.store.log(self.run, "sent", message, self.case_id, supplier_id, self.session_id)
         self.store.log(self.run, "result", result, self.case_id, supplier_id, self.session_id)
         return result
 
@@ -105,8 +118,8 @@ class LoggedTable(RemoteTable):
             self.standing_ids[supplier_id] = retry["action"]["term_sheet_id"]
         return retry
 
-    def refresh(self, threads):
-        new = super().refresh(threads)
+    def refresh(self, threads, deadline=None):
+        new = super().refresh(threads, deadline=deadline)
         for supplier_id, event in new:
             self.remember_standing(supplier_id, threads[supplier_id])
             self.store.log(self.run, "received", event, self.case_id, supplier_id, self.session_id)
@@ -128,12 +141,15 @@ def reissued_accept(client, session_id, supplier_id, message, error, known_terms
         return None
     if "standing offer" not in str(error.detail):
         return None
-    state = client.session(session_id)
+    deadline = time.monotonic() + REFRESH_BUDGET_S
+    state = client.session(session_id, deadline=deadline)
+    if state.get("status") == "ended":
+        return None
     live = (state.get("threads") or {}).get(supplier_id) or {}
     new_id = live.get("offer_id")
     if not new_id or new_id == action.get("term_sheet_id") or live.get("closed"):
         return None
-    thread = client.thread(session_id, supplier_id)
+    thread = client.thread(session_id, supplier_id, deadline=deadline)
     # GET /threads omits term_sheet_id on sheets (round 2 P05: the retry found no old terms and the
     # 422 crashed the case) - use the terms the table recorded when it received each offer.
     terms = dict(known_terms or {})
@@ -177,8 +193,8 @@ class SafeRemoteTable(RemoteTable):
         self._record([reply])
         return reply
 
-    def refresh(self, threads):
-        new = super().refresh(threads)
+    def refresh(self, threads, deadline=None):
+        new = super().refresh(threads, deadline=deadline)
         self._record([event for _, event in new])
         return new
 

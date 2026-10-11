@@ -16,6 +16,7 @@ from arena_kit.play import latest, live_threads, moves_left
 from .. import compliance
 from .budget import TurnBudget
 from .communication import describe_complete, render_reply, reply_facts
+from .continuation import add_continuation_context, validate_continuation_comparison
 from .decision_record import phase, record_decision, validate_plan
 from .deliberation import add_action_consequences, economics_context, objective_scope
 from .playbook import add_playbooks, feasible_seed
@@ -592,6 +593,10 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                         if pid and pid not in allowed:
                             allowed = allowed[:2] + [pid]
             replies = [m.get("status") for m in events if m.get("from") != "buyer"]
+            # A validated model proposal must not disappear merely because its
+            # price is outside the heuristic concession schedule.
+            allowed = list(dict.fromkeys(allowed + [pid for pid in keys.values()
+                           if board["packages"][pid]["terms"] in th.analyst_candidates]))
             if replies[-2:] != ["agreed", "agreed"] and allowed:
                 board["actions"][f"{sid}:counter"] = {"supplier_id": sid, "kind": "counter",
                                                       "package_ids": allowed, "max_packages": 3}
@@ -673,6 +678,7 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
     add_playbooks(board)
+    add_continuation_context(board)
     return board
 
 
@@ -697,7 +703,7 @@ def normalize_selection(board, selection):
     sel["question_id"] = qid if q and q["supplier_id"] == sid and kind == "counter" else ""
     ev = [e for e in dict.fromkeys(sel.get("evidence_ids") or []) if e in board["evidence"]
           and board["evidence"][e]["supplier_id"] == sid]
-    sel["evidence_ids"] = [] if kind in ("accept", "walk_away") else ev[:3]
+    sel["evidence_ids"] = [] if kind in ("accept", "walk_away") else ev
     if sel.get("tone") not in ("warm", "cooperative", "firm"):
         sel["tone"] = "cooperative"
     review = sel.get("continuation_review")
@@ -762,7 +768,7 @@ def validate_selection(board, selection):
                 or (action["kind"] != "counter" and not same_ask)):
         raise ValueError("question belongs to another supplier or action")
     evidence = selection["evidence_ids"]
-    if not isinstance(evidence, list) or len(evidence) > 3 or len(set(evidence)) != len(evidence):
+    if not isinstance(evidence, list) or len(evidence) > 2 or len(set(evidence)) != len(evidence):
         raise ValueError("invalid evidence selection")
     if any(e not in board["evidence"] or board["evidence"][e]["supplier_id"] != sid for e in evidence):
         raise ValueError("unverified evidence")
@@ -793,12 +799,28 @@ def validate_selection(board, selection):
     if action["kind"] in ("ask", "reply") and not review["information_needed"].strip():
         raise ValueError("a question needs an explicit decision-relevant information goal")
     validate_plan(board, action, selection)
+    validate_continuation_comparison(board, action, selection)
     if action["kind"] not in ("accept", "walk_away"):
         render_reply(selection["reply_text"], board["reply_facts"])
     return action
 
 
 def execute(agent, case, threads, board, selection):
+    """A rejected render must not consume evidence, questions, or planned offers."""
+    action = validate_selection(board, selection)
+    th = agent.threads[action["supplier_id"]]
+    before = copy.deepcopy(vars(th))
+    used = copy.deepcopy(getattr(agent, "case_used", set()))
+    try:
+        return _execute(agent, case, threads, board, selection)
+    except Exception:
+        vars(th).clear()
+        vars(th).update(before)
+        agent.case_used = used
+        raise
+
+
+def _execute(agent, case, threads, board, selection):
     """Render exactly the approved action; no reranking, fallback or term substitutions."""
     action = validate_selection(board, selection)
     sid, kind = action["supplier_id"], action["kind"]
@@ -831,7 +853,8 @@ def execute(agent, case, threads, board, selection):
             th.pending = {"kind": "quote_request", "request": question, "event_count": len(events)}
         elif kind == "confirm":
             offers = [board["packages"][action["package_id"]]["terms"]]
-            body = authored + "\n\n" + describe_complete(case, offers[0], th.std)
+            body = (authored + "\n\nPlease confirm whether this complete quotation is available. "
+                    "This is not an acceptance or purchase order.\n\n" + describe_complete(case, offers[0], th.std))
             th.asked_confirmations.add(json.dumps(offers[0], sort_keys=True))
             th.pending = {"kind": "quote_confirmation", "request": action, "event_count": len(events)}
         else:
@@ -843,7 +866,8 @@ def execute(agent, case, threads, board, selection):
             # (P07 probes: forecasts + one argument per message + management ask -> 5.40 vs 5.51 with all at once)
             if not th.last_terms:
                 claims.sort(key=lambda c: c.get("kind") not in ("forecast", "share_of_business", "volume"))
-            claims = claims[:2]
+            # The schema/validator limits selection to two before approval. Never
+            # silently discard a selected argument after the prose has been written.
             if not th.last_terms:  # first counter: the punctual-payment commitment rides along (P11 probe +0.08)
                 punctual = next((e for e in board["evidence"].values()
                                  if e["supplier_id"] == sid and e.get("kind") == "punctual_payment"), None)
@@ -854,8 +878,8 @@ def execute(agent, case, threads, board, selection):
             buyer_sent = sum(1 for m in events if m.get("from") == "buyer")
             if buyer_sent == 1 and not qid and not getattr(th, "escalated", False):
                 # the second counter asks for the decision-maker: the largest single concession in the P07 probes
-                question = ("Please take this package to your management for approval - a consolidated, "
-                            "multi-year commitment from us is a significant account for you.")
+                question = ("Please take this complete package and the verified commercial arguments "
+                            "to your management for approval.")
                 th.escalated = True
             # Escalating to the supplier's approver: management moved for a longer contract plus the
             # share-of-business prospect (P18 0.563) and not without it (0.509) - attach it if unused.
@@ -981,7 +1005,9 @@ def compact_board(board, keep=24):
             if isinstance(sup.get(key), list):
                 sup[key] = sup[key][-2:]
         if isinstance(sup.get("sources"), dict):
-            sup["sources"] = {k: (v[:800] if isinstance(v, str) else v) for k, v in sup["sources"].items()}
+            # Don't truncate a refusal/condition or detach a quotation from its context.
+            sup["sources"] = dict(sup["sources"])
+    add_continuation_context(small)
     return small
 
 
@@ -1042,6 +1068,7 @@ def decide(agent, case, threads, deadline, closing_only=False):
         return decision
     except (ValueError, KeyError, TypeError, ArithmeticError, TimeoutError, FinalDecisionUnavailable) as exc:
         agent.log("final_decision_failed", {"error_type": type(exc).__name__, "sent": False,
+                                            "validation_reason": str(exc) if isinstance(exc, ValueError) else type(exc).__name__,
                                             "board_event_id": board_event_id,
                                             "model_availability": availability, "budget": budget.snapshot(),
                                             "llm_calls": agent.router.calls})

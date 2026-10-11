@@ -1,7 +1,8 @@
 # Decision contract and controlled improvement
 
-**Status: core contract implemented in v10; one completed P02 trace after an
-initial validation failure.** See [observed results and limits](evaluation/v10-p02-results.md).
+**Status: decision record schema 2, policy `ksu-stability-contract-v2`.**
+The current fixes have automated verification; no new Arena score is attributed
+to them. See [verification and measured baselines](evaluation/stability-main-20261011.md).
 `contracts.py` requires a plan; `decision_record.py` validates it and records linked
 outcomes. [The current architecture](CURRENT_ARCHITECTURE.md) maps the execution
 path. More records do not prove better decisions or a score gain.
@@ -17,13 +18,16 @@ Every turn should be understandable from one record, with six sections:
 | Evidence | Claim/value, source event or document, scope/date, and status: observed, estimated or assumed | Python retains provenance; Astra interprets text and cites the source. Uncertainty remains visible. |
 | Options | Candidate package, provenance, buyer cost by component/range, feasibility, concessions we give and request | Astra proposes; Python validates/prices. Record which generation rule added or excluded an option. |
 | Plan | Chosen action, expected reply, conditional next action, stop condition, main alternative rejected and why | Final Astra is responsible for strategic judgment. A numerical probability is optional, not invented to fill a field. |
-| Outcome | Exact sent action, actual reply/terms, change from prediction, estimate updated and why | Python records; interpretation cites the response. The final score belongs to evaluation. |
+| Outcome | Authorized action, attempted/confirmed send, actual reply/terms and prediction error | Python records; interpretation cites the response. The final score belongs to evaluation. |
 
 The contract makes **deal** and **move** distinct. A deal is a complete package
 we could buy. A move is a request, question, acceptance or other action intended
 to change the negotiation. The cheapest proposed deal may be a poor next move.
 
-Each `decision_record` now links the full board event, current state, evidence
+Each schema-2 `decision_record` identifies the independent supplier cost model,
+continuation/exit context and selected confirmation package. Raw returned model
+output is kept separately from normalized selections. Historical records retain
+their original meaning. Each record links the full board event, current state, evidence
 provenance, generation counts/rejections, selected packages, model availability,
 timing and validated plan. `plan_outcome` compares response class and an optional
 forecast price interval with the actual reply. The next board contains the prior
@@ -38,8 +42,11 @@ where supported by existing checks; semantic truth of all prose is not guarantee
 3. Astra chooses the strategy among visible options. If useful options are missing,
    candidate generation must expose that limitation instead of presenting the menu
    as exhaustive.
-4. Python executes exactly a valid selection. An invalid selection becomes an
-   explicit error; it does not silently become a different commercial decision.
+4. Python renders all packages in a valid selection and preserves its selected
+   claims (maximum two). Ksu's supported automatic evidence attachments are retained.
+   Rejected drafts restore their state. The direct capped GPT-6 route fails closed
+   after bounded correction; the configured Azure route may use its existing
+   board fallback, explicitly logged as fallback rather than model authorization.
 5. Outcome evidence updates estimates. A developer changes policy only through
    a named, measurable hypothesis.
 
@@ -48,7 +55,7 @@ record. For example, a live offer ID is required for acceptance; a maximum ppm
 may be a buyer constraint; refusing to counter `final_offer` is a policy rule.
 All currently applicable checks remain until deliberately revised.
 
-## A readable example using P11
+## A historical example using P11
 
 Observed v9 facts: payment was fixed at 60 days. The run closed at EUR 46.50,
 300 ppm and zero complaint reimbursement. Its previous best closed at EUR 46.00
@@ -82,7 +89,7 @@ Use the same phases across suppliers, driven by events rather than case IDs:
 | Close | Accept a live offer or take another allowed closing action? | Current IDs, feasibility, costs, status and deadline. |
 | Learn | Which prediction was wrong and what is now supported? | The linked move/reply and permitted result components. |
 
-V10 records open/exchange/close phases from current state and action, then learn
+The record tracks open/exchange/close phases from current state and action, then learn
 on the linked outcome. Understanding is the evidence preparation stage, not an
 extra model call. A missing terminal reply is recorded as unobserved rather than
 inventing a rejection or walkout.
@@ -96,10 +103,31 @@ inventing a rejection or walkout.
 | 3. Make planning explicit | Conditional next moves and reply-error comparison | The record distinguishes a bad prediction from a missing option, invalid action or deliberate closing decision. |
 | 4. Improve one behavior | One targeted change supported by the trace | The intended action changes under the stated conditions; economics and regressions are reported. |
 
-V10 corrects the proposer deadline, adds cancellable request deadlines and
-lossless prompt compaction. Calls log allocated time, preparation time, actual
+Provider requests have cancellable deadlines. Multi-supplier refresh and stale-ID
+recovery use bounded state reads. The capped GPT-6 mode skips the proposer and
+uses a compact final-decision board; it is not the same prompt as the full board. Calls log allocated time, preparation time, actual
 request time, schema size, input size and usage. A timeout or budget skip is visible
 to the final decision; it cannot masquerade as successful proposer advice.
+
+## Closing and dispatch contract
+
+When at least three moves and a useful counter/question remain, confirmation or
+acceptance must name an actual available alternative and explain why it is rejected.
+This requires comparison, not continued negotiation. Reconsider a previous stop
+condition against new evidence before making a promise to finalize. Confirmation
+requests are explicitly nonbinding.
+
+Only a live supplier's standing offer ID can be accepted. A historical best deal,
+indicative alternative or closed supplier is not an executable alternative.
+Walking away ends the entire case, not just one supplier conversation. The board
+labels the buyer's outside option separately from rival bids.
+
+`send_attempt` means an HTTP dispatch was attempted. `sent` means a response
+confirmed that dispatch. `send_unconfirmed` preserves unknown outcomes; it must
+not be counted as a successful send. A new ID can replace an accepted ID on retry
+only if every recorded term is equal. Different terms require new authorization
+from the decision model. Earlier logs that predate this distinction are not
+rewritten or silently counted as confirmed.
 
 ## Experiment discipline
 
@@ -119,10 +147,11 @@ Arena actually exposes them. Treat a single run as exploratory evidence.
 Historical best and historical latest are useful context but are not matched controls.
 
 Preserve no-deals, timeouts and unfavorable outcomes. Do not select only successful
-runs or change memory during a comparison without recording it. No minimum score
-is guaranteed. Local simulator tests remain stopped under the current instruction;
-the initial P02 and separately authorized additional P02 have both finished.
-Further Arena runs need authorization.
+runs or change memory during a comparison without recording it. No minimum score is guaranteed. Automated transport/contract checks, including
+the starter kit's local HTTP contract simulator, are engineering checks, not
+negotiation-quality evidence. No new live Arena run or paid call was made for this
+revision; any subsequent experiment must respect the user's remaining spending
+and session authorization.
 
 ## File boundaries
 

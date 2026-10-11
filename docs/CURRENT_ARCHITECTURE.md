@@ -1,168 +1,130 @@
 # How the negotiation system works
 
-**Current runtime:** `astra-v10-traceable-plans`.
-**Current evidence:** one failed P02 session plus one separately authorized P02
-completion at 0.235; all six calls returned in the latter. No P18 or local tests.
-The v9 baseline remains evaluated at `b7c1dbc`. V10 implements the timing and
-linked-plan structure described here. See [the implementation record](evaluation/v10-traceable-plans.md)
-and [the decision contract](DECISION_CONTRACT.md).
+**Current policy:** `ksu-stability-contract-v2`, based on Ksu's argument pacing,
+commercial concessions and management escalation. The current changes are checked
+with automated contract tests, not a new paid Arena batch.
 
-## The objective
+**Measured evidence:** the preceding ten-case Azure batch averaged **0.624269**,
+with nine deals and one P05 no-deal. The subsequent capped GPT-6 P18 run scored
+**0.466961**. These are separate code/configuration snapshots; neither measures
+this revision. The README's **0.808 historical best mean** combines different
+versions and attempts. See [Azure results](evaluation/azure-all-cases-20261011.md),
+[capped GPT-6 results](evaluation/budget-recovery-20261011.md), and
+[this revision's verification](evaluation/stability-main-20261011.md).
+
+## Objective and authority
 
 Reach an executable agreement that improves the buyer's **total cost**, subject
-to the case's hard requirements. A cheap unit price can be a poor deal if it buys
-insufficient volume, late delivery, poor quality or costly index exposure.
+to the case's hard requirements. `arena_kit/cost.py` accounts for price, demand
+shortfall, financing, freight, lateness, defects, tooling, index exposure and the
+applicable relationship penalty. Some components are inactive in a particular case.
+The official score compares opening-to-deal improvement against a hidden benchmark.
+That benchmark is excluded from strategy inputs; no deal scores zero.
 
-`arena_kit/cost.py` adds price, uncovered demand, fallback risk, financing, freight,
-lateness, defects, tooling, index effects and the applicable relationship penalty.
-Some terms are zero or inactive in a case. The published score measures
-opening-to-deal improvement relative to an unknown best-cost benchmark. That
-hidden denominator is not an agent input. No deal scores zero. A score is not
-our percentage discount or a probability of success.
-
-Keep three questions separate:
-
-| Question | Who answers it? | Status of the answer |
+| Question | Responsible component | Limit |
 |---|---|---|
-| How valuable is this deal to us? | Python cost calculation | Exact for known inputs; uncertain where supplier economics are estimated. |
-| How might the supplier react? | Observed exchanges, explicit conditions and a response model | Estimates from sparse, selected history; not calibrated probabilities. |
-| Which move should we make now? | Final Astra call choosing available action/package IDs | A strategic judgment, not an arithmetic result. |
+| What is this package worth to the buyer? | Python cost calculation, with independent supplier-economic estimates | Known inputs are calculated; uncertain economics remain estimates. |
+| How might the supplier react? | Actual replies and heuristic response scenarios | Sparse history does not produce calibrated probabilities. |
+| Which move should we make? | Final model selects from a validated action/package menu | Python still determines the menu and policy restrictions. |
+| Was it sent and what happened? | Arena client and append-only SQLite events | An attempted send is not proof that Arena received it. |
 
-## The six responsibilities
+## Data flow
 
 ```mermaid
 flowchart TD
-    A[1. Read case and supplier reply] --> B[2. Assemble facts and current state]
-    B --> C[3. Generate offers and calculate costs]
-    C --> D[4. Astra chooses the next move]
-    D --> E[5. Validate and send]
-    E --> F[6. Record response and update estimates]
-    F --> B
+    A[Case and current supplier replies] --> B[Facts, live offers and relevant history]
+    B --> C[Candidate packages and Python cost calculations]
+    C --> D[Final model compares next moves]
+    D --> E[Validate and render the selected move]
+    E --> F[Send to Arena and record confirmation]
+    F --> G[Compare reply with prediction; update estimates]
+    G --> B
 ```
 
-| Responsibility | Input → output | Current code |
-|---|---|---|
-| Arena connection | Case/messages → exchange; authorized action → Arena | `arena_kit/client.py`, `play.py`; practice logging in `hollerau/analytical/cli.py`. |
-| Evidence and state | Public records + messages + memory → facts, current offers, estimates | `agent.py`, `retrieval.py`, `storage.py`, `hollerau/intel.py`. |
-| Offers and economics | State → packages, validity, cost breakdowns and uncertainty | Astra proposer through `router.py`; Python `director.py`, `playbook.py`, `sustainability.py`, `arena_kit/cost.py`. |
-| Strategic decision | Decision board → supplier, action, package IDs, conditional plan and reply | Final Astra call in `router.py`; schema in `contracts.py`; validation and linked outcomes in `decision_record.py`. |
-| Execution | Selection → checked message or explicit failure | `director.py`, `communication.py`, `hollerau/compliance.py`. |
-| Observation and audit | Actual reply/result → prediction error, evidence and revised estimates | `feedback.py`, `decision_record.py`, `beliefs.py`, `storage.py`; `report.py` displays plans beside outcomes. |
-
-Unqualified filenames are under `hollerau/analytical/`. These are responsibility
-boundaries, not newly created services. `director.py` currently spans offer
-construction, decision coordination and execution; this coupling remains in code.
-
-## One turn, precisely
-
-1. Assemble live offers, remaining moves, public facts, supplier conditions and
-   bounded same-case/supplier history. An old quote cannot be accepted now.
-2. When time and status permit, call Astra to interpret the situation and propose
-   up to three packages for one live supplier. A timeout yields no fresh proposals.
-3. Python builds the menu from proposer packages, current terms, historical buyer
-   moves and replies, term variants, public-data anchors and sustainability
-   alternatives. It prices packages and adds advisory response estimates.
-4. A separate Astra call chooses supplier and action: counter, ask, reply, confirm,
-   accept or walk, subject to the available action menu.
-5. Python validates IDs, full terms, constraints and rendered facts, then sends
-   the selected action. Failed final authorization sends no substitute action.
-6. Record the reply and update estimates. Completed practice cost components can
-   refine supplier-economic estimates.
-
-**Astra has the final choice within the menu. Python determines much of that
-menu.** Calling Python only a calculator is misleading: it also generates
-alternatives and applies strategic restrictions. Final Astra selection cannot
-invent a new numerical package. The two Astra calls are different roles using
-the same model, not two independent guarantees of correctness.
-
-## What we retained from Ksu
-
-Her changes introduced ambitious evidence-backed openings, reciprocal concessions,
-less repetition, approval escalation with a supported commercial prospect, and
-closing instead of countering explicit final offers. V9 extends these into supply,
-capacity, quality, competitive RFQ and commercial routes. It also repairs jointly
-invalid openings before generating variants and retains main's action/response
-memory. See [the implementation record](evaluation/v9-category-playbooks.md).
-
-The final-offer closing guard and standalone-question limit are **our policies**,
-not buyer contractual constraints or universal facts about suppliers.
-
-## What the numbers mean
-
-| Family | Concrete examples | Source and use |
-|---|---|---|
-| Buyer priorities | Interest rate, EUR per late day, EUR per defect, relationship EUR per margin point | Given by the case. Do not tune the official cost coefficients to improve scores. |
-| Supplier economics | Production cost EUR/unit, financing assumptions, sustainable margin | Evidence plus permitted practice cost feedback. Display uncertainty; acceptance does not prove profitability. |
-| Supplier response | Reservation estimate `r`; payment, duration, lead, quality, capacity, index and volume sensitivities | Heuristic priors updated from exchanges; advisory supplier preferences, not buyer weights. |
-| Strategy choices | Anchor percentages, concession sequence, final-offer rule | Developer/Astra policy assumptions to evaluate. |
-| Engineering limits | 55-second shared internal budget; proposer up to 20 seconds; final request cap 30 seconds; 24 anchor packages | Limits affecting which information/options reach the decision-maker. |
-
-There is no validated universal pressure index. Behavior currently uses 64 weighted
-scenarios; supplier economics uses a separate distribution. Astra's neural weights
-are not trained. Buyer preference weights are not learned. In the challenge,
-relationship is a specified economic penalty where applicable, not a measurement
-of how much a person respects us.
-
-For leverage, first expose concrete facts: cost of valid alternatives, unmet demand,
-feasible suppliers, and the buyer cost of each concession. How much a supplier
-needs us remains an estimate unless supported by evidence. A single number can
-hide these distinctions.
-
-## What is stored
-
-SQLite remains at private `hollerau/logs/analytical.sqlite`.
-
-| Table | Purpose |
+| Responsibility | Code |
 |---|---|
-| `events` | Append-only cases, evidence, boards, decisions, exchanges, estimates and results. |
-| `attempts`, `allowances` | Reserve starts before HTTP and track bounded Arena use. |
-| `cost_feedback` | Permitted completed-practice cost observations for matching supplier/case/context. |
-| `learned_models` | Legacy audit rows; current Astra behavior is reconstructed from raw matching exchanges. |
+| API, deadlines, live supplier state | `arena_kit/client.py`, `arena_kit/play.py` |
+| Case, evidence and supplier memory | `agent.py`, `retrieval.py`, `storage.py`, `hollerau/intel.py` |
+| Candidate generation and economics | `director.py`, `playbook.py`, `economics.py`, `sustainability.py`, `arena_kit/cost.py` |
+| Model transport and compact decision context | `router.py`, `budget.py`, `lean_decision.py`, `prompt_context.py` |
+| Decision contracts and continuation comparison | `contracts.py`, `continuation.py`, `decision_record.py` |
+| Rendering and compliance | `director.py`, `communication.py`, `hollerau/compliance.py` |
+| Feedback, reports and fingerprints | `feedback.py`, `beliefs.py`, `report.py`, `experiment.py` |
+| Capped OpenAI spending | `spending.py`, `tools/run_gpt6.sh` |
 
-Audit records can contain scores. Strategy retrieval excludes scores and hidden
-benchmark fields. A supplier response, a prediction and an evaluation are different
-kinds of evidence. Credentials and raw databases stay out of Git.
+Unqualified filenames are under `hollerau/analytical/`. `director.py` still spans
+menu construction, coordination and execution; splitting it is a future refactor,
+not a completed improvement.
 
-## What the latest evidence says
+## One turn
 
-[The v10 P02 report](evaluation/v10-p02-results.md) separates execution recovery
-from strategy quality. The initial final action failed validation and the remote
-session timed out with zero score. After a diagnostic/schema correction, the
-separately authorized additional session completed with six successful API calls,
-three valid final actions and linked outcomes. It scored 0.235 against a historical
-best of 0.255. Astra chose fixed-price concessions and then closed; no timeout or
-Python substitution forced that choice. The output-correction path was not needed.
+1. Receive replies and assemble currently available suppliers. In multi-supplier
+   cases, refresh state before choosing or closing. State reads share a six-second
+   deadline, including rate-limit waits; changed thread reads run concurrently.
+   Known closures immediately remove live offers. An unread changed offer
+   invalidates the old quote instead of allowing acceptance of obsolete terms.
+2. Build validated packages using Ksu's concession rules, evidence, public-data
+   anchors, optional proposer advice and term variants. Valid proposer packages
+   remain eligible even when they differ from the heuristic price schedule.
+3. Price packages using supplier economics **separate from** response beliefs.
+   Observing willingness to accept may revise reservation estimates; it does not
+   prove lower production costs or erase a relationship penalty.
+4. The final model selects supplier, action, packages, evidence and a conditional
+   plan. With useful moves remaining, early confirmation/acceptance must compare
+   an actual available counter or question. The model can still close; no code
+   forces continued negotiation. A prior stop condition is advisory.
+5. Validate IDs, constraints, cited facts and the rendered message. Render every
+   approved package and at most two model-selected claims. Existing evidence-backed
+   automatic attachments may add another claim. Confirmation explicitly asks for
+   a quote and is not an acceptance or purchase order. A failed rendering restores
+   draft state, so unsent claims/questions are not consumed.
+6. Record a send attempt, then mark it sent only after a confirmed API response.
+   Unknown outcomes stay unconfirmed. A rejected acceptance may retry a new
+   standing ID only when **all recorded terms are identical**; changed terms
+   require a fresh decision. State recovery reads share a bounded deadline.
+7. Record the actual reply and prediction error, then update appropriate estimates.
+   A new decision budget requires new state during recovery. Terminal results
+   survive post-result learning errors.
 
-[Six v9 sessions](evaluation/v9-arena-results.md) produced three improvements over
-previous bests, one tie and two declines. P08 never started after the request to
-stop. Frozen runtime source hashes remained unchanged.
+A refresh budget reduces one source of delay; it cannot guarantee that every
+supplier remains available while another supplier or model takes time to respond.
+Network races still require Arena's atomic acceptance check.
 
-**16 of 19 proposer calls timed out; all 20 final calls succeeded.** The final
-choice often lacked fresh first-call proposals. This is an observed execution
-problem, not proof that it caused every poor score.
+## Model modes and money
 
-Multiple strategy changes, memory integration and timing changes shipped together.
-There was one new session per case, with no matched baseline rerun. Effects of
-individual changes cannot be separated from different histories or model/supplier
-variation. Comparing one new run with the best of several old runs also favors
-the historical best. Report this comparison without claiming causation.
+| Mode | Model work and failure behavior |
+|---|---|
+| Ksu's configured Azure/provider route | Optional proposer plus final decision; compact menus and existing validated-board fallback when configured. Fallback is explicitly logged and is not model approval. |
+| Direct capped GPT-6 route | One final decision call; proposer skipped. Compact context, 2,048 output-token cap, request deadline within the shared turn budget, at most one bounded correction. No provider fallback when spending is capped. |
 
-## Implemented structure and remaining limits
+`Astra` in legacy event fields describes the decision role. The actual provider,
+model ID, timing and token usage are recorded in model-call events; a role label
+alone must not be reported as proof of which model ran.
 
-V10 requires a structured **move → predicted reply → conditional next move →
-observed prediction error** chain. `decision_record.py` validates plans, links them
-to full boards and records response/price mismatches. The next decision receives
-that mismatch and must explain its revision. Conditional actions are plans, never
-automatically executed promises.
+The direct OpenAI ledger atomically reserves a conservative call ceiling before
+sending, records returned usage and retains reservations for unknown outcomes.
+Billing rejection blocks more calls. The same ledger must be reused across cases;
+creating a new ledger would create a separate budget. Azure usage is not covered
+by this OpenAI ledger. The remaining authorized budget for this improvement round
+is **$0.500123** after **$0.499877** accounted previously; this revision adds no paid
+calls or Arena sessions.
 
-The old acceptance/walkout subtotal is explicitly labeled as a partial value;
-it is not a full expected value that silently assigns no improvement to counters.
-Astra must plan the counteroffer branch. There is still no calibrated multi-turn
-optimizer, learned buyer weights or guarantee that a valid plan is strategically good.
+## Indexes, learning and records
 
-`budget.py` owns deadline allocation. `prompt_context.py` losslessly tabulates and
-deduplicates prompt data, verifies reconstruction before sending, and preserves all
-offers, source values and IDs. `experiment.py` fingerprints code, public data and
-initial memory. The practice runner supports stopping after the current session
-without changing its allowance. [The decision contract](DECISION_CONTRACT.md)
-identifies remaining limits.
+- Buyer cost coefficients come from the case; they are not tuned to inflate scores.
+- Supplier economics and response scenarios are distinct distributions. Response
+  updates do not change cost weights. Estimates retain uncertainty.
+- Pressure, concession pacing and final-offer rules are policies, not observed laws.
+  There is no validated universal leverage index or trained multi-turn optimizer.
+- The relationship factor is the case's economic penalty where applicable; it
+  does not measure human respect. The LLM's neural weights are not trained here.
+- SQLite stores events, attempt allowances and permitted practice cost feedback.
+  Strategy retrieval excludes scores and hidden benchmark values.
+- Decision record schema **2** includes continuation/exit context, the selected
+  confirmation package, the linked full board and independent cost-model label.
+  Raw returned decisions remain separate from normalized selections; old records
+  are preserved rather than retroactively relabeled.
+
+See [the decision contract](DECISION_CONTRACT.md). Credentials, raw databases and
+negotiation traces stay outside Git. Entire links an authentic, scoped session
+export with credentials and hidden benchmark fields redacted.

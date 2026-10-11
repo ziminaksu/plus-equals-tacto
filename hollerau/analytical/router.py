@@ -205,7 +205,11 @@ UNCERTAINTY: Response estimates omit some conversational hazards and are not cal
 Use historical final-warning outcomes explicitly. In continuation_review state a subjective plausible
 walkout probability range and why. Compare that range to the target's optimistic break-even threshold;
 that threshold assumes every non-walkout achieves the improvement, so real break-even can be lower.
-Read previous_continuation_review and honour its stop_condition unless new evidence justifies revising it.
+Read previous_continuation_review, but treat its stop_condition as a hypothesis, not an instruction.
+Before confirming or accepting early, read continuation_comparison and compare an AVAILABLE counter or
+useful question in plan.rejected_alternative_id. Explain attainable gain and withdrawal risk.
+Confirmation/agreement alone does not mean bargaining is exhausted; compare BEFORE promising to finalise.
+Confirmation requests quote availability only. For walking away, use exit_context: expired rivals are unavailable.
 Record a concrete stop_condition. For a question, information_needed must identify which answer would
 change your chosen package or closing decision; curiosity alone is insufficient. An unchanged standing
 package is NOT acceptance of a different proposal, regardless of an 'agreed' label.
@@ -226,7 +230,7 @@ relationship cases compare the calibrated cost range/downside, not only unit pri
 OUTPUT: Counter uses 1-3 package_ids belonging to its action and a target_package_id from those selected.
 Other actions use package_ids=[]. Confirmation sets target_package_id to its package_id; it only establishes offer status. Optional question_id appends
 a supplied question to a counter; normally leave it empty when reply_text already asks the right question.
-Select up to 3 verified evidence_ids on any supplier-facing message; use none on accept/walk_away. Their exact claims and complete priced term sheets are
+Select up to 2 verified evidence_ids on any supplier-facing message; use none on accept/walk_away. Their exact claims and complete priced term sheets are
 appended by Python. Reply_text is your actual respectful message, not an internal rationale or template
 label. It can answer questions and propose conditional exchanges, but cannot assert unsupported facts,
 make extra commitments, disclose buyer budget/urgency/weakness, or invent supplier admissions. All numeric
@@ -393,6 +397,8 @@ class Router:
                 payload["service_tier"] = "default"
                 reservation = self.spend.reserve(payload)
                 record["spend_reservation"] = reservation
+            record["request_settings"] = {k: payload[k] for k in
+                                          ("max_output_tokens", "reasoning", "store", "service_tier") if k in payload}
             record["schema_chars"] = len(json.dumps(schema, separators=(",", ":")))
             record["preparation_seconds"] = round(time.monotonic() - start, 3)
             record["network_budget_seconds"] = round(max(0, request_deadline - time.monotonic()), 3)
@@ -496,6 +502,10 @@ class Router:
     def _chat_once(self, base, model, system, data, remaining, role, schema, key=None):
         key = key or self.review_key
         record = {"model": model, "provider": base.split("/")[2], "role": role, "status": "started"}
+        completion_settings = (
+            {"max_completion_tokens": 8192, "reasoning_effort": os.environ.get("ASTRA_EFFORT", "low")}
+            if re.match(r"(gpt-5|o\d)", model) else {"max_tokens": 4096, "temperature": 0})
+        record["request_settings"] = dict(completion_settings)
         self.calls.append(record)
         start = time.monotonic()
         instructions = system
@@ -518,8 +528,7 @@ class Router:
                         if schema and base not in self._schema_rejected else {"type": "json_object"}
                     ),
                     # reasoning models (gpt-5*, o*) take max_completion_tokens and an effort, not max_tokens
-                    **({"max_completion_tokens": 8192, "reasoning_effort": os.environ.get("ASTRA_EFFORT", "low")}
-                       if re.match(r"(gpt-5|o\d)", model) else {"max_tokens": 4096, "temperature": 0}),
+                    **completion_settings,
                 },
             )
             record["http_status"] = response.status_code
@@ -802,6 +811,7 @@ The application appends the exact offer and verified arguments separately."""
             except Exception:
                 # A network failure or refusal is not retried and never authorizes a substitute.
                 raise FinalDecisionUnavailable("Final Astra request unavailable; no action authorized") from None
+            self.calls[-1]["raw_returned_decision"] = copy.deepcopy(result)
             if chat:
                 result = strip_bare_numbers(result)
             if safe and not self.spend:
@@ -824,8 +834,10 @@ The application appends the exact offer and verified arguments separately."""
                         "invalid_decision": result, "reason": reason,
                         # the exact menu of the chosen action (Azure P11: counter packages outside its list twice)
                         "allowed_package_ids_for_this_action": (chosen or {}).get("package_ids", []),
-                        "instruction": "Correct this validation error and return a complete valid decision. "
-                                       "No action has been sent. Keep all buyer constraints and evidence rules.",
+                        "instruction": "Correct the identified fields and return a complete valid decision. "
+                                       "Keep the action and commercial choices if they are valid; this is a format "
+                                       "repair, not a fresh strategy selection. No action has been sent. "
+                                       "Keep all buyer constraints and evidence rules.",
                     }}
                     continue
                 raise FinalDecisionUnavailable("Final Astra decision invalid; no action authorized") from None

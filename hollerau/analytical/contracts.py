@@ -80,7 +80,7 @@ def final_schema(board):
         "action_id": enum_values(list(board["actions"])),
         "package_ids": ids(board["packages"], 3),
         "question_id": enum_values([""] + list(board["questions"])),
-        "evidence_ids": ids(board["evidence"], 3),
+        "evidence_ids": ids(board["evidence"], 2),
         "tone": enum_values(["warm", "cooperative", "firm"]),
         "rationale": {"type": "string"},
         "reply_text": {"type": "string", "pattern": "^[^0-9]*$", "maxLength": 3000},

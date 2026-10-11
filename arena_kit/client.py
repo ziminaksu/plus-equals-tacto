@@ -1,5 +1,6 @@
 """Thin HTTP client for the arena API. Every method returns the JSON the server sends."""
 
+import asyncio
 import os
 import threading
 import time
@@ -48,11 +49,14 @@ class ArenaClient:
         headers = {"X-API-Key": key} if key else {}
         self.retries, self.rate, self._lock, self._next = retries, rate, threading.Lock(), 0.0
         self.practice_remaining = None  # from the last practice reply that said so
+        self._transport = transport
         self.http = httpx.Client(base_url=f"{base_url}/v1", headers=headers, timeout=timeout, transport=transport)
 
-    def _pace(self):
+    def _pace(self, deadline=None):
         with self._lock:
             now = time.monotonic()
+            if deadline is not None and max(now, self._next) >= deadline:
+                raise httpx.ReadTimeout("Arena read budget exhausted while waiting for rate limit")
             wait, self._next = self._next - now, max(now, self._next) + 1 / self.rate
         if wait > 0:
             time.sleep(wait)
@@ -84,6 +88,37 @@ class ArenaClient:
             raise ArenaError(r.status_code, detail)
         return r.content if raw else r.json()
 
+    def _read_until(self, path, deadline):
+        """Read current state within one total deadline, including pacing and body.
+
+        No retry or worker survives expiration. Ordinary supplier sends retain
+        their longer timeout because supplier generation is outside our move budget.
+        """
+        self._pace(deadline)
+
+        async def read():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise httpx.ReadTimeout("Arena read budget exhausted")
+            try:
+                async with asyncio.timeout(remaining):
+                    async with httpx.AsyncClient(base_url=self.http.base_url, headers=self.http.headers,
+                                                 timeout=remaining, transport=self._transport) as client:
+                        response = await client.get(path)
+            except TimeoutError as exc:
+                raise httpx.ReadTimeout("Arena state read exceeded total deadline") from exc
+            if time.monotonic() >= deadline:
+                raise httpx.ReadTimeout("Arena state arrived after its deadline")
+            if response.is_error:
+                try:
+                    detail = response.json().get("detail", response.text)
+                except (ValueError, AttributeError):
+                    detail = response.text
+                raise ArenaError(response.status_code, detail)
+            return response.json()
+
+        return asyncio.run(read())
+
     def register(self, team_name, event_code):
         """arena-sim only: the simulator hands out its own keys. On the arena, the organisers
         give each team its key."""
@@ -104,8 +139,9 @@ class ArenaClient:
         path = f"/sessions/{session_id}/threads/{supplier_id}/messages"
         return self._call("POST", path, {"message": message})
 
-    def thread(self, session_id, supplier_id):
-        return self._call("GET", f"/sessions/{session_id}/threads/{supplier_id}")
+    def thread(self, session_id, supplier_id, *, deadline=None):
+        path = f"/sessions/{session_id}/threads/{supplier_id}"
+        return self._call("GET", path) if deadline is None else self._read_until(path, deadline)
 
     def attachment(self, session_id, attachment_id, timeout=None):
         """The bytes of a document a supplier attached."""
@@ -124,8 +160,9 @@ class ArenaClient:
     def walk_away(self, session_id):
         return self._call("POST", f"/sessions/{session_id}/walk_away")
 
-    def session(self, session_id):
-        return self._call("GET", f"/sessions/{session_id}")
+    def session(self, session_id, *, deadline=None):
+        path = f"/sessions/{session_id}"
+        return self._call("GET", path) if deadline is None else self._read_until(path, deadline)
 
     def sessions(self, set_="practice"):
         return self._call("GET", "/sessions", params={"set": set_})

@@ -33,7 +33,7 @@ from .spending import SpendLimitReached
 from .storage import Store
 from .sustainability import SupplierEconomics, practice_observation
 
-POLICY_VERSION = "astra-v10-traceable-plans+gemini"
+POLICY_VERSION = "ksu-stability-contract-v2"
 DECISION_BUDGET_S = TURN_SECONDS
 INFRA_ERRORS = {"HTTPStatusError", "ConnectError", "ConnectTimeout", "ReadTimeout", "RemoteProtocolError",
                 "ReadError", "WriteError", "PoolTimeout"}

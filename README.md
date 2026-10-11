@@ -3,16 +3,17 @@
 **Autonomous procurement agent for Hollerau Pumpenwerke** · EHL Munich 2026 · team **+=**
 ([ziminaksu](https://github.com/ziminaksu), [IlyaKats2005](https://github.com/IlyaKats2005))
 
-The agent negotiates by e-mail with supplier bots and closes the deal that minimises the buyer's
+The agent negotiates by e-mail with supplier bots and aims to close a deal that reduces the buyer's
 **total cost**: price, uncovered demand, payment terms, freight, lateness, quality, index clauses and,
 where the category goal asks for it, the cost of squeezing a supplier below a sustainable margin.
 
 | | |
 |---|---|
-| Practice leaderboard (best per case) | **0.808** mean over the 10 hosted cases, 10/10 deals |
-| Last full rounds | **every session ends in a deal** – crashes, timeouts and lost moves were the main loss in earlier rounds |
-| Decision model | **gpt-5-mini** (Azure OpenAI), automatic backups: gpt-oss-120b / DeepSeek-V4.1 (Hugging Face), Gemini |
-| Live Final launcher | `./tools/final_azure.sh` – tested with 10 parallel sessions (one wave in 5.5 min of 8) |
+| Historical best per case (reported, mixed versions) | **0.808** mean over 10 cases; not a matched evaluation of current code |
+| Latest recorded full Azure batch | **0.624269** mean, **9/10 deals**; P05 no deal ([record](docs/evaluation/azure-all-cases-20261011.md)) |
+| Latest funded GPT-6 P18 | **0.466961**, below prior Azure P18 **0.508944**; **$0.499877** conservative whole-round spend ([record](docs/evaluation/budget-recovery-20261011.md)) |
+| Decision model | Azure launcher: **gpt-5-mini**, configured backups; capped OpenAI launcher: **gpt-6-astra**, no provider fallback |
+| Live Final launcher | `./tools/final_azure.sh` – up to 10 parallel sessions; Azure costs are separate from the OpenAI spending ledger |
 
 ## How a move is made
 
@@ -31,7 +32,7 @@ function (`arena_kit/cost.py`), removes options that break must-haves or our neg
 the model a menu. The model picks the move, the arguments (each a checked data ID) and writes the e-mail.
 Nothing the model writes can introduce a number that is not on the board.
 
-### Negotiation rules that the board enforces (each came from a traced loss)
+### Negotiation policies (heuristics from recorded runs, not universal supplier rules)
 
 | Rule | Why |
 |---|---|
@@ -39,36 +40,42 @@ Nothing the model writes can introduce a number that is not on the board.
 | Concession schedule: a quarter of the gap, then a third, then half | crawling steps make suppliers send a final offer early |
 | Longest contract that covers the horizon | a commitment beyond the horizon is free for us and valuable to the supplier |
 | RFQ: every supplier hears from us before we close; no counter after a supplier's own 5 % step; accept only within 1 % of the cheapest live offer | competition is the lever; a push after a big step made suppliers walk |
-| RFQ: refresh all threads before each move; a supplier answered by timeout moves first | while one supplier answers (≈1 min), the others time out and change or withdraw their offers |
+| RFQ: refresh changed threads concurrently within one six-second budget; prioritize timeout replies | closed or changed offers must not remain executable; reserve time for the decision |
 | Chargebacks only when the supplier's real defect rate makes them worth it; no index clause whose deadband is below the expected index move | both are priced into total cost, not just price |
 | No counter after two "agreed" replies; no bare e-mail without a package while rivals are live | both burned moves or made suppliers walk |
 
 ## Reliability
 
-A case that crashes scores 0, so the runner is built to never lose a case to one bad move:
+The runner bounds recovery and records failures explicitly. It cannot guarantee a deal:
 
-- **Model chain with time budget:** primary model gets the time a reasoning model needs; on 429/503/timeout
-  or an unparsable answer the next model answers (Hugging Face, then Gemini).
-- **Every failed turn becomes a fallback move** taken from the current board (all rules still apply),
-  never silence; learning errors are logged, not raised.
-- **Runner hardening:** stale offer IDs are re-checked, a failed decision waits for the arena's timeout
-  reply and decides again, malformed decisions fall back to the safest closing move, attachments and
-  refreshes cannot crash a case. Code reviewed by two external models (DeepSeek-V4.1, gpt-oss-120b).
-- **Deadlines:** one monotonic 55 s budget per move (arena limit 60 s), cancellable HTTP requests,
-  `caffeinate` so a sleeping laptop cannot freeze a session.
+- **Current offers:** changed supplier threads refresh concurrently within a shared total deadline.
+  Known closures immediately remove old offers; unread changed offers are marked uncertain.
+- **Decision contract:** early confirmation/acceptance must compare a currently available counter or
+  useful question. A prior stop condition is advisory. Confirmation is explicitly nonbinding.
+- **Faithful execution:** all approved packages and up to two selected evidence arguments are rendered;
+  rejected renders restore pending state. Raw and normalized model output remain distinct in the audit.
+- **Recovery:** provider fallbacks depend on the launcher and remaining deadline. In capped GPT-6 mode
+  there is no secondary provider; exhausted spending closes a valid received offer when possible.
+  This is recorded as a budget closure, not a model decision.
+- **Spending:** the GPT-6 launcher shares an atomic SQLite allowance across cases and restarts, checks
+  billing before opening Arena, and retains cost reservations after uncertain request failures.
+- **Audit:** an authorized action, a send attempt and a confirmed send are separate events. Failed
+  requests are not labelled as successful sends. Historical results retain their measured code version.
+
 
 ## Results
 
-Best practice score per case (score = share of the possible cost improvement captured, 1.0 = arena optimum):
+Historical best practice scores reported by the team across different runs and versions
+(score = share of possible cost improvement captured, 1.0 = arena optimum):
 
 | P01 | P02 | P03 | P04 | P05 | P07 | P08 | P10 | P11 | P18 | **Mean** |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | 0.957 | 0.735 | 0.974 | 0.860 | 0.875 | 0.779 | 0.770 | 0.686 | 0.794 | 0.654 | **0.808** |
 
-Honest limits: suppliers are LLM bots and vary between sessions (their opening price alone moves the score
-by ±0.1-0.2), so single runs are noisy. P10's supplier sends its final offer after our second counter however
-low we open (three models and a scripted probe agree), P02 needs the index clause the supplier values.
-Every batch, including failures, is reported in [`docs/evaluation/`](docs/evaluation/).
+Supplier replies vary between sessions. Historical best-of-many scores are not evidence that the
+current version will repeat them. The last complete batch had a failed deal, and the latest funded P18
+run did not improve the previous score. The stability fixes added afterward have regression coverage,
+not a new paid Arena evaluation. See [`docs/evaluation/`](docs/evaluation/) for versioned records.
 
 ## Run it
 
@@ -85,7 +92,8 @@ uv run arena data              # case data package
 | `./tools/run_azure.sh P05` | one practice case with gpt-5-mini (+ backups) |
 | `./tools/run_free.sh P05` | one practice case on free Gemini (+ Hugging Face backup) |
 | `./tools/final_azure.sh` | **Live Final**: all five waves, 10 parallel sessions, log in `hollerau/logs/` |
-| `uv run pytest -q` | tests (16 legacy tests from the strict no-fallback design are known to fail) |
+| `./tools/run_gpt6.sh P18` | direct GPT-6 with a shared $1 ledger by default; reuse the authorized round’s ledger |
+| `uv run pytest -q` | full regression suite; hosted integration tests require separate explicit credentials |
 
 ## Repository map
 

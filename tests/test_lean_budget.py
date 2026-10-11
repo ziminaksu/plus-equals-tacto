@@ -101,6 +101,8 @@ def test_usage_is_accounted_even_for_truncated_output(monkeypatch, tmp_path):
         router.call_astra('', {}, time.monotonic() + 10, role='final_decision')
     assert router.spend.snapshot()['accounted_usd'] == 0.1149
     assert router.spend.snapshot()['unknown_outcome_reserve_usd'] == 0
+    assert router.calls[-1]['request_settings'] == {
+        'max_output_tokens': 2048, 'reasoning': {'effort': 'low'}, 'store': False, 'service_tier': 'default'}
 
 
 def test_definitive_credit_rejection_blocks_calls_without_claiming_a_charge(monkeypatch, tmp_path):
@@ -122,6 +124,10 @@ def test_billing_preflight_fails_before_arena_client_is_created(monkeypatch, tmp
     from types import SimpleNamespace
 
     from hollerau.analytical import cli
+    # The CLI updates these process variables; restore them after this test so
+    # subsequent provider checks do not inherit a temporary spending ledger.
+    for name in ('LLM_SPEND_LEDGER', 'LLM_MAX_SPEND_USD', 'BUDGET_OPENAI_MODEL'):
+        monkeypatch.setenv(name, '')
     monkeypatch.delenv('ASTRA_BASE_URL', raising=False)
     monkeypatch.setenv('OPENAI_API_KEY', 'test')
     monkeypatch.setattr(cli, 'load_env', lambda: None)

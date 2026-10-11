@@ -3,13 +3,13 @@ from arena_kit.play import RemoteTable, latest, live_threads
 
 
 class FakeClient:
-    def session(self, session_id):
+    def session(self, session_id, *, deadline=None):
         return {"status": "open", "threads": {
             "a": {"offer_id": "offer:a-3", "closed": None},
             "b": {"offer_id": None, "closed": "walked_away"},
             "c": {"offer_id": "offer:c-0", "closed": None}}}
 
-    def thread(self, session_id, supplier_id):
+    def thread(self, session_id, supplier_id, *, deadline=None):
         return {"a": {"status": "final_offer", "closed": None, "timeouts": [
                     {"offer_id": "offer:a-2", "round": 2, "status": "open", "terms": {"unit_price": 28.5}, "text": "x"},
                     {"offer_id": "offer:a-3", "round": 3, "status": "final_offer", "terms": {"unit_price": 28.5}}]},
@@ -34,7 +34,7 @@ def test_refresh_appends_timeout_offers_and_closures_once():
 
 def test_refresh_preserves_server_terminal_result():
     class EndedClient:
-        def session(self, sid):
+        def session(self, sid, *, deadline=None):
             return {'status': 'ended', 'result': {'deal': True, 'score': 0.7}}
         def thread(self, *args):
             raise AssertionError('must not read stale threads after session end')

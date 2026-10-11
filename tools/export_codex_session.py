@@ -10,6 +10,26 @@ import re
 from pathlib import Path
 
 
+def redact(value, secrets):
+    """Redact public-checkpoint exports without altering the authentic source."""
+    if isinstance(value, dict):
+        return {k: "[REDACTED_BENCHMARK]" if k == "c_best" else redact(v, secrets)
+                for k, v in value.items()}
+    if isinstance(value, list):
+        return [redact(v, secrets) for v in value]
+    if not isinstance(value, str):
+        return value
+    value = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[image pixels omitted]", value)
+    value = re.sub(
+        r"(?<![A-Za-z0-9])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{20,}"
+        r"|AIza[A-Za-z0-9_-]{20,}|AQ\.[A-Za-z0-9_-]{20,})", "[REDACTED_CREDENTIAL]", value)
+    for secret in secrets:
+        value = value.replace(secret, "[REDACTED_CREDENTIAL]")
+    # Tool output can be JSON, escaped JSON, or Python's single-quoted repr.
+    return re.sub(r'''([\\"']+c_best[\\"']+\s*:\s*)[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?''',
+                  r'\1"[REDACTED_BENCHMARK]"', value)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--source", type=Path, required=True)
@@ -74,16 +94,7 @@ def main():
             source_record=i,
             source_sha256=hashlib.sha256(line.encode()).hexdigest(),
         )
-        raw = json.dumps(out, ensure_ascii=False)
-        raw = re.sub(r"data:image/[^;]+;base64,[A-Za-z0-9+/=]+", "[image pixels omitted]", raw)
-        raw = re.sub(
-            r"(?<![A-Za-z0-9])(?:sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|hf_[A-Za-z0-9]{20,})",
-            "[REDACTED_CREDENTIAL]",
-            raw,
-        )
-        for secret in secrets:
-            raw = raw.replace(secret, "[REDACTED_CREDENTIAL]")
-        rows.append(raw)
+        rows.append(json.dumps(redact(out, secrets), ensure_ascii=False))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(rows) + "\n")
     manifest = {
@@ -97,6 +108,7 @@ def main():
             "images omitted",
             "visible messages and tool events converted to Entire JSONL",
             "known credentials and API-key patterns redacted",
+            "hidden benchmark fields redacted, including nested tool output",
         ],
         "export_sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(),
     }

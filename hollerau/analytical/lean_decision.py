@@ -33,7 +33,7 @@ expected total cost, never a price ladder disclosing our ceiling. All selected p
 reply/ask sends NO package: if you intend to offer terms, choose counter. accept/walk has package_ids=[],
 evidence_ids=[], question_id='', reply_text=''. Counter target_package_id must be selected; confirm uses
 its action's package_id. Other actions have no target unless relevant. evidence_ids attach exact verified
-claims. question_id optionally attaches the given question to a counter. No unsupported claims, threats,
+claims (select at most TWO, saving other arguments for later). question_id optionally attaches the given question to a counter. No unsupported claims, threats,
 extra commitments, or disclosure of our budget, weakness or private calculations to the supplier.
 reply_text is short respectful prose; don't repeat terms, numbers or package counts. Python appends the
 complete terms. Numeric facts require a supplied reply_facts placeholder, never literal digits.
@@ -43,7 +43,12 @@ sentence. Plan: predict the next response and an optional price range (null for 
 source/evidence IDs, or [] with 'Assumption:' in basis. State branches if_counteroffer/unchanged/accepted/
 walkout; after closure say 'Case closed'. Compare a distinct available alternative and explain why.
 For questions say what answer would change the choice. Risk ranges are subjective, not measured odds.
-Honour the prior stop condition unless new evidence justifies a change. No independent proposer is needed:
+Read continuation_comparison before confirming or accepting early: compare one AVAILABLE counter or
+useful question in plan.rejected_alternative_id and explain its attainable gain and risk. A prior stop
+condition is a hypothesis; agreement or confirmation alone does not establish that bargaining is exhausted.
+Decide this BEFORE promising to finalise. If you confirm, ask only for quote availability, without a
+purchase commitment. When walking away, use exit_context: an expired rival is not an outside option.
+No independent proposer is needed:
 you read the facts, choose the strategy and write the reply in this ONE call.
 """
 
@@ -66,7 +71,8 @@ def lean_board(board):
     supplier_fields = {"status", "remaining_moves", "buyer_messages_sent", "sources", "past_exchanges",
                        "previous_buyer_terms", "asked_questions", "supplier_economics", "stagnant_replies",
                        "previous_plan", "last_plan_outcome", "previous_continuation_review", "standing",
-                       "opening_comparison", "phase", "closeness", "final_offer_decision"}
+                       "opening_comparison", "phase", "closeness", "final_offer_decision",
+                       "continuation_comparison", "payment_days_value"}
     for sid, original in board["suppliers"].items():
         sup = {k: copy.deepcopy(v) for k, v in original.items() if k in supplier_fields}
         sup["past_exchanges"] = []  # empirical cost calibration remains in cost cards; no stale quote dump
@@ -82,7 +88,7 @@ def lean_board(board):
                             if k in card_fields | {"term_sheet_id", "currently_executable"}}
         small["suppliers"][sid] = sup
     keep = {"case", "objective_scope", "reply_facts", "fallback_estimated_cost_eur", "suppliers", "packages",
-            "actions", "evidence", "questions", "buyer_constraints", "playbook", "live_competition"}
+            "actions", "evidence", "questions", "buyer_constraints", "playbook", "live_competition", "exit_context"}
     small = {k: v for k, v in small.items() if k in keep}
     small["live_supplier_ids"] = list(small["suppliers"])
     small["context_policy"] = "All selectable packages and current source text retained; past quotes omitted."

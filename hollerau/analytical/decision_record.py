@@ -53,17 +53,21 @@ def record_decision(agent, case, board, selection, decision, board_event_id, sta
     action = board["actions"][selection["action_id"]]
     sid = action["supplier_id"]
     supplier = board["suppliers"][sid]
+    selected_ids = selection["package_ids"] + ([action["package_id"]] if action["kind"] == "confirm" else [])
     did = f"{agent.run_id}:{agent.session_id or case['case_id']}:{agent.turn}:{sid}"
     record = {
+        "schema_version": 2, "cost_model": "independent_supplier_economics_v1",
         "decision_id": did, "board_event_id": board_event_id, "phase": phase(supplier, action),
         "case": board["case"], "state": {k: supplier.get(k) for k in
-            ("status", "remaining_moves", "buyer_messages_sent", "standing", "previous_buyer_terms")},
+            ("status", "remaining_moves", "buyer_messages_sent", "standing", "previous_buyer_terms",
+             "continuation_comparison")},
+        "exit_context": board.get("exit_context"),
         "evidence": {"observed_source_ids": list(supplier["sources"]),
                      "historical_source_ids": [h["source_id"] for h in supplier["past_exchanges"]],
                      "assumptions": board["policy_rules"],
                      "estimates": {"beliefs": supplier["beliefs"], "economics": supplier["supplier_economics"]}},
         "options": {"count": len(board["packages"]), "all_options_in_board_event": board_event_id,
-                    "selected": {p: board["packages"][p] for p in selection["package_ids"]},
+                    "selected": {p: board["packages"][p] for p in selected_ids},
                     "generation": board["candidate_generation"]},
         "plan": selection["plan"], "selection": selection,
         "authorized_action": decision, "execution_status": "authorized_not_yet_sent",
