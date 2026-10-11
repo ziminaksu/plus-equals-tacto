@@ -102,6 +102,13 @@ class LoggedTable(RemoteTable):
             self.standing_ids[supplier_id] = retry["action"]["term_sheet_id"]
         return retry
 
+    def refresh(self, threads):
+        new = super().refresh(threads)
+        for supplier_id, event in new:
+            self.remember_standing(supplier_id, threads[supplier_id])
+            self.store.log(self.run, "received", event, self.case_id, supplier_id, self.session_id)
+        return new
+
     def missed(self, supplier_id, error):
         result = super().missed(supplier_id, error)
         if "result" not in result:
@@ -166,6 +173,11 @@ class SafeRemoteTable(RemoteTable):
         reply = super().send(supplier_id, message)
         self._record([reply])
         return reply
+
+    def refresh(self, threads):
+        new = super().refresh(threads)
+        self._record([event for _, event in new])
+        return new
 
     def close(self, supplier_id, message):
         try:

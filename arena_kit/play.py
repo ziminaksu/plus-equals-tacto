@@ -91,6 +91,43 @@ class RemoteTable:
             "attachments": [],
         }
 
+    def refresh(self, threads):
+        """With several suppliers, a blocking send leaves the others unanswered for a minute: the arena
+        answers their timeouts with new offers (lower, final) and closes a thread after repeated ones
+        (free Gemini P05: Dralveck dropped to 28.50 by itself, then walked; we tried to accept its old
+        31.00 id and crashed). Append every unseen timeout reply and closure; returns the new events."""
+        seen = self.__dict__.setdefault("_seen", set())
+        state = self.client.session(self.session_id)
+        if state.get("status") == "ended":
+            return []
+        new = []
+        for sid, info in (state.get("threads") or {}).items():
+            if sid not in threads or latest(threads[sid]).get("status") in ENDED:
+                continue
+            known = {ts.get("term_sheet_id") for m in threads[sid] for ts in m.get("term_sheets") or []}
+            if info.get("offer_id") in known and not info.get("closed"):
+                continue
+            t = self.client.thread(self.session_id, sid)
+            for out in t.get("timeouts") or []:
+                key = (sid, out.get("round"), out.get("offer_id"))
+                if key in seen or (out.get("offer_id") and out["offer_id"] in known):
+                    continue
+                seen.add(key)
+                sheets = [{"term_sheet_id": out["offer_id"], "terms": out.get("terms", {})}] if out.get("offer_id") else []
+                sheets += [{"term_sheet_id": a.get("offer_id") or a.get("term_sheet_id"), "terms": a.get("terms", {})}
+                           for a in out.get("alternatives") or [] if isinstance(a, dict)]
+                event = {"from": "arena", "status": out.get("status") or t.get("status"), "term_sheets": sheets,
+                         "body": out.get("text", ""), "missing_fields": out.get("missing_fields", []),
+                         "attachments": [], "timeout_reply": True}
+                threads[sid].append(event)
+                new.append((sid, event))
+            if t.get("closed") and latest(threads[sid]).get("status") not in ENDED:
+                event = {"from": "arena", "status": "walked_away", "term_sheets": [],
+                         "body": f"(the thread with {sid} has ended: {t['closed']})", "attachments": []}
+                threads[sid].append(event)
+                new.append((sid, event))
+        return new
+
     def result(self):
         state = self.client.session(self.session_id)
         return state.get("result") or {"deal": False, "end_reason": state.get("end_reason"), **state}
@@ -169,6 +206,7 @@ def play(table, case_id, agent, deadline=None):
         for m in events:
             fetch_documents(table, m)
     slowest = 0.0  # the longest round so far: decision + the supplier's reply
+    rejected = 0  # accepts the arena refused in a row (stale offer id)
     while live_threads(threads):
         t0 = time.monotonic()
         cap = deadline() if callable(deadline) else deadline
@@ -178,6 +216,13 @@ def play(table, case_id, agent, deadline=None):
                 closing_move(case, threads)
             )
         else:
+            if len(threads) > 1 and hasattr(table, "refresh"):
+                try:
+                    table.refresh(threads)
+                except ArenaError as e:
+                    log.warning("%s: thread refresh failed: %s", case_id, e.detail)
+                if not live_threads(threads):
+                    break
             decision = agent.decide(case, threads)
         if (took := time.monotonic() - t0) > MOVE_LIMIT_S * 0.75:
             log.warning("decision took %.1fs - the limit is %ss per message", took, MOVE_LIMIT_S)
@@ -188,6 +233,14 @@ def play(table, case_id, agent, deadline=None):
                 return finish(table.close(sid, msg))
             reply = table.send(sid, msg)
         except ArenaError as e:
+            if e.status == 422 and msg.get("action") and hasattr(table, "refresh") and rejected < 2:
+                # a stale offer id (the thread moved on while we waited): look again and decide again
+                rejected += 1
+                log.warning("%s: %s rejected (%s) - refreshing threads", sid, msg["action"], e.detail)
+                table.refresh(threads)
+                if hasattr(agent, "move_deadline"):
+                    agent.move_deadline = time.monotonic() + getattr(agent, "decision_budget_s", MOVE_LIMIT_S * 0.6)
+                continue
             if e.status != 409:
                 raise
             log.info("%s: %s", sid, e.detail)
