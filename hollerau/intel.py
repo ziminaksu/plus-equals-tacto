@@ -311,6 +311,51 @@ def build(case, supplier_id, package=None, asked_price=None):
                 f"fixed prices until {m.group(1)}, so market movements do not reach your costs before then.",
                 1.45, None))
             break
+    # The framework agreement already indexes the price (P18: ctr:4600070740#3.2, PPI-C2431 at 80 % with
+    # quarterly adjustment) - the supplier then cites the same index again to justify an increase. Citing
+    # the clause moved P18 from 5.10 to 5.00 (0.654 -> 0.721).
+    for k, v in facts.items():
+        if (k.startswith("ctr:") and "#" in k and v.get("supplier") == supplier_id and v.get("type") == "index"
+                and v.get("series") and v.get("material_share")):
+            share = round(v["material_share"] * 100)
+            d.claims.append(Claim(
+                "contract_index", [k],
+                f"Under our framework agreement the price already follows {v['series']} with a {share} % share "
+                f"and periodic adjustment ({k}); that index movement is therefore already in today's price and "
+                f"cannot be charged a second time.", 1.5, None))
+            break
+    # What the supplier's own people told us (meeting/call notes, citable doc IDs): an offer to open the
+    # calculation, a focus on volume customers, a pricing-committee threshold (P18 probes: these lines
+    # plus the contract clause gave the record).
+    notes = [(r["id"], r["date"]) for r in _query(package, "SELECT id, date FROM documents WHERE supplier_id = ? "
+                                                            "ORDER BY date DESC", (supplier_id,)) if r["id"] in facts]
+    said = {}
+    for doc_id, _date in notes:
+        try:
+            text = package.document(doc_id).lower()
+        except Exception:
+            continue
+        if "calculation" in text and ("walk" in text or "open" in text) and "walkthrough" not in said:
+            said["walkthrough"] = doc_id
+        if "customers with volume" in text and "volume_focus" not in said:
+            said["volume_focus"] = doc_id
+        if "pricing committee" in text and "committee" not in said:
+            said["committee"] = doc_id
+    if "walkthrough" in said:
+        d.claims.append(Claim(
+            "calculation_offer", [said["walkthrough"]],
+            f"Your owner offered to walk us through your calculation of hourly rates and material "
+            f"({said['walkthrough']}); we would welcome that before any increase is agreed.", 1.35, None))
+    if "volume_focus" in said:
+        d.claims.append(Claim(
+            "volume_focus", [said["volume_focus"]],
+            f"Your sales team told us you will focus on customers with volume ({said['volume_focus']}); with a "
+            f"competitive base price we are prepared to move more of our volume to you.", 1.35, None))
+    if "committee" in said:
+        d.claims.append(Claim(
+            "approval_threshold", [said["committee"]],
+            f"Your key account manager explained that larger price changes need your pricing committee "
+            f"({said['committee']}); please take this package there with our multi-year commitment.", 1.1, None))
     if asked_price and part:
         own = sorted(
             ((k, v) for k, v in facts.items()
