@@ -5,20 +5,19 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 case_id="${1:?usage: ./tools/run_azure.sh P08}"
-set -a; source .env; set +a
-export OPENAI_API_KEY="$AZURE_OPENAI_KEY"
-export ASTRA_BASE_URL="${AZURE_OPENAI_ENDPOINT%/}/openai/v1"
-export ASTRA_MODEL="$AZURE_OPENAI_DEPLOYMENT"
-export ASTRA_EFFORT="${ASTRA_EFFORT:-low}"  # 'minimal' broke the answer shape in 5 of 6 boards
+source tools/env_azure.sh
 run_id="azure-$case_id-$(date +%H%M%S)"
 # caffeinate: an idle-sleeping Mac froze a session until it expired (free Gemini P05, score 0)
 caffeinate -i uv run tacto-bayes --run-id "$run_id" --max-sessions 1 --cases "case:$case_id" --primary astra --reviewer astra \
-  2>&1 | grep -E "^(START|DONE|STOP)" || true
+  2>&1 | grep -E "^(START|DONE|STOP)|Error" || true
 uv run python - "$run_id" <<'PY'
 import json, sqlite3, sys
 c = sqlite3.connect("hollerau/logs/analytical.sqlite")
 rows = [json.loads(r[0]) for r in c.execute(
     "SELECT payload FROM events WHERE run_id=? AND kind='decision'", (sys.argv[1],))]
 fallback = sum("fallback" in str(p.get("reason", "")) for p in rows)
+from collections import Counter
+print("final calls:", dict(Counter(c.get("model") for p in rows for c in p.get("llm_calls", [])
+                                    if c.get("role") == "final_decision" and c.get("status") == "ok")))
 print(f"decisions by the model: {len(rows) - fallback} of {len(rows)} (the rest: offline fallback)")
 PY

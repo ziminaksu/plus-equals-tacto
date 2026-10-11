@@ -442,9 +442,16 @@ class Router:
                 if not os.environ.get("HF_TOKEN"):
                     continue
                 m_base, m_key, m_name = "https://router.huggingface.co/v1", os.environ["HF_TOKEN"], model[3:]
+            elif model.startswith("gm:"):  # Gemini as a backup behind another primary (e.g. Azure gpt-5-mini)
+                if not os.environ.get("GEMINI_API_KEY"):
+                    continue
+                m_base = "https://generativelanguage.googleapis.com/v1beta/openai"
+                m_key, m_name = os.environ["GEMINI_API_KEY"], model[3:]
             try:
-                return self._chat_once(m_base, m_name, system, data, left if i == len(models) - 1 else min(left, 9),
-                                       role, schema, key=m_key)
+                # the primary gets the time a reasoning model needs (gpt-5-mini: 12-15 s), keeping ~10 s for one
+                # backup; later entries share what is left in 9-second slices
+                slot = left if i == len(models) - 1 else (max(9, left - 10) if i == 0 else min(left, 9))
+                return self._chat_once(m_base, m_name, system, data, slot, role, schema, key=m_key)
             except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as exc:
                 last_exc = exc
                 status = getattr(getattr(exc, "response", None), "status_code", None)

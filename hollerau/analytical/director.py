@@ -706,6 +706,23 @@ def normalize_selection(board, selection):
             target = ""
         review["target_package_id"] = target
         sel["continuation_review"] = review
+    plan = sel.get("plan")
+    if isinstance(plan, dict):
+        # cite only sources this supplier really has (gpt-5-mini P05: an unknown source id twice in a row);
+        # with none left the plan is labelled an assumption, as the contract asks
+        plan = dict(plan)
+        sup = board["suppliers"].get(sid, {})
+        available = set(sup.get("sources") or {}) | {h.get("source_id") for h in sup.get("past_exchanges") or []}
+        available |= {k for k, e in board["evidence"].items() if e["supplier_id"] == sid}
+        refs = [r for r in plan.get("basis_source_ids") or [] if r in available][:3]
+        plan["basis_source_ids"] = refs
+        if not refs and "assum" not in str(plan.get("basis") or "").lower():
+            plan["basis"] = ("Assumption: " + str(plan.get("basis") or "")).strip()
+        alt = plan.get("rejected_alternative_id") or ""
+        if alt and (alt not in board["packages"] and alt not in board["actions"]
+                    or alt == sel.get("action_id") or alt in sel["package_ids"]):
+            plan["rejected_alternative_id"] = ""
+        sel["plan"] = plan
     return sel
 
 
