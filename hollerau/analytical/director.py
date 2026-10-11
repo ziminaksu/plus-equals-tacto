@@ -556,29 +556,48 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
         contacts = {sid: sum(m.get("from") == "buyer" for m in threads[sid]) for sid in live}
         open_ones = [sid for sid in live if latest(threads[sid]).get("status") not in ("final_offer", "agreed")
                      and moves_left(case, threads[sid]) > 1]
-        if open_ones:
+
+        def stale(sid):  # trailing replies the arena sent because we did not answer in time
+            n = 0
+            for m in reversed(threads[sid]):
+                if not m.get("timeout_reply"):
+                    break
+                n += 1
+            return n
+
+        def last_step(sid):
+            prices = [min(t["terms"].get("unit_price") or float("inf") for t in m["term_sheets"])
+                      for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
+            return (prices[-2] - prices[-1]) / prices[-2] if len(prices) >= 2 and prices[-2] else 0.0
+
+        acts = board["actions"]
+        urgent = max(live, key=lambda sid: (stale(sid), latest(threads[sid]).get("status") == "final_offer"))
+        if stale(urgent) and not closing_only:
+            # A supplier the arena had to answer by timeout comes first: after a final offer one more timeout
+            # closes its thread (Azure P05: 70250 fell to 30.00 by timeout, then final, then walked away while
+            # we bargained with another supplier). Accepting any supplier stays possible.
+            keep = {k: v for k, v in acts.items() if v["supplier_id"] == urgent or v["kind"] == "accept"}
+            if last_step(urgent) >= 0.05 and f"{urgent}:accept" in keep:
+                keep = {k: v for k, v in keep.items() if v["supplier_id"] != urgent or v["kind"] == "accept"}
+            board["actions"] = keep
+        elif open_ones:
             floor = min(contacts[sid] for sid in open_ones)
             ahead = {sid for sid in live if contacts[sid] > floor + 1}
-            board["actions"] = {k: v for k, v in board["actions"].items()
-                                if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
+            acts = {k: v for k, v in acts.items()
+                    if v["supplier_id"] not in ahead or v["kind"] in ("accept", "walk_away")}
             # A supplier that has just cut its price by 5 % or more is at its limit: one more push made it
             # walk away (free Gemini P05: 33.00 -> 30.00, we sent 28.20, it withdrew and we closed at 34.00).
             # Keep accepting it or working the others; no further counter to it.
-            def last_step(sid):
-                prices = [min(t["terms"].get("unit_price") or float("inf") for t in m["term_sheets"])
-                          for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
-                return (prices[-2] - prices[-1]) / prices[-2] if len(prices) >= 2 and prices[-2] else 0.0
             limit = {sid for sid in open_ones if last_step(sid) >= 0.05}
-            if limit:
-                board["actions"] = {k: v for k, v in board["actions"].items()
-                                    if v["supplier_id"] not in limit or v["kind"] in ("accept", "walk_away")}
+            acts = {k: v for k, v in acts.items()
+                    if v["supplier_id"] not in limit or v["kind"] in ("accept", "walk_away")}
             # No close while a supplier has never heard from us: asking it costs nothing (free Gemini P05:
             # accepted 32.50 after two rounds, a third supplier untouched - 0.37 vs 0.875 with all three).
             untried = [sid for sid in open_ones if contacts[sid] == 0]
-            if untried and not closing_only:
-                board["actions"] = {k: v for k, v in board["actions"].items()
-                                    if v["kind"] != "accept"
-                                    or latest(threads[v["supplier_id"]]).get("status") == "final_offer"}
+            if untried and not closing_only and any(v["supplier_id"] in untried for v in acts.values()):
+                acts = {k: v for k, v in acts.items()
+                        if v["kind"] != "accept" or latest(threads[v["supplier_id"]]).get("status") == "final_offer"}
+            board["actions"] = acts or board["actions"]
 
     board["candidate_generation"]["retained"] = len(board["packages"])
     add_action_consequences(agent, board)
@@ -841,7 +860,9 @@ def decide(agent, case, threads, deadline, closing_only=False):
               and latest(threads[sid]).get("status") != "final_offer"]
     if viable and not closing_only:
         sid = min(viable, key=lambda s: sum(e.get("from") == "buyer" for e in threads[s]))
-        if budget.can_propose():
+        # With several live suppliers every second counts: each unanswered thread times out after a minute
+        # (Azure P05: two suppliers walked on timeouts while the proposer and final call ran in turn).
+        if budget.can_propose() and len(live_threads(threads)) == 1:
             before = time.monotonic()
             analysis, _ = agent.interpret(case, sid, threads[sid], budget.proposer_deadline())
             availability[sid] = {"status": "unavailable" if analysis.get("fallback") else
