@@ -9,8 +9,13 @@ set -a; source .env; set +a
 export OPENAI_API_KEY="$GEMINI_API_KEY"
 export ASTRA_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai"
 export ASTRA_SAFE=1  # normalize bookkeeping slips; a failed answer becomes a move from the current board
-# Cross-provider routing requires an explicit ASTRA_MODEL_OVERRIDE; a stored HF token is not opt-in.
-export ASTRA_MODEL="${ASTRA_MODEL_OVERRIDE:-gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.6-flash}"
+# Gemini first. The team opted in to Hugging Face as backup (HF_TOKEN in .env, 2026-10-11): its models
+# answer only when Gemini is rate-limited/overloaded/too slow; set ASTRA_HF=0 to keep everything on Gemini.
+chain="gemini-3.5-flash-lite,gemini-3.1-flash-lite"
+if [ -n "${HF_TOKEN:-}" ] && [ "${ASTRA_HF:-1}" != "0" ]; then
+  chain="$chain,hf:openai/gpt-oss-120b:cerebras,hf:deepseek-ai/DeepSeek-V4.1-Flash"
+fi
+export ASTRA_MODEL="${ASTRA_MODEL_OVERRIDE:-$chain,gemini-3.6-flash}"
 # caffeinate: an idle-sleeping Mac froze a session until it expired (free Gemini P05, score 0)
 run_id="free-$case_id-$(date +%H%M%S)"
 set +e

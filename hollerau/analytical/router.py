@@ -492,7 +492,7 @@ class Router:
             response.raise_for_status()
             result = response.json()
             record["usage"] = result.get("usage", {})
-            if result["choices"][0].get("finish_reason") != "stop":
+            if str(result["choices"][0].get("finish_reason") or "").lower() not in ("stop", "end_turn", "eos"):
                 raise ValueError("Chat completion was not complete")
             text = result["choices"][0]["message"].get("content") or ""
             obj = decode_conditions(parse_object(text))
