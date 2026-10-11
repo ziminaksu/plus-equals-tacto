@@ -579,8 +579,21 @@ def build_board(agent, case, threads, source_map, history_map, closing_only=Fals
                       for m in threads[sid] if m.get("from") != "buyer" and m.get("term_sheets")]
             return (prices[-2] - prices[-1]) / prices[-2] if len(prices) >= 2 and prices[-2] else 0.0
 
+        def standing_cost(sid):
+            st = board["suppliers"].get(sid, {}).get("standing") or {}
+            return st.get("expected_total_eur") or float("inf")
+
+        best_cost = min(standing_cost(sid) for sid in live)
+        # Accept only an offer within 1 % of the cheapest live one (Gemini P05: accepted a final 35.50 while
+        # a rival stood at 32.00 - the urgent supplier looked like the one to close with).
+        board["actions"] = {k: v for k, v in board["actions"].items()
+                            if v["kind"] != "accept" or standing_cost(v["supplier_id"]) <= best_cost * 1.01}
         acts = board["actions"]
-        urgent = max(live, key=lambda sid: (stale(sid), latest(threads[sid]).get("status") == "final_offer"))
+        # Urgent only if worth keeping: still bargaining, or a final offer that is competitive.
+        candidates = [sid for sid in live if latest(threads[sid]).get("status") != "final_offer"
+                      or standing_cost(sid) <= best_cost * 1.01]
+        urgent = max(candidates or live,
+                     key=lambda sid: (stale(sid), latest(threads[sid]).get("status") == "final_offer"))
         if stale(urgent) and not closing_only:
             # A supplier the arena had to answer by timeout comes first: after a final offer one more timeout
             # closes its thread (Azure P05: 70250 fell to 30.00 by timeout, then final, then walked away while
